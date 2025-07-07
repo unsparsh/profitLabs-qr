@@ -1,0 +1,130 @@
+const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:3001/api';
+
+class ApiClient {
+  private baseURL: string;
+  private token: string | null = null;
+
+  constructor(baseURL: string) {
+    this.baseURL = baseURL;
+    this.token = localStorage.getItem('authToken');
+  }
+
+  setToken(token: string | null) {
+    this.token = token;
+    if (token) {
+      localStorage.setItem('authToken', token);
+    } else {
+      localStorage.removeItem('authToken');
+    }
+  }
+
+  private getHeaders() {
+    return {
+      'Content-Type': 'application/json',
+      ...(this.token && { Authorization: `Bearer ${this.token}` }),
+    };
+  }
+
+  async request<T>(endpoint: string, options: RequestInit = {}): Promise<T> {
+    const url = `${this.baseURL}${endpoint}`;
+    const response = await fetch(url, {
+      ...options,
+      headers: {
+        ...this.getHeaders(),
+        ...options.headers,
+      },
+    });
+
+    if (!response.ok) {
+      const error = await response.json().catch(() => ({ message: 'An error occurred' }));
+      throw new Error(error.message || 'Request failed');
+    }
+
+    return response.json();
+  }
+
+  // Auth endpoints
+  async login(email: string, password: string) {
+    return this.request<{ token: string; user: any }>('/auth/login', {
+      method: 'POST',
+      body: JSON.stringify({ email, password }),
+    });
+  }
+
+  async register(hotelData: any) {
+    return this.request<{ token: string; user: any; hotel: any }>('/auth/register', {
+      method: 'POST',
+      body: JSON.stringify(hotelData),
+    });
+  }
+
+  // Hotel endpoints
+  async getHotel(id: string) {
+    return this.request<any>(`/hotels/${id}`);
+  }
+
+  async updateHotel(id: string, data: any) {
+    return this.request<any>(`/hotels/${id}`, {
+      method: 'PUT',
+      body: JSON.stringify(data),
+    });
+  }
+
+  // Room endpoints
+  async getRooms(hotelId: string) {
+    return this.request<any[]>(`/hotels/${hotelId}/rooms`);
+  }
+
+  async createRoom(hotelId: string, roomData: any) {
+    return this.request<any>(`/hotels/${hotelId}/rooms`, {
+      method: 'POST',
+      body: JSON.stringify(roomData),
+    });
+  }
+
+  async updateRoom(hotelId: string, roomId: string, data: any) {
+    return this.request<any>(`/hotels/${hotelId}/rooms/${roomId}`, {
+      method: 'PUT',
+      body: JSON.stringify(data),
+    });
+  }
+
+  async deleteRoom(hotelId: string, roomId: string) {
+    return this.request<any>(`/hotels/${hotelId}/rooms/${roomId}`, {
+      method: 'DELETE',
+    });
+  }
+
+  // Request endpoints
+  async getRequests(hotelId: string) {
+    return this.request<any[]>(`/hotels/${hotelId}/requests`);
+  }
+
+  async createRequest(hotelId: string, requestData: any) {
+    return this.request<any>(`/hotels/${hotelId}/requests`, {
+      method: 'POST',
+      body: JSON.stringify(requestData),
+    });
+  }
+
+  async updateRequest(hotelId: string, requestId: string, data: any) {
+    return this.request<any>(`/hotels/${hotelId}/requests/${requestId}`, {
+      method: 'PUT',
+      body: JSON.stringify(data),
+    });
+  }
+
+  // Guest portal endpoints
+  async getGuestPortalData(hotelId: string, roomId: string) {
+    return this.request<any>(`/guest/${hotelId}/${roomId}`);
+  }
+
+  async submitGuestRequest(hotelId: string, roomId: string, requestData: any) {
+    return this.request<any>(`/guest/${hotelId}/${roomId}/request`, {
+      method: 'POST',
+      body: JSON.stringify(requestData),
+    });
+  }
+}
+
+export const apiClient = new ApiClient(API_BASE_URL);

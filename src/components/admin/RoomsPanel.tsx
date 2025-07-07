@@ -1,0 +1,248 @@
+import React, { useState } from 'react';
+import { Plus, QrCode, Settings, Trash2, Download } from 'lucide-react';
+import { apiClient } from '../../utils/api';
+import toast from 'react-hot-toast';
+
+interface RoomsPanelProps {
+  rooms: any[];
+  onRoomsUpdate: () => void;
+  hotelId: string;
+}
+
+export const RoomsPanel: React.FC<RoomsPanelProps> = ({ 
+  rooms, 
+  onRoomsUpdate, 
+  hotelId 
+}) => {
+  const [isAddingRoom, setIsAddingRoom] = useState(false);
+  const [newRoom, setNewRoom] = useState({ number: '', name: '' });
+  const [isLoading, setIsLoading] = useState(false);
+
+  const handleAddRoom = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!newRoom.number.trim()) {
+      toast.error('Room number is required');
+      return;
+    }
+
+    setIsLoading(true);
+    try {
+      await apiClient.createRoom(hotelId, {
+        number: newRoom.number,
+        name: newRoom.name || `Room ${newRoom.number}`,
+      });
+      setNewRoom({ number: '', name: '' });
+      setIsAddingRoom(false);
+      onRoomsUpdate();
+      toast.success('Room added successfully');
+    } catch (error) {
+      toast.error('Failed to add room');
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleDeleteRoom = async (roomId: string) => {
+    if (!confirm('Are you sure you want to delete this room?')) return;
+
+    try {
+      await apiClient.deleteRoom(hotelId, roomId);
+      onRoomsUpdate();
+      toast.success('Room deleted successfully');
+    } catch (error) {
+      toast.error('Failed to delete room');
+    }
+  };
+
+  const handleToggleRoom = async (roomId: string, isActive: boolean) => {
+    try {
+      await apiClient.updateRoom(hotelId, roomId, { isActive: !isActive });
+      onRoomsUpdate();
+      toast.success(`Room ${isActive ? 'disabled' : 'enabled'} successfully`);
+    } catch (error) {
+      toast.error('Failed to update room status');
+    }
+  };
+
+  const downloadQRCode = (room: any) => {
+    const canvas = document.createElement('canvas');
+    const ctx = canvas.getContext('2d');
+    const qrSize = 300;
+    
+    canvas.width = qrSize;
+    canvas.height = qrSize + 80;
+    
+    // Create QR code data URL
+    const qrDataUrl = room.qrCode;
+    const img = new Image();
+    img.onload = () => {
+      // Draw QR code
+      ctx?.drawImage(img, 0, 0, qrSize, qrSize);
+      
+      // Add room info
+      if (ctx) {
+        ctx.fillStyle = '#000';
+        ctx.font = 'bold 16px Arial';
+        ctx.textAlign = 'center';
+        ctx.fillText(`Room ${room.number}`, qrSize / 2, qrSize + 30);
+        ctx.font = '12px Arial';
+        ctx.fillText('Scan for room service', qrSize / 2, qrSize + 50);
+      }
+      
+      // Download
+      const link = document.createElement('a');
+      link.download = `room-${room.number}-qr.png`;
+      link.href = canvas.toDataURL();
+      link.click();
+    };
+    img.src = qrDataUrl;
+  };
+
+  return (
+    <div className="space-y-6">
+      {/* Header */}
+      <div className="flex justify-between items-center">
+        <h2 className="text-2xl font-bold text-gray-900">Rooms & QR Codes</h2>
+        <button
+          onClick={() => setIsAddingRoom(true)}
+          className="bg-blue-600 text-white px-4 py-2 rounded-lg font-medium hover:bg-blue-700 transition-colors flex items-center gap-2"
+        >
+          <Plus className="h-4 w-4" />
+          Add Room
+        </button>
+      </div>
+
+      {/* Add Room Form */}
+      {isAddingRoom && (
+        <div className="bg-white rounded-lg shadow-sm p-6">
+          <h3 className="text-lg font-medium text-gray-900 mb-4">Add New Room</h3>
+          <form onSubmit={handleAddRoom} className="space-y-4">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div>
+                <label htmlFor="roomNumber" className="block text-sm font-medium text-gray-700 mb-2">
+                  Room Number *
+                </label>
+                <input
+                  id="roomNumber"
+                  type="text"
+                  value={newRoom.number}
+                  onChange={(e) => setNewRoom({ ...newRoom, number: e.target.value })}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  placeholder="e.g., 101"
+                  required
+                />
+              </div>
+              <div>
+                <label htmlFor="roomName" className="block text-sm font-medium text-gray-700 mb-2">
+                  Room Name (Optional)
+                </label>
+                <input
+                  id="roomName"
+                  type="text"
+                  value={newRoom.name}
+                  onChange={(e) => setNewRoom({ ...newRoom, name: e.target.value })}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  placeholder="e.g., Deluxe Suite"
+                />
+              </div>
+            </div>
+            <div className="flex gap-3">
+              <button
+                type="button"
+                onClick={() => setIsAddingRoom(false)}
+                className="px-4 py-2 text-gray-700 bg-gray-200 rounded-lg hover:bg-gray-300 transition-colors"
+              >
+                Cancel
+              </button>
+              <button
+                type="submit"
+                disabled={isLoading}
+                className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+              >
+                {isLoading ? 'Adding...' : 'Add Room'}
+              </button>
+            </div>
+          </form>
+        </div>
+      )}
+
+      {/* Rooms Grid */}
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        {rooms.map((room) => (
+          <div key={room._id} className="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden">
+            <div className="p-4">
+              <div className="flex justify-between items-start mb-3">
+                <div>
+                  <h3 className="text-lg font-semibold text-gray-900">
+                    Room {room.number}
+                  </h3>
+                  <p className="text-sm text-gray-600">{room.name}</p>
+                </div>
+                <div className="flex items-center gap-2">
+                  <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
+                    room.isActive 
+                      ? 'bg-green-100 text-green-800' 
+                      : 'bg-red-100 text-red-800'
+                  }`}>
+                    {room.isActive ? 'Active' : 'Inactive'}
+                  </span>
+                </div>
+              </div>
+              
+              {/* QR Code */}
+              <div className="flex justify-center mb-4">
+                <div className="bg-gray-100 p-4 rounded-lg">
+                  <img 
+                    src={room.qrCode} 
+                    alt={`QR Code for Room ${room.number}`}
+                    className="w-32 h-32"
+                  />
+                </div>
+              </div>
+              
+              <div className="text-center text-sm text-gray-600 mb-4">
+                <p>Scan to access room services</p>
+              </div>
+              
+              {/* Actions */}
+              <div className="flex gap-2">
+                <button
+                  onClick={() => downloadQRCode(room)}
+                  className="flex-1 bg-blue-600 text-white py-2 px-3 rounded-lg font-medium hover:bg-blue-700 transition-colors flex items-center justify-center gap-2"
+                >
+                  <Download className="h-4 w-4" />
+                  Download
+                </button>
+                <button
+                  onClick={() => handleToggleRoom(room._id, room.isActive)}
+                  className={`flex-1 py-2 px-3 rounded-lg font-medium transition-colors flex items-center justify-center gap-2 ${
+                    room.isActive
+                      ? 'bg-yellow-600 text-white hover:bg-yellow-700'
+                      : 'bg-green-600 text-white hover:bg-green-700'
+                  }`}
+                >
+                  <Settings className="h-4 w-4" />
+                  {room.isActive ? 'Disable' : 'Enable'}
+                </button>
+                <button
+                  onClick={() => handleDeleteRoom(room._id)}
+                  className="p-2 text-red-600 hover:bg-red-50 rounded-lg transition-colors"
+                >
+                  <Trash2 className="h-4 w-4" />
+                </button>
+              </div>
+            </div>
+          </div>
+        ))}
+      </div>
+      
+      {rooms.length === 0 && (
+        <div className="text-center py-12">
+          <QrCode className="h-12 w-12 text-gray-400 mx-auto mb-4" />
+          <p className="text-gray-500">No rooms added yet</p>
+          <p className="text-sm text-gray-400">Add your first room to get started</p>
+        </div>
+      )}
+    </div>
+  );
+};
