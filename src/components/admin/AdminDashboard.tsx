@@ -22,10 +22,9 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ user, hotel, onL
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
-    // Initialize socket connection
     const token = localStorage.getItem('authToken');
     const socket = socketManager.connect(token);
-    
+
     socket.on('connect', () => {
       socketManager.joinHotelRoom(hotel._id);
     });
@@ -33,26 +32,26 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ user, hotel, onL
     socket.on('newRequest', (request) => {
       setRequests(prev => [request, ...prev]);
       setUnreadCount(prev => prev + 1);
-      
-      // Play notification sound
-      if (hotel.settings.notifications.sound) {
-        const audio = new Audio('/notification.wav');
+
+      // ✅ Play sound if enabled in settings
+      if (hotel?.settings?.notifications?.sound) {
+        const audio = new Audio('/sounds/bell.wav');
         audio.play().catch(() => {
-          // Fallback to system notification
-          toast.success('New request received!');
+          toast.success('🔔 New request received!');
         });
+      } else {
+        toast.success('🔔 New request received!');
       }
-      
-      toast.success(`New ${request.type.replace('-', ' ')} request from Room ${request.roomNumber}`);
+
+      toast.success(`📩 ${request.type.replace('-', ' ')} from Room ${request.roomNumber}`);
     });
 
     socket.on('requestUpdated', (updatedRequest) => {
-      setRequests(prev => prev.map(req => 
-        req._id === updatedRequest._id ? updatedRequest : req
-      ));
+      setRequests(prev =>
+        prev.map(req => req._id === updatedRequest._id ? updatedRequest : req)
+      );
     });
 
-    // Fetch initial data
     fetchRequests();
     fetchRooms();
 
@@ -102,17 +101,15 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ user, hotel, onL
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between items-center py-4">
             <div className="flex items-center">
-              <div className="flex items-center">
-                <div className="bg-blue-600 text-white p-2 rounded-lg mr-3">
-                  <Users className="h-6 w-6" />
-                </div>
-                <div>
-                  <h1 className="text-xl font-bold text-gray-900">ProfitLabs</h1>
-                  <p className="text-sm text-gray-600">{hotel.name}</p>
-                </div>
+              <div className="bg-blue-600 text-white p-2 rounded-lg mr-3">
+                <Users className="h-6 w-6" />
+              </div>
+              <div>
+                <h1 className="text-xl font-bold text-gray-900">ProfitLabs</h1>
+                <p className="text-sm text-gray-600">{hotel.name}</p>
               </div>
             </div>
-            
+
             <div className="flex items-center space-x-4">
               <div className="text-right">
                 <p className="text-sm font-medium text-gray-900">{user.name}</p>
@@ -169,31 +166,31 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ user, hotel, onL
         ) : (
           <>
             {activeTab === 'requests' && (
-              <RequestsPanel 
-                requests={requests} 
+              <RequestsPanel
+                requests={requests}
                 onRequestUpdate={fetchRequests}
                 hotelId={hotel._id}
               />
             )}
             {activeTab === 'rooms' && (
-              <RoomsPanel 
-                rooms={rooms} 
+              <RoomsPanel
+                rooms={rooms}
                 onRoomsUpdate={fetchRooms}
                 hotelId={hotel._id}
               />
             )}
             {activeTab === 'analytics' && (
-              <AnalyticsPanel 
+              <AnalyticsPanel
                 requests={requests}
                 rooms={rooms}
                 hotel={hotel}
               />
             )}
             {activeTab === 'settings' && (
-              <SettingsPanel 
+              <SettingsPanel
                 hotel={hotel}
                 onHotelUpdate={(updatedHotel) => {
-                  // Update hotel data
+                  // Update hotel if needed
                 }}
               />
             )}
