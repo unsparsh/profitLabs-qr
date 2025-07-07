@@ -69,6 +69,7 @@ const roomSchema = new mongoose.Schema({
   hotelId: { type: mongoose.Schema.Types.ObjectId, ref: 'Hotel', required: true },
   number: { type: String, required: true },
   name: { type: String, required: true },
+  uuid: { type: String, required: true, unique: true },
   qrCode: { type: String, required: true },
   isActive: { type: Boolean, default: true },
 }, { timestamps: true });
@@ -136,6 +137,7 @@ io.on('connection', (socket) => {
 app.get('/', (req,res) => {
   res.send("Server running fine...");
 })
+
 // Auth routes
 app.post('/api/auth/register', async (req, res) => {
   try {
@@ -300,30 +302,38 @@ app.post('/api/hotels/:hotelId/rooms', authenticateToken, async (req, res) => {
     const { number, name } = req.body;
     const { hotelId } = req.params;
 
-    // Check if room number already exists
+    // Check for duplicate room
     const existingRoom = await Room.findOne({ hotelId, number });
     if (existingRoom) {
       return res.status(400).json({ message: 'Room number already exists' });
     }
 
-    // Generate QR code
-    const qrData = `${process.env.CLIENT_URL || 'http://localhost:5173'}/guest/${hotelId}/${uuidv4()}`;
+    // Generate UUID
+    const roomUuid = uuidv4();
+
+    // Generate QR code with UUID
+    const qrData = `${process.env.CLIENT_URL || 'http://localhost:5173'}/guest/${hotelId}/${roomUuid}`;
     const qrCode = await qrcode.toDataURL(qrData);
 
+    // Create Room with UUID
     const room = new Room({
       hotelId,
       number,
       name,
-      qrCode,
+      uuid: roomUuid,      // ✅ Save uuid
+      qrCode               // ✅ Save QR image
     });
 
     await room.save();
+    console.log("✅ Room created successfully");
+
     res.json(room);
   } catch (error) {
-    console.error('Room creation error:', error);
+    console.error('❌ Room creation error:', error);
     res.status(500).json({ message: 'Server error' });
   }
 });
+
 
 app.put('/api/hotels/:hotelId/rooms/:roomId', authenticateToken, async (req, res) => {
   try {
@@ -425,7 +435,9 @@ app.get('/api/guest/:hotelId/:roomId', async (req, res) => {
       return res.status(404).json({ message: 'Hotel not found' });
     }
 
-    const room = await Room.findById(roomId);
+    // ✅ Change this line:
+    const room = await Room.findOne({ hotelId, uuid: roomId });
+
     if (!room) {
       return res.status(404).json({ message: 'Room not found' });
     }
@@ -447,19 +459,22 @@ app.get('/api/guest/:hotelId/:roomId', async (req, res) => {
   }
 });
 
+
+
 app.post('/api/guest/:hotelId/:roomId/request', async (req, res) => {
   try {
     const { hotelId, roomId } = req.params;
     const { type, message, priority } = req.body;
 
-    const room = await Room.findById(roomId);
+    // ✅ Fetch room by UUID instead of _id
+    const room = await Room.findOne({ hotelId, uuid: roomId });
     if (!room) {
       return res.status(404).json({ message: 'Room not found' });
     }
 
     const request = new Request({
       hotelId,
-      roomId,
+      roomId: room._id, // ✅ Still store the actual _id here
       roomNumber: room.number,
       type,
       message,
@@ -468,15 +483,14 @@ app.post('/api/guest/:hotelId/:roomId/request', async (req, res) => {
 
     await request.save();
 
-    // Emit real-time notification
-    io.to(hotelId).emit('newRequest', request);
-
+    io.to(hotelId).emit('newRequest', request); // Real-time event
     res.json(request);
   } catch (error) {
     console.error('Guest request error:', error);
     res.status(500).json({ message: 'Server error' });
   }
 });
+
 
 const PORT = process.env.PORT || 3001;
 server.listen(PORT, () => {

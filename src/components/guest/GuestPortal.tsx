@@ -37,6 +37,13 @@ export const GuestPortal: React.FC<GuestPortalProps> = ({ hotelId, roomId }) => 
     fetchHotelData();
   }, [hotelId, roomId]);
 
+  const serviceIdToSettingsKey: Record<string, string> = {
+    'call-service': 'callServiceBoy',
+    'order-food': 'orderFood',
+    'room-service': 'requestRoomService',
+    'complaint': 'lodgeComplaint'
+  };
+
   const services: Service[] = [
     {
       id: 'call-service',
@@ -159,14 +166,15 @@ export const GuestPortal: React.FC<GuestPortalProps> = ({ hotelId, roomId }) => 
             <button
               key={service.id}
               onClick={() => handleServiceSelect(service.id)}
-              disabled={!hotelData.hotel.settings.servicesEnabled[service.id.replace('-', '')]}
+              disabled={!hotelData.hotel.settings.servicesEnabled[serviceIdToSettingsKey[service.id]]}
+
               className={`
                 p-6 rounded-2xl shadow-sm border-2 transition-all duration-200 text-left
                 ${selectedService === service.id
                   ? 'border-blue-500 bg-blue-50'
                   : 'border-gray-200 bg-white hover:border-gray-300 hover:shadow-md'
                 }
-                ${!hotelData.hotel.settings.servicesEnabled[service.id.replace('-', '')]
+                ${!hotelData.hotel.settings.servicesEnabled[serviceIdToSettingsKey[service.id]]
                   ? 'opacity-50 cursor-not-allowed'
                   : 'cursor-pointer'
                 }
