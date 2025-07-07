@@ -26,6 +26,7 @@
     "express": "^5.1.0",
     "jsonwebtoken": "^9.0.2",
     "lucide-react": "^0.344.0",
+    "mongodb": "^6.17.0",
     "mongoose": "^8.16.1",
     "nodemailer": "^7.0.4",
     "qrcode": "^1.5.4",

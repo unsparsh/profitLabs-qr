@@ -133,7 +133,9 @@ io.on('connection', (socket) => {
 });
 
 // Routes
-
+app.get('/', (req,res) => {
+  res.send("Server running fine...");
+})
 // Auth routes
 app.post('/api/auth/register', async (req, res) => {
   try {
