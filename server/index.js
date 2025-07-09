@@ -11,17 +11,24 @@ require('dotenv').config();
 const bodyParser = require('body-parser');
 const crypto = require('crypto');
 
-const app = express();
-const server = http.createServer(app);
-app.use(bodyParser.json());
-app.use(express.static('public'));
+  const app = express();
+  const server = http.createServer(app);
+  app.use(bodyParser.json());
+  app.use(express.static('public'));
 
-const io = socketIo(server, {
-  cors: {
-    origin: process.env.CLIENT_URL || "http://localhost:5173",
-    methods: ["GET", "POST"]
-  }
-});
+  app.use(cors({
+  origin: process.env.CLIENT_URL || "http://localhost:5173",
+  methods: ["GET", "POST", "PUT", "DELETE"],
+  credentials: true
+}));
+
+  const io = socketIo(server, {
+    cors: {
+      origin: process.env.CLIENT_URL || "http://localhost:5173",
+      methods: ["GET", "POST", "PUT", "DELETE"],
+      credentials: true
+    }
+  });
 
 //Adding RazorPay Payment Gateway
 const Razorpay = require('razorpay');
