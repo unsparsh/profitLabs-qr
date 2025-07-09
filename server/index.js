@@ -8,15 +8,29 @@ const bcrypt = require('bcryptjs');
 const qrcode = require('qrcode');
 const { v4: uuidv4 } = require('uuid');
 require('dotenv').config();
+const bodyParser = require('body-parser');
+const crypto = require('crypto');
 
 const app = express();
 const server = http.createServer(app);
+app.use(bodyParser.json());
+app.use(express.static('public'));
+
 const io = socketIo(server, {
   cors: {
     origin: process.env.CLIENT_URL || "http://localhost:5173",
     methods: ["GET", "POST"]
   }
 });
+
+//Adding RazorPay Payment Gateway
+const Razorpay = require('razorpay');
+const razorpay = new Razorpay({
+  key_id: process.env.RAZORPAY_KEY_ID,
+  key_secret: process.env.RAZORPAY_KEY_SECRET,
+});
+
+
 
 // Middleware
 app.use(cors());
@@ -257,6 +271,67 @@ app.post('/api/auth/login', async (req, res) => {
     res.status(500).json({ message: 'Login failed' });
   }
 });
+
+//Razorpay route
+app.post('/api/subscribe', authenticateToken, async (req, res) => {
+  try {
+    const { plan } = req.body;
+
+    // Plan pricing logic
+    const prices = {
+      basic: 99900, // ₹999 in paise
+      premium: 199900 // ₹1999 in paise
+    };
+    
+    const amount = prices[plan];
+    if (!amount) return res.status(400).json({ message: 'Invalid plan' });
+
+    const options = {
+      amount,
+      currency: "INR",
+      receipt: `receipt_${Date.now()}`,
+      notes: { plan },
+    };
+
+    const order = await razorpay.orders.create(options);
+    res.json({ order });
+  } catch (error) {
+    console.error("Subscription error:", error);
+    res.status(500).json({ message: 'Failed to create order' });
+  }
+});
+
+// POST /api/payment/webhook
+app.post('/payment/webhook', express.raw({ type: 'application/json' }), async (req, res) => {
+  const secret = process.env.RAZORPAY_WEBHOOK_SECRET;
+
+  const signature = req.headers['x-razorpay-signature'];
+  const body = req.body;
+
+  const isValid = Razorpay.validateWebhookSignature(JSON.stringify(body), signature, secret);
+
+  if (!isValid) return res.status(400).send('Invalid signature');
+
+  const payment = body.payload.payment.entity;
+
+  const userId = payment.notes.userId;
+  const plan = payment.notes.plan;
+  const duration = parseInt(payment.notes.duration);
+
+  const expiresAt = new Date(Date.now() + duration * 24 * 60 * 60 * 1000);
+
+  // Update in DB
+  await Hotel.updateOne({ admin: userId }, {
+    subscription: {
+      plan,
+      status: 'active',
+      expiresAt
+    }
+  });
+
+  return res.status(200).json({ success: true });
+});
+
 
 // Hotel routes
 app.get('/api/hotels/:id', authenticateToken, async (req, res) => {

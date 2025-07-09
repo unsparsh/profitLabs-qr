@@ -1,15 +1,24 @@
-import React, { useState, useEffect } from 'react';
-import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
+import React, { useEffect, useState } from 'react';
+import { BrowserRouter as Router, Routes, Route, Navigate, useParams } from 'react-router-dom';
 import { Toaster } from 'react-hot-toast';
 import { LoginForm } from './components/auth/LoginForm';
 import { RegisterForm } from './components/auth/RegisterForm';
 import { AdminDashboard } from './components/admin/AdminDashboard';
 import { GuestPortal } from './components/guest/GuestPortal';
+import PricingPage from './components/auth/PricingPage';
 import { apiClient } from './utils/api';
 
+type User = any;
+type Hotel = any;
+
+function GuestPortalWrapper() {
+  const { hotelId, roomId } = useParams<{ hotelId: string; roomId: string }>();
+  return <GuestPortal hotelId={hotelId!} roomId={roomId!} />;
+}
+
 function App() {
-  const [user, setUser] = useState<any>(null);
-  const [hotel, setHotel] = useState<any>(null);
+  const [user, setUser] = useState<User | null>(null);
+  const [hotel, setHotel] = useState<Hotel | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [authMode, setAuthMode] = useState<'login' | 'register'>('login');
 
@@ -17,13 +26,12 @@ function App() {
     const token = localStorage.getItem('authToken');
     if (token) {
       apiClient.setToken(token);
-      // Verify token and get user data
-      // This would typically be done with a /auth/verify endpoint
+      // You can hit /auth/verify here if backend supports verification
     }
     setIsLoading(false);
   }, []);
 
-  const handleAuthSuccess = (userData: any, hotelData: any) => {
+  const handleAuthSuccess = (userData: User, hotelData: Hotel) => {
     setUser(userData);
     setHotel(hotelData);
   };
@@ -50,61 +58,54 @@ function App() {
     <Router>
       <div className="min-h-screen bg-gray-50">
         <Toaster position="top-right" />
-        
         <Routes>
-          {/* Guest Portal Route */}
-          <Route 
-            path="/guest/:hotelId/:roomId" 
-            element={
-              <GuestPortal 
-                hotelId={window.location.pathname.split('/')[2]} 
-                roomId={window.location.pathname.split('/')[3]} 
-              />
-            } 
-          />
-          
-          {/* Admin Routes */}
-          <Route 
-            path="/admin" 
+          {/* Guest Portal */}
+          <Route path="/guest/:hotelId/:roomId" element={<GuestPortalWrapper />} />
+
+          {/* Admin Portal */}
+          <Route
+            path="/admin"
             element={
               user && hotel ? (
-                <AdminDashboard 
-                  user={user} 
-                  hotel={hotel} 
-                  onLogout={handleLogout}
-                />
+                <AdminDashboard user={user} hotel={hotel} onLogout={handleLogout} />
               ) : (
                 <Navigate to="/auth" replace />
               )
-            } 
+            }
           />
-          
-          {/* Auth Routes */}
-          <Route 
-            path="/auth" 
+
+          {/* Pricing Page */}
+          <Route path="/pricing" element={<PricingPage />} />
+
+          {/* Auth */}
+          <Route
+            path="/auth"
             element={
               user ? (
                 <Navigate to="/admin" replace />
               ) : (
                 <div className="min-h-screen bg-gray-50 flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8">
                   {authMode === 'login' ? (
-                    <LoginForm 
+                    <LoginForm
                       onSuccess={handleAuthSuccess}
                       onSwitchToRegister={() => setAuthMode('register')}
                     />
                   ) : (
-                    <RegisterForm 
+                    <RegisterForm
                       onSuccess={handleAuthSuccess}
                       onSwitchToLogin={() => setAuthMode('login')}
                     />
                   )}
                 </div>
               )
-            } 
+            }
           />
-          
+
           {/* Default Route */}
           <Route path="/" element={<Navigate to="/auth" replace />} />
+
+          {/* Not Found */}
+          <Route path="*" element={<div className="p-8 text-center text-red-500">404 | Page Not Found</div>} />
         </Routes>
       </div>
     </Router>

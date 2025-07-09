@@ -7,7 +7,7 @@ import { SettingsPanel } from './SettingsPanel';
 import { apiClient } from '../../utils/api';
 import { socketManager } from '../../utils/socket';
 import toast from 'react-hot-toast';
-
+import { Link } from 'react-router-dom';
 interface AdminDashboardProps {
   user: any;
   hotel: any;
@@ -197,6 +197,9 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ user, hotel, onL
           </>
         )}
       </div>
+{/* <Link to="/pricing" className="text-indigo-600 hover:underline">View Plans</Link> */}
     </div>
+
+
   );
 };
