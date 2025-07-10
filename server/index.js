@@ -536,18 +536,15 @@ app.get('/api/guest/:hotelId/:roomId', async (req, res) => {
   try {
     const { hotelId, roomId } = req.params;
 
-    console.log('🔍 Checking hotelId:', hotelId);
-    console.log('🔍 Checking room UUID:', roomId);
-
+    // Cast hotelId to ObjectId for query
     const hotel = await Hotel.findById(hotelId);
     if (!hotel) {
       return res.status(404).json({ message: 'Hotel not found' });
     }
 
-    // ✅ Find room by `uuid` not `_id`
-    const room = await Room.findOne({ hotelId, uuid: roomId });
+    // Cast hotelId to ObjectId for Room query
+    const room = await Room.findOne({ hotelId: mongoose.Types.ObjectId(hotelId), uuid: roomId });
     if (!room) {
-      console.log('❌ Room not found with uuid:', roomId);
       return res.status(404).json({ message: 'Room not found' });
     }
 
@@ -574,15 +571,15 @@ app.post('/api/guest/:hotelId/:roomId/request', async (req, res) => {
     const { hotelId, roomId } = req.params;
     const { type, message, priority, guestPhone, orderDetails } = req.body;
 
-    // ✅ Fetch room by UUID instead of _id
-    const room = await Room.findOne({ hotelId, uuid: roomId });
+    // Cast hotelId to ObjectId for Room query
+    const room = await Room.findOne({ hotelId: mongoose.Types.ObjectId(hotelId), uuid: roomId });
     if (!room) {
       return res.status(404).json({ message: 'Room not found' });
     }
 
     const request = new Request({
       hotelId,
-      roomId: room._id, // ✅ Still store the actual _id here
+      roomId: room._id,
       roomNumber: room.number,
       guestPhone,
       type,
@@ -593,7 +590,7 @@ app.post('/api/guest/:hotelId/:roomId/request', async (req, res) => {
 
     await request.save();
 
-    io.to(hotelId).emit('newRequest', request); // Real-time event
+    io.to(hotelId).emit('newRequest', request);
     res.json(request);
   } catch (error) {
     console.error('Guest request error:', error);
