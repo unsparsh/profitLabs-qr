@@ -672,7 +672,7 @@ app.get('/api/guest/:hotelId/food-menu', async (req, res) => {
     });
     res.json(foodItems);
   } catch (error) {
-    console.error('Guest food menu error:', error);
+    console.error('Guest food menu error:', error.stack || error);
     res.status(500).json({ message: 'Server error' });
   }
 });
