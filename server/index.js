@@ -663,12 +663,15 @@ app.delete('/api/hotels/:hotelId/food-menu/:itemId', authenticateToken, async (r
 // Guest Food Menu Route (no auth required)
 app.get('/api/guest/:hotelId/food-menu', async (req, res) => {
   try {
+    console.log('Fetching food menu for hotel:', req.params.hotelId);
     const foodItems = await FoodItem.find({ 
       hotelId: req.params.hotelId, 
       isAvailable: true 
     });
+    console.log('Found food items:', foodItems.length);
     res.json(foodItems);
   } catch (error) {
+    console.error('Food menu fetch error:', error);
     res.status(500).json({ message: 'Server error' });
   }
 });

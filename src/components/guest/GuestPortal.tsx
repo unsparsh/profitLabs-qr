@@ -44,10 +44,9 @@ export const GuestPortal: React.FC<GuestPortalProps> = ({ hotelId, roomId }) => 
       try {
         const foodMenu = await apiClient.getGuestFoodMenu(hotelId);
         setFoodItems(foodMenu);
-        console.log('Food items loaded:', foodMenu);
       } catch (error) {
         console.error('Failed to load food menu:', error);
-        toast.error('Unable to load food menu');
+        setFoodItems([]); // Set empty array on error
       }
     };
 
@@ -416,7 +415,9 @@ export const GuestPortal: React.FC<GuestPortalProps> = ({ hotelId, roomId }) => 
                 <div className="flex-1 overflow-y-auto p-6">
                   {foodItems.length === 0 ? (
                     <div className="text-center py-8">
-                      <p className="text-gray-500">No food items available</p>
+                      <UtensilsCrossed className="h-12 w-12 text-gray-400 mx-auto mb-4" />
+                      <p className="text-gray-500">Unable to load food menu</p>
+                      <p className="text-sm text-gray-400">Please try again later or contact staff</p>
                     </div>
                   ) : (
                     <>
