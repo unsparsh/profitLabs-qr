@@ -542,8 +542,8 @@ app.get('/api/guest/:hotelId/:roomId', async (req, res) => {
       return res.status(404).json({ message: 'Hotel not found' });
     }
 
-    // Cast hotelId to ObjectId for Room query
-    const room = await Room.findOne({ hotelId: mongoose.Types.ObjectId(hotelId), uuid: roomId });
+    // FIX: Use 'new' with ObjectId
+    const room = await Room.findOne({ hotelId: new mongoose.Types.ObjectId(hotelId), uuid: roomId });
     if (!room) {
       return res.status(404).json({ message: 'Room not found' });
     }
@@ -571,8 +571,8 @@ app.post('/api/guest/:hotelId/:roomId/request', async (req, res) => {
     const { hotelId, roomId } = req.params;
     const { type, message, priority, guestPhone, orderDetails } = req.body;
 
-    // Cast hotelId to ObjectId for Room query
-    const room = await Room.findOne({ hotelId: mongoose.Types.ObjectId(hotelId), uuid: roomId });
+    // FIX: Use 'new' with ObjectId
+    const room = await Room.findOne({ hotelId: new mongoose.Types.ObjectId(hotelId), uuid: roomId });
     if (!room) {
       return res.status(404).json({ message: 'Room not found' });
     }
@@ -597,6 +597,7 @@ app.post('/api/guest/:hotelId/:roomId/request', async (req, res) => {
     res.status(500).json({ message: 'Server error' });
   }
 });
+
 
 
 // Food Menu Routes
@@ -666,8 +667,9 @@ app.get('/api/guest/:hotelId/food-menu', async (req, res) => {
     if (!mongoose.Types.ObjectId.isValid(hotelId)) {
       return res.status(400).json({ message: 'Invalid hotelId' });
     }
+    // FIX: Use 'new' with ObjectId
     const foodItems = await FoodItem.find({ 
-      hotelId: mongoose.Types.ObjectId(hotelId), 
+      hotelId: new mongoose.Types.ObjectId(hotelId), 
       isAvailable: true 
     });
     res.json(foodItems);
