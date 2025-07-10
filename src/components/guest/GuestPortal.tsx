@@ -35,16 +35,24 @@ export const GuestPortal: React.FC<GuestPortalProps> = ({ hotelId, roomId }) => 
       try {
         const data = await apiClient.getGuestPortalData(hotelId, roomId);
         setHotelData(data);
-        
-        // Fetch food menu
-        const foodMenu = await apiClient.getGuestFoodMenu(hotelId);
-        setFoodItems(foodMenu);
       } catch (error) {
         toast.error('Unable to load hotel information');
       }
     };
 
+    const fetchFoodMenu = async () => {
+      try {
+        const foodMenu = await apiClient.getGuestFoodMenu(hotelId);
+        setFoodItems(foodMenu);
+        console.log('Food items loaded:', foodMenu);
+      } catch (error) {
+        console.error('Failed to load food menu:', error);
+        toast.error('Unable to load food menu');
+      }
+    };
+
     fetchHotelData();
+    fetchFoodMenu();
   }, [hotelId, roomId]);
 
   const serviceIdToSettingsKey: Record<string, string> = {
@@ -406,6 +414,11 @@ export const GuestPortal: React.FC<GuestPortalProps> = ({ hotelId, roomId }) => 
               <div className="flex h-[calc(90vh-120px)]">
                 {/* Menu Items */}
                 <div className="flex-1 overflow-y-auto p-6">
+                  {foodItems.length === 0 ? (
+                    <div className="text-center py-8">
+                      <p className="text-gray-500">No food items available</p>
+                    </div>
+                  ) : (
                   {categories.map(category => (
                     <div key={category} className="mb-6">
                       <h4 className="text-lg font-semibold text-gray-900 mb-3">{category}</h4>
@@ -439,6 +452,7 @@ export const GuestPortal: React.FC<GuestPortalProps> = ({ hotelId, roomId }) => 
                       </div>
                     </div>
                   ))}
+                  )}
                 </div>
 
                 {/* Cart */}
