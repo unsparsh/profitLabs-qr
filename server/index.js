@@ -536,15 +536,18 @@ app.get('/api/guest/:hotelId/:roomId', async (req, res) => {
   try {
     const { hotelId, roomId } = req.params;
 
+    console.log('🔍 Checking hotelId:', hotelId);
+    console.log('🔍 Checking room UUID:', roomId);
+
     const hotel = await Hotel.findById(hotelId);
     if (!hotel) {
       return res.status(404).json({ message: 'Hotel not found' });
     }
 
-    // ✅ Change this line:
+    // ✅ Find room by `uuid` not `_id`
     const room = await Room.findOne({ hotelId, uuid: roomId });
-
     if (!room) {
+      console.log('❌ Room not found with uuid:', roomId);
       return res.status(404).json({ message: 'Room not found' });
     }
 
@@ -561,11 +564,10 @@ app.get('/api/guest/:hotelId/:roomId', async (req, res) => {
       },
     });
   } catch (error) {
+    console.error('Error fetching guest portal data:', error);
     res.status(500).json({ message: 'Server error' });
   }
 });
-
-
 
 app.post('/api/guest/:hotelId/:roomId/request', async (req, res) => {
   try {
