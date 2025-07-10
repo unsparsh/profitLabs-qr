@@ -81,6 +81,8 @@ MONGODB_URI=mongodb://localhost:27017/profitlabs
 JWT_SECRET=your-super-secret-jwt-key
 PORT=3001
 CLIENT_URL=http://localhost:5173
+RAZORPAY_KEY_ID=rzp_test_your_razorpay_key_id
+RAZORPAY_KEY_SECRET=your_razorpay_key_secret
 ```
 
 ### 4. Start the Application
@@ -194,6 +196,8 @@ npm run build
 MONGODB_URI=mongodb+srv://your-cluster-url
 JWT_SECRET=your-production-secret
 CLIENT_URL=https://your-domain.com
+RAZORPAY_KEY_ID=rzp_live_your_razorpay_key_id
+RAZORPAY_KEY_SECRET=your_razorpay_key_secret
 
 # Frontend
 VITE_API_URL=https://your-backend-domain.com/api
