@@ -419,7 +419,8 @@ export const GuestPortal: React.FC<GuestPortalProps> = ({ hotelId, roomId }) => 
                       <p className="text-gray-500">No food items available</p>
                     </div>
                   ) : (
-                  {categories.map(category => (
+                    <>
+                      {categories.map(category => (
                     <div key={category} className="mb-6">
                       <h4 className="text-lg font-semibold text-gray-900 mb-3">{category}</h4>
                       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -451,7 +452,8 @@ export const GuestPortal: React.FC<GuestPortalProps> = ({ hotelId, roomId }) => 
                           ))}
                       </div>
                     </div>
-                  ))}
+                      ))}
+                    </>
                   )}
                 </div>
 
