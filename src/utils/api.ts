@@ -125,6 +125,35 @@ class ApiClient {
       body: JSON.stringify(requestData),
     });
   }
+
+  // Food Menu endpoints
+  async getFoodMenu(hotelId: string) {
+    return this.request<any[]>(`/hotels/${hotelId}/food-menu`);
+  }
+
+  async createFoodItem(hotelId: string, itemData: any) {
+    return this.request<any>(`/hotels/${hotelId}/food-menu`, {
+      method: 'POST',
+      body: JSON.stringify(itemData),
+    });
+  }
+
+  async updateFoodItem(hotelId: string, itemId: string, data: any) {
+    return this.request<any>(`/hotels/${hotelId}/food-menu/${itemId}`, {
+      method: 'PUT',
+      body: JSON.stringify(data),
+    });
+  }
+
+  async deleteFoodItem(hotelId: string, itemId: string) {
+    return this.request<any>(`/hotels/${hotelId}/food-menu/${itemId}`, {
+      method: 'DELETE',
+    });
+  }
+
+  async getGuestFoodMenu(hotelId: string) {
+    return this.request<any[]>(`/guest/${hotelId}/food-menu`);
+  }
 }
 
 export const apiClient = new ApiClient(API_BASE_URL);

@@ -4,6 +4,7 @@ import { RequestsPanel } from './RequestsPanel';
 import { RoomsPanel } from './RoomsPanel';
 import { AnalyticsPanel } from './AnalyticsPanel';
 import { SettingsPanel } from './SettingsPanel';
+import { FoodMenuPanel } from './FoodMenuPanel';
 import { apiClient } from '../../utils/api';
 import { socketManager } from '../../utils/socket';
 import toast from 'react-hot-toast';
@@ -91,6 +92,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ user, hotel, onL
     { id: 'requests', label: 'Requests', icon: Bell, hasNotification: unreadCount > 0 },
     { id: 'rooms', label: 'Rooms', icon: QrCode, hasNotification: false },
     { id: 'analytics', label: 'Analytics', icon: BarChart3, hasNotification: false },
+    { id: 'food-menu', label: 'Food Menu', icon: Users, hasNotification: false },
     { id: 'settings', label: 'Settings', icon: Settings, hasNotification: false },
   ];
 
@@ -184,6 +186,11 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ user, hotel, onL
                 requests={requests}
                 rooms={rooms}
                 hotel={hotel}
+              />
+            )}
+            {activeTab === 'food-menu' && (
+              <FoodMenuPanel
+                hotelId={hotel._id}
               />
             )}
             {activeTab === 'settings' && (

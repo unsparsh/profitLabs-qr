@@ -99,12 +99,23 @@ const requestSchema = new mongoose.Schema({
   hotelId: { type: mongoose.Schema.Types.ObjectId, ref: 'Hotel', required: true },
   roomId: { type: mongoose.Schema.Types.ObjectId, ref: 'Room', required: true },
   roomNumber: { type: String, required: true },
+  guestPhone: { type: String, required: true },
   type: { 
     type: String, 
     enum: ['call-service', 'order-food', 'room-service', 'complaint', 'custom-message'],
     required: true 
   },
   message: { type: String, required: true },
+  orderDetails: {
+    items: [{
+      itemId: { type: mongoose.Schema.Types.ObjectId },
+      name: { type: String },
+      price: { type: Number },
+      quantity: { type: Number },
+      total: { type: Number }
+    }],
+    totalAmount: { type: Number, default: 0 }
+  },
   status: { 
     type: String, 
     enum: ['pending', 'in-progress', 'completed', 'canceled'],
@@ -117,10 +128,21 @@ const requestSchema = new mongoose.Schema({
   },
 }, { timestamps: true });
 
+// Food Menu Schema
+const foodItemSchema = new mongoose.Schema({
+  hotelId: { type: mongoose.Schema.Types.ObjectId, ref: 'Hotel', required: true },
+  name: { type: String, required: true },
+  description: { type: String },
+  price: { type: Number, required: true },
+  category: { type: String, required: true },
+  isAvailable: { type: Boolean, default: true },
+  image: { type: String }, // URL to image
+}, { timestamps: true });
 const Hotel = mongoose.model('Hotel', hotelSchema);
 const User = mongoose.model('User', userSchema);
 const Room = mongoose.model('Room', roomSchema);
 const Request = mongoose.model('Request', requestSchema);
+const FoodItem = mongoose.model('FoodItem', foodItemSchema);
 
 // Auth middleware
 const authenticateToken = (req, res, next) => {
@@ -458,7 +480,7 @@ app.get('/api/hotels/:hotelId/requests', authenticateToken, async (req, res) => 
 
 app.post('/api/hotels/:hotelId/requests', authenticateToken, async (req, res) => {
   try {
-    const { roomId, type, message, priority } = req.body;
+    const { roomId, type, message, priority, guestPhone, orderDetails } = req.body;
     const { hotelId } = req.params;
 
     const room = await Room.findById(roomId);
@@ -470,8 +492,10 @@ app.post('/api/hotels/:hotelId/requests', authenticateToken, async (req, res) =>
       hotelId,
       roomId,
       roomNumber: room.number,
+      guestPhone,
       type,
       message,
+      orderDetails,
       priority: priority || 'medium',
     });
 
@@ -546,7 +570,7 @@ app.get('/api/guest/:hotelId/:roomId', async (req, res) => {
 app.post('/api/guest/:hotelId/:roomId/request', async (req, res) => {
   try {
     const { hotelId, roomId } = req.params;
-    const { type, message, priority } = req.body;
+    const { type, message, priority, guestPhone, orderDetails } = req.body;
 
     // ✅ Fetch room by UUID instead of _id
     const room = await Room.findOne({ hotelId, uuid: roomId });
@@ -558,8 +582,10 @@ app.post('/api/guest/:hotelId/:roomId/request', async (req, res) => {
       hotelId,
       roomId: room._id, // ✅ Still store the actual _id here
       roomNumber: room.number,
+      guestPhone,
       type,
       message,
+      orderDetails,
       priority: priority || 'medium',
     });
 
@@ -573,6 +599,79 @@ app.post('/api/guest/:hotelId/:roomId/request', async (req, res) => {
   }
 });
 
+
+// Food Menu Routes
+app.get('/api/hotels/:hotelId/food-menu', authenticateToken, async (req, res) => {
+  try {
+    const foodItems = await FoodItem.find({ hotelId: req.params.hotelId });
+    res.json(foodItems);
+  } catch (error) {
+    res.status(500).json({ message: 'Server error' });
+  }
+});
+
+app.post('/api/hotels/:hotelId/food-menu', authenticateToken, async (req, res) => {
+  try {
+    const { name, description, price, category, image } = req.body;
+    const { hotelId } = req.params;
+
+    const foodItem = new FoodItem({
+      hotelId,
+      name,
+      description,
+      price,
+      category,
+      image,
+    });
+
+    await foodItem.save();
+    res.json(foodItem);
+  } catch (error) {
+    console.error('Food item creation error:', error);
+    res.status(500).json({ message: 'Server error' });
+  }
+});
+
+app.put('/api/hotels/:hotelId/food-menu/:itemId', authenticateToken, async (req, res) => {
+  try {
+    const foodItem = await FoodItem.findByIdAndUpdate(
+      req.params.itemId,
+      req.body,
+      { new: true }
+    );
+    if (!foodItem) {
+      return res.status(404).json({ message: 'Food item not found' });
+    }
+    res.json(foodItem);
+  } catch (error) {
+    res.status(500).json({ message: 'Server error' });
+  }
+});
+
+app.delete('/api/hotels/:hotelId/food-menu/:itemId', authenticateToken, async (req, res) => {
+  try {
+    const foodItem = await FoodItem.findByIdAndDelete(req.params.itemId);
+    if (!foodItem) {
+      return res.status(404).json({ message: 'Food item not found' });
+    }
+    res.json({ message: 'Food item deleted successfully' });
+  } catch (error) {
+    res.status(500).json({ message: 'Server error' });
+  }
+});
+
+// Guest Food Menu Route (no auth required)
+app.get('/api/guest/:hotelId/food-menu', async (req, res) => {
+  try {
+    const foodItems = await FoodItem.find({ 
+      hotelId: req.params.hotelId, 
+      isAvailable: true 
+    });
+    res.json(foodItems);
+  } catch (error) {
+    res.status(500).json({ message: 'Server error' });
+  }
+});
 
 const PORT = process.env.PORT || 3001;
 server.listen(PORT, () => {

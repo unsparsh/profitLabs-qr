@@ -20,6 +20,12 @@ interface Service {
 export const GuestPortal: React.FC<GuestPortalProps> = ({ hotelId, roomId }) => {
   const [hotelData, setHotelData] = useState<any>(null);
   const [selectedService, setSelectedService] = useState<string | null>(null);
+  const [showPhoneModal, setShowPhoneModal] = useState(false);
+  const [guestPhone, setGuestPhone] = useState('');
+  const [showFoodMenu, setShowFoodMenu] = useState(false);
+  const [foodItems, setFoodItems] = useState<any[]>([]);
+  const [cart, setCart] = useState<any[]>([]);
+  const [pendingServiceType, setPendingServiceType] = useState<string>('');
   const [customMessage, setCustomMessage] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [isSubmitted, setIsSubmitted] = useState(false);
@@ -29,6 +35,10 @@ export const GuestPortal: React.FC<GuestPortalProps> = ({ hotelId, roomId }) => 
       try {
         const data = await apiClient.getGuestPortalData(hotelId, roomId);
         setHotelData(data);
+        
+        // Fetch food menu
+        const foodMenu = await apiClient.getGuestFoodMenu(hotelId);
+        setFoodItems(foodMenu);
       } catch (error) {
         toast.error('Unable to load hotel information');
       }
@@ -80,23 +90,41 @@ export const GuestPortal: React.FC<GuestPortalProps> = ({ hotelId, roomId }) => 
   ];
 
   const handleServiceSelect = (serviceId: string) => {
-    setSelectedService(serviceId);
+    if (serviceId === 'order-food') {
+      setShowFoodMenu(true);
+    } else {
+      setPendingServiceType(serviceId);
+      setShowPhoneModal(true);
+    }
     setIsSubmitted(false);
   };
 
-  const handleSubmit = async (type: string, message: string = '') => {
+  const handlePhoneSubmit = () => {
+    if (!guestPhone.trim() || guestPhone.length < 10) {
+      toast.error('Please enter a valid phone number');
+      return;
+    }
+    setShowPhoneModal(false);
+    setSelectedService(pendingServiceType);
+  };
+
+  const handleSubmit = async (type: string, message: string = '', orderDetails: any = null) => {
     if (!hotelData) return;
 
     setIsLoading(true);
     try {
       await apiClient.submitGuestRequest(hotelId, roomId, {
         type,
+        guestPhone,
         message: message || `${services.find(s => s.type === type)?.title} request`,
-        priority: type === 'complaint' ? 'high' : 'medium'
+        priority: type === 'complaint' ? 'high' : 'medium',
+        orderDetails
       });
       
       setIsSubmitted(true);
       setSelectedService(null);
+      setGuestPhone('');
+      setCart([]);
       setCustomMessage('');
       toast.success('Request submitted successfully!');
     } catch (error) {
@@ -111,8 +139,65 @@ export const GuestPortal: React.FC<GuestPortalProps> = ({ hotelId, roomId }) => 
       toast.error('Please enter a message');
       return;
     }
-    await handleSubmit('custom-message', customMessage);
+    setPendingServiceType('custom-message');
+    setShowPhoneModal(true);
   };
+
+  const addToCart = (item: any) => {
+    const existingItem = cart.find(cartItem => cartItem._id === item._id);
+    if (existingItem) {
+      setCart(cart.map(cartItem => 
+        cartItem._id === item._id 
+          ? { ...cartItem, quantity: cartItem.quantity + 1, total: (cartItem.quantity + 1) * cartItem.price }
+          : cartItem
+      ));
+    } else {
+      setCart([...cart, { ...item, quantity: 1, total: item.price }]);
+    }
+  };
+
+  const removeFromCart = (itemId: string) => {
+    setCart(cart.filter(item => item._id !== itemId));
+  };
+
+  const updateQuantity = (itemId: string, quantity: number) => {
+    if (quantity <= 0) {
+      removeFromCart(itemId);
+      return;
+    }
+    setCart(cart.map(item => 
+      item._id === itemId 
+        ? { ...item, quantity, total: quantity * item.price }
+        : item
+    ));
+  };
+
+  const getTotalAmount = () => {
+    return cart.reduce((total, item) => total + item.total, 0);
+  };
+
+  const handleFoodOrderSubmit = () => {
+    if (cart.length === 0) {
+      toast.error('Please add items to cart');
+      return;
+    }
+    
+    const orderDetails = {
+      items: cart.map(item => ({
+        itemId: item._id,
+        name: item.name,
+        price: item.price,
+        quantity: item.quantity,
+        total: item.total
+      })),
+      totalAmount: getTotalAmount()
+    };
+    
+    setPendingServiceType('order-food');
+    setShowPhoneModal(true);
+  };
+
+  const categories = [...new Set(foodItems.map(item => item.category))];
 
   if (!hotelData) {
     return (
@@ -238,12 +323,183 @@ export const GuestPortal: React.FC<GuestPortalProps> = ({ hotelId, roomId }) => 
                   Cancel
                 </button>
                 <button
-                  onClick={() => handleSubmit(selectedService)}
+                  onClick={() => {
+                    if (pendingServiceType === 'custom-message') {
+                      handleSubmit('custom-message', customMessage);
+                    } else if (pendingServiceType === 'order-food') {
+                      const orderDetails = {
+                        items: cart.map(item => ({
+                          itemId: item._id,
+                          name: item.name,
+                          price: item.price,
+                          quantity: item.quantity,
+                          total: item.total
+                        })),
+                        totalAmount: getTotalAmount()
+                      };
+                      handleSubmit('order-food', 'Food order placed', orderDetails);
+                    } else {
+                      handleSubmit(selectedService);
+                    }
+                  }}
                   disabled={isLoading}
                   className="flex-1 bg-blue-600 text-white py-3 px-4 rounded-lg font-medium hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
                 >
                   {isLoading ? 'Submitting...' : 'Confirm'}
                 </button>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Phone Number Modal */}
+        {showPhoneModal && (
+          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
+            <div className="bg-white rounded-2xl max-w-sm w-full p-6">
+              <h3 className="text-lg font-semibold text-gray-900 mb-4">Enter Your Phone Number</h3>
+              <p className="text-gray-600 mb-4">We need your phone number so our staff can contact you if needed.</p>
+              <input
+                type="tel"
+                value={guestPhone}
+                onChange={(e) => setGuestPhone(e.target.value)}
+                placeholder="Enter your phone number"
+                className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent mb-4"
+              />
+              <div className="flex gap-3">
+                <button
+                  onClick={() => {
+                    setShowPhoneModal(false);
+                    setGuestPhone('');
+                    setPendingServiceType('');
+                  }}
+                  className="flex-1 bg-gray-200 text-gray-800 py-3 px-4 rounded-lg font-medium hover:bg-gray-300 transition-colors"
+                >
+                  Cancel
+                </button>
+                <button
+                  onClick={handlePhoneSubmit}
+                  className="flex-1 bg-blue-600 text-white py-3 px-4 rounded-lg font-medium hover:bg-blue-700 transition-colors"
+                >
+                  Continue
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Food Menu Modal */}
+        {showFoodMenu && (
+          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
+            <div className="bg-white rounded-2xl max-w-4xl w-full max-h-[90vh] overflow-hidden">
+              <div className="p-6 border-b border-gray-200">
+                <div className="flex justify-between items-center">
+                  <h3 className="text-xl font-semibold text-gray-900">Food Menu</h3>
+                  <button
+                    onClick={() => setShowFoodMenu(false)}
+                    className="text-gray-400 hover:text-gray-600"
+                  >
+                    ✕
+                  </button>
+                </div>
+              </div>
+              
+              <div className="flex h-[calc(90vh-120px)]">
+                {/* Menu Items */}
+                <div className="flex-1 overflow-y-auto p-6">
+                  {categories.map(category => (
+                    <div key={category} className="mb-6">
+                      <h4 className="text-lg font-semibold text-gray-900 mb-3">{category}</h4>
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        {foodItems
+                          .filter(item => item.category === category)
+                          .map(item => (
+                            <div key={item._id} className="border border-gray-200 rounded-lg p-4">
+                              {item.image && (
+                                <img 
+                                  src={item.image} 
+                                  alt={item.name}
+                                  className="w-full h-24 object-cover rounded-lg mb-2"
+                                />
+                              )}
+                              <h5 className="font-semibold text-gray-900">{item.name}</h5>
+                              {item.description && (
+                                <p className="text-sm text-gray-600 mb-2">{item.description}</p>
+                              )}
+                              <div className="flex justify-between items-center">
+                                <span className="text-lg font-bold text-orange-600">₹{item.price}</span>
+                                <button
+                                  onClick={() => addToCart(item)}
+                                  className="bg-orange-600 text-white px-3 py-1 rounded-lg text-sm hover:bg-orange-700 transition-colors"
+                                >
+                                  Add to Cart
+                                </button>
+                              </div>
+                            </div>
+                          ))}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+
+                {/* Cart */}
+                <div className="w-80 border-l border-gray-200 p-6 bg-gray-50">
+                  <h4 className="text-lg font-semibold text-gray-900 mb-4">Your Order</h4>
+                  {cart.length === 0 ? (
+                    <p className="text-gray-500">No items in cart</p>
+                  ) : (
+                    <>
+                      <div className="space-y-3 mb-4">
+                        {cart.map(item => (
+                          <div key={item._id} className="bg-white p-3 rounded-lg">
+                            <div className="flex justify-between items-start mb-2">
+                              <h5 className="font-medium text-gray-900">{item.name}</h5>
+                              <button
+                                onClick={() => removeFromCart(item._id)}
+                                className="text-red-500 hover:text-red-700"
+                              >
+                                ✕
+                              </button>
+                            </div>
+                            <div className="flex justify-between items-center">
+                              <div className="flex items-center gap-2">
+                                <button
+                                  onClick={() => updateQuantity(item._id, item.quantity - 1)}
+                                  className="w-6 h-6 bg-gray-200 rounded-full flex items-center justify-center text-sm"
+                                >
+                                  -
+                                </button>
+                                <span className="font-medium">{item.quantity}</span>
+                                <button
+                                  onClick={() => updateQuantity(item._id, item.quantity + 1)}
+                                  className="w-6 h-6 bg-gray-200 rounded-full flex items-center justify-center text-sm"
+                                >
+                                  +
+                                </button>
+                              </div>
+                              <span className="font-bold text-orange-600">₹{item.total}</span>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                      
+                      <div className="border-t border-gray-300 pt-4">
+                        <div className="flex justify-between items-center mb-4">
+                          <span className="text-lg font-bold">Total</span>
+                          <span className="text-xl font-bold text-orange-600">₹{getTotalAmount()}</span>
+                        </div>
+                        <button
+                          onClick={() => {
+                            setShowFoodMenu(false);
+                            handleFoodOrderSubmit();
+                          }}
+                          className="w-full bg-orange-600 text-white py-3 px-4 rounded-lg font-medium hover:bg-orange-700 transition-colors"
+                        >
+                          Place Order
+                        </button>
+                      </div>
+                    </>
+                  )}
+                </div>
               </div>
             </div>
           </div>

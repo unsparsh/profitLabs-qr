@@ -171,9 +171,25 @@ export const RequestsPanel: React.FC<RequestsPanelProps> = ({
                   <p className="text-sm font-medium text-gray-900">
                     {formatRequestType(request.type)}
                   </p>
+                  <p className="text-sm text-blue-600 mt-1">
+                    📞 {request.guestPhone}
+                  </p>
                   <p className="text-sm text-gray-600 mt-1">
                     {request.message}
                   </p>
+                  {request.orderDetails && request.orderDetails.items && request.orderDetails.items.length > 0 && (
+                    <div className="mt-2 p-2 bg-orange-50 rounded-lg">
+                      <p className="text-sm font-medium text-orange-800">Food Order:</p>
+                      {request.orderDetails.items.map((item, index) => (
+                        <p key={index} className="text-xs text-orange-700">
+                          {item.name} x{item.quantity} = ₹{item.total}
+                        </p>
+                      ))}
+                      <p className="text-sm font-bold text-orange-800 mt-1">
+                        Total: ₹{request.orderDetails.totalAmount}
+                      </p>
+                    </div>
+                  )}
                 </div>
               </div>
             ))}
@@ -212,6 +228,29 @@ export const RequestsPanel: React.FC<RequestsPanelProps> = ({
                 <p className="text-sm text-gray-500">Message</p>
                 <p className="font-medium">{selectedRequest.message}</p>
               </div>
+              
+              <div>
+                <p className="text-sm text-gray-500">Guest Phone</p>
+                <p className="font-medium text-blue-600">📞 {selectedRequest.guestPhone}</p>
+              </div>
+              
+              {selectedRequest.orderDetails && selectedRequest.orderDetails.items && selectedRequest.orderDetails.items.length > 0 && (
+                <div>
+                  <p className="text-sm text-gray-500">Order Details</p>
+                  <div className="bg-orange-50 p-3 rounded-lg mt-1">
+                    {selectedRequest.orderDetails.items.map((item, index) => (
+                      <div key={index} className="flex justify-between text-sm">
+                        <span>{item.name} x{item.quantity}</span>
+                        <span>₹{item.total}</span>
+                      </div>
+                    ))}
+                    <div className="border-t border-orange-200 mt-2 pt-2 flex justify-between font-bold">
+                      <span>Total Amount</span>
+                      <span>₹{selectedRequest.orderDetails.totalAmount}</span>
+                    </div>
+                  </div>
+                </div>
+              )}
               
               <div className="flex space-x-2">
                 <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${getStatusColor(selectedRequest.status)}`}>
