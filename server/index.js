@@ -662,8 +662,12 @@ app.delete('/api/hotels/:hotelId/food-menu/:itemId', authenticateToken, async (r
 // Guest Food Menu Route (no auth required)
 app.get('/api/guest/:hotelId/food-menu', async (req, res) => {
   try {
+    const { hotelId } = req.params;
+    if (!mongoose.Types.ObjectId.isValid(hotelId)) {
+      return res.status(400).json({ message: 'Invalid hotelId' });
+    }
     const foodItems = await FoodItem.find({ 
-      hotelId: req.params.hotelId, 
+      hotelId: mongoose.Types.ObjectId(hotelId), 
       isAvailable: true 
     });
     res.json(foodItems);
