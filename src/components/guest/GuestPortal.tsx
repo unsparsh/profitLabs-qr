@@ -138,7 +138,14 @@ export const GuestPortal: React.FC<GuestPortalProps> = ({ hotelId, roomId }) => 
 
     setIsLoading(true);
     try {
-      await apiClient.submitGuestRequest(hotelId, roomId, {
+      const response = await apiClient.getGuestFoodMenu(hotelId);
+      console.log('Food items loaded:', response);
+      setFoodItems(response);
+    } catch (error) {
+      console.error('Error loading food menu:', error);
+      setFoodItems([]); // Set empty array on error
+    }
+  };
         type,
         guestPhone,
         message: message || `${services.find(s => s.type === type)?.title} request`,
