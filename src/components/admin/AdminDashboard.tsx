@@ -15,15 +15,27 @@ interface AdminDashboardProps {
   onLogout: () => void;
 }
 
+type Request = {
+  _id: string;
+  type: string;
+  roomNumber: string;
+  // Add other fields as needed
+};
+
+type Room = {
+  _id: string;
+  // Add other fields as needed
+};
+
 export const AdminDashboard: React.FC<AdminDashboardProps> = ({ user, hotel, onLogout }) => {
   const [activeTab, setActiveTab] = useState('requests');
-  const [requests, setRequests] = useState([]);
-  const [rooms, setRooms] = useState([]);
+  const [requests, setRequests] = useState<Request[]>([]);
+  const [rooms, setRooms] = useState<Room[]>([]);
   const [unreadCount, setUnreadCount] = useState(0);
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
-    const token = localStorage.getItem('authToken');
+    const token = localStorage.getItem('authToken') ?? undefined;
     const socket = socketManager.connect(token);
 
     socket.on('connect', () => {

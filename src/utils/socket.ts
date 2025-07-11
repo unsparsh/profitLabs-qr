@@ -12,9 +12,16 @@ class SocketManager {
     if (this.socket?.connected) return this.socket;
 
     this.socket = io(this.url, {
-      auth: {
-        token,
-      },
+      auth: { token },
+      transports: ['websocket'], // Force websocket for reliability
+    });
+
+    this.socket.on('connect_error', (err) => {
+      console.error('Socket.IO connect_error:', err);
+    });
+
+    this.socket.on('disconnect', (reason) => {
+      console.warn('Socket.IO disconnected:', reason);
     });
 
     return this.socket;
@@ -49,6 +56,10 @@ class SocketManager {
     if (this.socket) {
       this.socket.emit(event, data);
     }
+  }
+
+  getSocket() {
+    return this.socket;
   }
 }
 
