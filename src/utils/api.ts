@@ -154,7 +154,7 @@ class ApiClient {
   async getGuestFoodMenu(hotelId: string) {
     const url = `${this.baseURL}/guest/${hotelId}/food-menu`;
     console.log('Fetching food menu from:', url);
-    
+
     const response = await fetch(url, {
       method: 'GET',
       headers: {
@@ -166,10 +166,11 @@ class ApiClient {
       console.error('Food menu API response not ok:', response.status, response.statusText);
       throw new Error(`HTTP error! status: ${response.status}`);
     }
-  }
-}
 
     const data = await response.json();
     console.log('Food menu data received:', data);
     return data;
+  }
+}
+
 export const apiClient = new ApiClient(API_BASE_URL);
