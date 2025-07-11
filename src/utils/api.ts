@@ -119,13 +119,18 @@ class ApiClient {
     return this.request<any>(`/guest/${hotelId}/${roomId}`);
   }
 
-  async submitGuestRequest(hotelId: string, roomId: string, requestData: any) {
-    console.log('API submitGuestRequest called with:', { hotelId, roomId, requestData });
-    return this.request<any>(`/guest/${hotelId}/${roomId}/request`, {
-      method: 'POST',
-      body: JSON.stringify(requestData),
-    });
-  }
+async submitGuestRequest(hotelId: string, roomId: string, requestData: {
+  type: string;
+  guestPhone: string;
+  message?: string;
+  priority?: 'low' | 'medium' | 'high';
+  orderDetails?: any;
+}) {
+  return this.request<any>(`/guest/${hotelId}/${roomId}/request`, {
+    method: 'POST',
+    body: JSON.stringify(requestData),
+  });
+}
 
   // Food Menu endpoints
   async getFoodMenu(hotelId: string) {

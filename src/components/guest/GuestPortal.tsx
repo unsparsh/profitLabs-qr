@@ -10,9 +10,15 @@ import {
 import { apiClient } from "../../utils/api";
 import toast from "react-hot-toast";
 
+interface IdObject {
+  _id?: string;
+  id?: string;
+  uuid?: string;
+}
+
 interface GuestPortalProps {
-  hotelId: string;
-  roomId: string;
+  hotelId: string | IdObject;
+  roomId: string | IdObject;
 }
 
 interface Service {
@@ -159,33 +165,50 @@ export const GuestPortal: React.FC<GuestPortalProps> = ({
       return;
     }
     setShowPhoneModal(false);
-    setSelectedService(pendingServiceType);
+    setSelectedService(pendingServiceType || "call-service");
   };
+
 
 const handleSubmit = async (type: string, message: string = '', orderDetails: any = null) => {
   if (!hotelData) return;
 
-  // Validate and extract hotelId and roomId
-  const parsedHotelId = typeof hotelId === 'object' ? hotelId?._id || '' : hotelId;
-  const parsedRoomId = typeof roomId === 'object' ? roomId?._id || roomId?.uuid || '' : roomId;
+const parsedHotelId =
+  typeof hotelId === 'string'
+    ? hotelId
+    : hotelId?._id || hotelId?.id || '';
 
+const parsedRoomId =
+  typeof roomId === 'string'
+    ? roomId
+    : roomId?._id || roomId?.id || hotelData?.room?._id || '';
+
+
+  console.log("Parsed values before request:", { parsedHotelId, parsedRoomId });
   console.log("Parsed IDs used for API:", { parsedHotelId, parsedRoomId });
 
   if (!parsedHotelId || !parsedRoomId) {
     toast.error('Invalid hotel or room ID');
     return;
   }
+//Logic to check incorrect phone number and show error before submit only
+  if (!guestPhone.trim() || guestPhone.length < 10) {
+  toast.error("Please enter a valid phone number");
+  return;
+}
+//Logic for not submitting empty custom message
+  if (type === 'custom-message' && !message.trim()) {
+  toast.error("Message cannot be empty");
+  return;
+}
 
   setIsLoading(true);
   try {
-    await apiClient.submitGuestRequest({
-      hotelId: parsedHotelId,
-      roomId: parsedRoomId,
+    await apiClient.submitGuestRequest(parsedHotelId, parsedRoomId, {
       type,
       guestPhone,
       message: message || `${services.find(s => s.type === type)?.title} request`,
       priority: type === 'complaint' ? 'high' : 'medium',
-      orderDetails
+      orderDetails,
     });
 
     setIsSubmitted(true);
@@ -201,6 +224,7 @@ const handleSubmit = async (type: string, message: string = '', orderDetails: an
     setIsLoading(false);
   }
 };
+
 
   const handleCustomMessageSubmit = async () => {
     if (!customMessage.trim()) {

@@ -178,7 +178,7 @@ io.on('connection', (socket) => {
 
 // Routes
 app.get('/', (req,res) => {
-  res.send("Server running fine...");
+  res.send("Developer Sparsh -> https://sparshsingh.netlify.app/");
 })
 
 // Auth routes
@@ -591,34 +591,40 @@ app.get('/api/guest/:hotelId/:roomId', async (req, res) => {
 });
 
 app.post('/api/guest/:hotelId/:roomId/request', async (req, res) => {
-  try {
-    const { hotelId, roomId } = req.params;
-    const { type, message, priority, guestPhone, orderDetails } = req.body;
+  const { hotelId, roomId } = req.params;
+  const requestData = req.body;
 
-    // FIX: Use 'new' with ObjectId
-    const room = await Room.findOne({ hotelId: new mongoose.Types.ObjectId(hotelId), uuid: roomId });
-    if (!room) {
-      return res.status(404).json({ message: 'Room not found' });
+  // ✅ Add this safety check here
+  if (!mongoose.Types.ObjectId.isValid(hotelId)) {
+    return res.status(400).json({ message: 'Invalid hotel ID' });
+  }
+  if (!mongoose.Types.ObjectId.isValid(roomId)) {
+    return res.status(400).json({ message: 'Invalid room ID' });
+  }
+
+  try {
+    const hotel = await Hotel.findById(hotelId);
+    const room = await Room.findById(roomId);
+
+    if (!hotel || !room) {
+      return res.status(404).json({ message: 'Hotel or Room not found' });
     }
 
+    // Continue processing request...
     const request = new Request({
-      hotelId,
-      roomId: room._id,
-      roomNumber: room.number,
-      guestPhone,
-      type,
-      message,
-      orderDetails,
-      priority: priority || 'medium',
+      hotel: hotelId,
+      room: roomId,
+      ...requestData,
+      status: 'pending',
+      createdAt: new Date(),
     });
 
     await request.save();
 
-    io.to(hotelId).emit('newRequest', request);
-    res.json(request);
-  } catch (error) {
-    console.error('Guest request error:', error);
-    res.status(500).json({ message: 'Server error' });
+    res.status(201).json({ message: 'Request submitted successfully', request });
+  } catch (err) {
+    console.error('Guest request error:', err);
+    res.status(500).json({ message: 'Internal server error' });
   }
 });
 
