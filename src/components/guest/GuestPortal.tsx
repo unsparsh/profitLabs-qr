@@ -9,6 +9,7 @@ import {
 } from "lucide-react";
 import { apiClient } from "../../utils/api";
 import toast from "react-hot-toast";
+import mongoose from "mongoose";
 
 interface IdObject {
   _id?: string;
@@ -59,17 +60,46 @@ export const GuestPortal: React.FC<GuestPortalProps> = ({
       return;
     }
 
-    const fetchHotelData = async () => {
-      try {
-        console.log("Fetching hotel data for:", { hotelId, roomId });
-        const data = await apiClient.getGuestPortalData(hotelId, roomId);
-        console.log("Hotel data received:", data);
-        setHotelData(data);
-      } catch (error) {
-        console.error("Error fetching hotel data:", error);
-        toast.error("Unable to load hotel information");
-      }
-    };
+  const fetchHotelData = async () => {
+  try {
+    // Safely extract string IDs from props
+    const parsedHotelId =
+      typeof hotelId === "object" && hotelId !== null
+        ? hotelId._id || hotelId.id || ""
+        : hotelId;
+
+    const parsedRoomId =
+      typeof roomId === "object" && roomId !== null
+        ? roomId._id || roomId.uuid || roomId.id || ""
+        : roomId;
+
+    if (!parsedHotelId || !parsedRoomId) {
+      console.error("Missing valid hotelId or roomId:", {
+        parsedHotelId,
+        parsedRoomId,
+      });
+      toast.error("Invalid room access. Please scan the QR code again.");
+      return;
+    }
+
+    console.log("Fetching hotel data for:", {
+      parsedHotelId,
+      parsedRoomId,
+    });
+
+    const data = await apiClient.getGuestPortalData(
+      parsedHotelId,
+      parsedRoomId
+    );
+
+    console.log("✅ Hotel data received:", data);
+    setHotelData(data);
+  } catch (error) {
+    console.error("❌ Error fetching hotel data:", error);
+    toast.error("Unable to load hotel information");
+  }
+};
+
 
     const fetchFoodMenu = async () => {
       try {
@@ -169,57 +199,54 @@ export const GuestPortal: React.FC<GuestPortalProps> = ({
   };
 
 
-const handleSubmit = async (type: string, message: string = '', orderDetails: any = null) => {
+const handleSubmit = async (
+  type: string,
+  message: string = "",
+  orderDetails: any = null
+) => {
   if (!hotelData) return;
 
-const parsedHotelId =
-  typeof hotelId === 'string'
-    ? hotelId
-    : hotelId?._id || hotelId?.id || '';
+  const parsedHotelId =
+    typeof hotelId === "object" && hotelId !== null
+      ? hotelId._id || hotelId.id || ""
+      : hotelId || hotelData?.hotel?._id || "";
 
-const parsedRoomId =
-  typeof roomId === 'string'
-    ? roomId
-    : roomId?._id || roomId?.id || hotelData?.room?._id || '';
+  const parsedRoomId =
+    typeof roomId === "object" && roomId !== null
+      ? roomId._id || roomId.id || ""
+      : hotelData?.room?._id || roomId;
 
-
-  console.log("Parsed values before request:", { parsedHotelId, parsedRoomId });
-  console.log("Parsed IDs used for API:", { parsedHotelId, parsedRoomId });
+  console.log("🧠 Parsed IDs for request:", {
+    parsedHotelId,
+    parsedRoomId,
+    phone: guestPhone,
+  });
 
   if (!parsedHotelId || !parsedRoomId) {
-    toast.error('Invalid hotel or room ID');
+    toast.error("Invalid hotel or room ID");
     return;
   }
-//Logic to check incorrect phone number and show error before submit only
-  if (!guestPhone.trim() || guestPhone.length < 10) {
-  toast.error("Please enter a valid phone number");
-  return;
-}
-//Logic for not submitting empty custom message
-  if (type === 'custom-message' && !message.trim()) {
-  toast.error("Message cannot be empty");
-  return;
-}
 
   setIsLoading(true);
   try {
     await apiClient.submitGuestRequest(parsedHotelId, parsedRoomId, {
       type,
       guestPhone,
-      message: message || `${services.find(s => s.type === type)?.title} request`,
-      priority: type === 'complaint' ? 'high' : 'medium',
+      message:
+        message || `${services.find((s) => s.type === type)?.title} request`,
+      priority: type === "complaint" ? "high" : "medium",
       orderDetails,
     });
 
     setIsSubmitted(true);
     setSelectedService(null);
-    setGuestPhone('');
+    setGuestPhone("");
     setCart([]);
-    setCustomMessage('');
-    toast.success('Request submitted successfully!');
+    setCustomMessage("");
+    toast.success("Request submitted successfully!");
   } catch (error) {
     console.error("API Error:", error);
-    toast.error('Failed to submit request. Please try again.');
+    toast.error("Failed to submit request. Please try again.");
   } finally {
     setIsLoading(false);
   }

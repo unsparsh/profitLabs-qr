@@ -592,22 +592,17 @@ app.get('/api/guest/:hotelId/:roomId', async (req, res) => {
 
 app.post('/api/guest/:hotelId/:roomId/request', async (req, res) => {
   const { hotelId, roomId } = req.params;
-  const requestData = req.body;
 
-  // ✅ Add this safety check here
+  // Only check hotelId for ObjectId validity
   if (!mongoose.Types.ObjectId.isValid(hotelId)) {
     return res.status(400).json({ message: 'Invalid hotel ID' });
   }
-  if (!mongoose.Types.ObjectId.isValid(roomId)) {
-    return res.status(400).json({ message: 'Invalid room ID' });
-  }
 
   try {
-    const hotel = await Hotel.findById(hotelId);
-    const room = await Room.findById(roomId);
-
-    if (!hotel || !room) {
-      return res.status(404).json({ message: 'Hotel or Room not found' });
+    // Find the room by hotelId and uuid (not ObjectId)
+    const room = await Room.findOne({ hotelId: new mongoose.Types.ObjectId(hotelId), uuid: roomId });
+    if (!room) {
+      return res.status(404).json({ message: 'Room not found' });
     }
 
     // Continue processing request...
