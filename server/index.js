@@ -30,18 +30,16 @@ const crypto = require('crypto');
     }
   });
 
+// Middleware
+app.use(cors());
+app.use(express.json());
+
 //Adding RazorPay Payment Gateway
 const Razorpay = require('razorpay');
 const razorpay = new Razorpay({
   key_id: process.env.RAZORPAY_KEY_ID,
   key_secret: process.env.RAZORPAY_KEY_SECRET,
 });
-
-
-
-// Middleware
-app.use(cors());
-app.use(express.json());
 
 // MongoDB connection
 mongoose.connect(process.env.MONGODB_URI || 'mongodb://localhost:27017/profitlabs', {
@@ -593,25 +591,29 @@ app.get('/api/guest/:hotelId/:roomId', async (req, res) => {
 app.post('/api/guest/:hotelId/:roomId/request', async (req, res) => {
   const { hotelId, roomId } = req.params;
 
-  // Only check hotelId for ObjectId validity
   if (!mongoose.Types.ObjectId.isValid(hotelId)) {
     return res.status(400).json({ message: 'Invalid hotel ID' });
   }
 
   try {
-    // Find the room by hotelId and uuid (not ObjectId)
-    const room = await Room.findOne({ hotelId: new mongoose.Types.ObjectId(hotelId), uuid: roomId });
+    // ✅ Find the actual room using UUID
+    const room = await Room.findOne({
+      hotelId: new mongoose.Types.ObjectId(hotelId),
+      uuid: roomId
+    });
+
     if (!room) {
       return res.status(404).json({ message: 'Room not found' });
     }
 
-    // Continue processing request...
+    
+    const requestData = req.body;
     const request = new Request({
       hotel: hotelId,
-      room: roomId,
+      room: room._id, 
       ...requestData,
       status: 'pending',
-      createdAt: new Date(),
+      createdAt: new Date()
     });
 
     await request.save();
