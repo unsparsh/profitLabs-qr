@@ -299,74 +299,76 @@ export const GuestPortal: React.FC<GuestPortalProps> = ({ hotelId, roomId }) => 
           ))}
         </div>
 
-        {/* Custom Message */}
-        {hotelData.hotel.settings.servicesEnabled.customMessage && (
-          <div className="bg-white rounded-2xl shadow-sm border border-gray-200 p-6 mb-6">
-            <h3 className="font-semibold text-gray-900 mb-3">Custom Message</h3>
-            <textarea
-              value={customMessage}
-              onChange={(e) => setCustomMessage(e.target.value)}
-              placeholder="Type your message here..."
-              className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent resize-none"
-              rows={4}
-            />
-            <button
-              onClick={handleCustomMessageSubmit}
-              disabled={isLoading || !customMessage.trim()}
-              className="mt-3 w-full bg-blue-600 text-white py-3 px-4 rounded-lg font-medium hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors flex items-center justify-center gap-2"
-            >
-              {isLoading ? (
-                <>
-                  <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
-                  Sending...
-              
-                
-                  {foodItems.length === 0 ? (
-                    <div className="text-center py-8">
-                      <UtensilsCrossed className="h-12 w-12 text-gray-400 mx-auto mb-4" />
-                      <p className="text-gray-500">No food items available</p>
-                      <p className="text-sm text-gray-400">Menu will be updated soon</p>
-                    </div>
-                  ) : (
-                    categories.map(category => (
-                      <div key={category} className="mb-6">
-                        <h4 className="text-lg font-semibold text-gray-900 mb-3">{category}</h4>
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                          {foodItems
-                            .filter(item => item.category === category)
-                            .map(item => (
-                              <div key={item._id} className="border border-gray-200 rounded-lg p-4">
-                                {item.image && (
-                                  <img 
-                                    src={item.image} 
-                                    alt={item.name}
-                                    className="w-full h-24 object-cover rounded-lg mb-2"
-                                  />
-                                )}
-                                <h5 className="font-semibold text-gray-900">{item.name}</h5>
-                                {item.description && (
-                                  <p className="text-sm text-gray-600 mb-2">{item.description}</p>
-                                )}
-                                <div className="flex justify-between items-center">
-                                  <span className="text-lg font-bold text-orange-600">₹{item.price}</span>
-                                  <button
-                                    onClick={() => addToCart(item)}
-                                    className="bg-orange-600 text-white px-3 py-1 rounded-lg text-sm hover:bg-orange-700 transition-colors"
-                                  >
-                                    Add to Cart
-                                  </button>
-                                </div>
-                              </div>
-                            ))}
-                        </div>
-                      </div>
-                    ))
+      {/* Custom Message */}
+{hotelData.hotel.settings.servicesEnabled.customMessage && (
+  <div className="bg-white rounded-2xl shadow-sm border border-gray-200 p-6 mb-6">
+    <h3 className="font-semibold text-gray-900 mb-3">Custom Message</h3>
+    <textarea
+      value={customMessage}
+      onChange={(e) => setCustomMessage(e.target.value)}
+      placeholder="Type your message here..."
+      className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent resize-none"
+      rows={4}
+    />
+    <button
+      onClick={handleCustomMessageSubmit}
+      disabled={isLoading || !customMessage.trim()}
+      className="mt-3 w-full bg-blue-600 text-white py-3 px-4 rounded-lg font-medium hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors flex items-center justify-center gap-2"
+    >
+      {isLoading ? (
+        <>
+          <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
+          Sending...
+        </>
+      ) : (
+        "Send Message"
+      )}
+    </button>
+
+    {/* 🍽️ Food Menu Display */}
+    {foodItems.length === 0 ? (
+      <div className="text-center py-8">
+        <UtensilsCrossed className="h-12 w-12 text-gray-400 mx-auto mb-4" />
+        <p className="text-gray-500">No food items available</p>
+        <p className="text-sm text-gray-400">Menu will be updated soon</p>
+      </div>
+    ) : (
+      categories.map(category => (
+        <div key={category} className="mb-6">
+          <h4 className="text-lg font-semibold text-gray-900 mb-3">{category}</h4>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            {foodItems
+              .filter(item => item.category === category)
+              .map(item => (
+                <div key={item._id} className="border border-gray-200 rounded-lg p-4">
+                  {item.image && (
+                    <img 
+                      src={item.image} 
+                      alt={item.name}
+                      className="w-full h-24 object-cover rounded-lg mb-2"
+                    />
                   )}
-                </>
-              )}
-            </button>
+                  <h5 className="font-semibold text-gray-900">{item.name}</h5>
+                  {item.description && (
+                    <p className="text-sm text-gray-600 mb-2">{item.description}</p>
+                  )}
+                  <div className="flex justify-between items-center">
+                    <span className="text-lg font-bold text-orange-600">₹{item.price}</span>
+                    <button
+                      onClick={() => addToCart(item)}
+                      className="bg-orange-600 text-white px-3 py-1 rounded-lg text-sm hover:bg-orange-700 transition-colors"
+                    >
+                      Add to Cart
+                    </button>
+                  </div>
+                </div>
+              ))}
           </div>
-        )}
+        </div>
+      ))
+    )}
+  </div>
+)}
 
         {/* Selected Service Action */}
         {selectedService && (
