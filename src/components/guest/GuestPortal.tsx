@@ -44,7 +44,8 @@ export const GuestPortal: React.FC<GuestPortalProps> = ({ hotelId, roomId }) => 
 
     const fetchFoodMenu = async () => {
       try {
-        const response = await fetch(`/api/guest/${hotelId}/food-menu`);
+        const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:3001/api';
+        const response = await fetch(`${API_BASE_URL}/guest/${hotelId}/food-menu`);
         if (response.ok) {
           const foodMenu = await response.json();
           console.log('Food items loaded:', foodMenu);
