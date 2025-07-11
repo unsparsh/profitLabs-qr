@@ -120,6 +120,7 @@ class ApiClient {
   }
 
   async submitGuestRequest(hotelId: string, roomId: string, requestData: any) {
+    console.log('API submitGuestRequest called with:', { hotelId, roomId, requestData });
     return this.request<any>(`/guest/${hotelId}/${roomId}/request`, {
       method: 'POST',
       body: JSON.stringify(requestData),

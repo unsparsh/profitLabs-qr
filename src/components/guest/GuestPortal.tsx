@@ -18,6 +18,9 @@ interface Service {
 }
 
 export const GuestPortal: React.FC<GuestPortalProps> = ({ hotelId, roomId }) => {
+  // Debug logging to check what we're receiving
+  console.log('GuestPortal props:', { hotelId, roomId });
+  
   const [hotelData, setHotelData] = useState<any>(null);
   const [selectedService, setSelectedService] = useState<string | null>(null);
   const [showPhoneModal, setShowPhoneModal] = useState(false);
@@ -33,19 +36,31 @@ export const GuestPortal: React.FC<GuestPortalProps> = ({ hotelId, roomId }) => 
   const [housekeepingOptions, setHousekeepingOptions] = useState<string[]>([]);
 
   useEffect(() => {
+    // Ensure we have valid hotelId and roomId
+    if (!hotelId || !roomId) {
+      console.error('Missing hotelId or roomId:', { hotelId, roomId });
+      toast.error('Invalid room access. Please scan the QR code again.');
+      return;
+    }
+
     const fetchHotelData = async () => {
       try {
+        console.log('Fetching hotel data for:', { hotelId, roomId });
         const data = await apiClient.getGuestPortalData(hotelId, roomId);
+        console.log('Hotel data received:', data);
         setHotelData(data);
       } catch (error) {
+        console.error('Error fetching hotel data:', error);
         toast.error('Unable to load hotel information');
       }
     };
 
     const fetchFoodMenu = async () => {
       try {
+        console.log('Fetching food menu for hotelId:', hotelId);
         const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:3001/api';
         const response = await fetch(`${API_BASE_URL}/guest/${hotelId}/food-menu`);
+        console.log('Food menu API response status:', response.status);
         if (response.ok) {
           const foodMenu = await response.json();
           console.log('Food items loaded:', foodMenu);
@@ -136,6 +151,8 @@ export const GuestPortal: React.FC<GuestPortalProps> = ({ hotelId, roomId }) => 
 
   const handleSubmit = async (type: string, message: string = '', orderDetails: any = null) => {
     if (!hotelData) return;
+
+    console.log('Submitting request:', { hotelId, roomId, type, message, orderDetails });
 
     setIsLoading(true);
     try {
