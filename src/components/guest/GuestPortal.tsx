@@ -213,8 +213,8 @@ const handleSubmit = async (
 
   const parsedRoomId =
     typeof roomId === "object" && roomId !== null
-      ? roomId._id || roomId.id || ""
-      : hotelData?.room?._id || roomId;
+      ? roomId.uuid || roomId._id || roomId.id || ""
+      : hotelData?.room?.uuid || roomId;
 
   console.log("🧠 Parsed IDs for request:", {
     parsedHotelId,
