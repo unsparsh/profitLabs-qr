@@ -162,56 +162,45 @@ export const GuestPortal: React.FC<GuestPortalProps> = ({
     setSelectedService(pendingServiceType);
   };
 
-  const handleSubmit = async (
-    type: string,
-    message: string = "",
-    orderDetails: any = null
-  ) => {
-    if (!hotelData) return;
+const handleSubmit = async (type: string, message: string = '', orderDetails: any = null) => {
+  if (!hotelData) return;
 
-    // Safely extract string values for hotelId and roomId
-    const parsedHotelId = typeof hotelId === "object" ? hotelId._id : hotelId;
-    const parsedRoomId =
-      typeof roomId === "object" ? roomId.uuid || roomId._id : roomId;
+  // Validate and extract hotelId and roomId
+  const parsedHotelId = typeof hotelId === 'object' ? hotelId?._id || '' : hotelId;
+  const parsedRoomId = typeof roomId === 'object' ? roomId?._id || roomId?.uuid || '' : roomId;
 
-    if (!parsedHotelId || !parsedRoomId) {
-      toast.error("Invalid hotel or room information.");
-      return;
-    }
+  console.log("Parsed IDs used for API:", { parsedHotelId, parsedRoomId });
 
-    console.log("Submitting request:", {
+  if (!parsedHotelId || !parsedRoomId) {
+    toast.error('Invalid hotel or room ID');
+    return;
+  }
+
+  setIsLoading(true);
+  try {
+    await apiClient.submitGuestRequest({
       hotelId: parsedHotelId,
       roomId: parsedRoomId,
       type,
-      message,
-      orderDetails,
+      guestPhone,
+      message: message || `${services.find(s => s.type === type)?.title} request`,
+      priority: type === 'complaint' ? 'high' : 'medium',
+      orderDetails
     });
 
-    setIsLoading(true);
-    try {
-      await apiClient.submitGuestRequest({
-        hotelId: parsedHotelId,
-        roomId: parsedRoomId,
-        type,
-        guestPhone,
-        message:
-          message || `${services.find((s) => s.type === type)?.title} request`,
-        priority: type === "complaint" ? "high" : "medium",
-        orderDetails,
-      });
-      setIsSubmitted(true);
-      setSelectedService(null);
-      setGuestPhone("");
-      setCart([]);
-      setCustomMessage("");
-      toast.success("Request submitted successfully!");
-    } catch (error) {
-      console.error("API Error:", error);
-      toast.error("Failed to submit request. Please try again.");
-    } finally {
-      setIsLoading(false);
-    }
-  };
+    setIsSubmitted(true);
+    setSelectedService(null);
+    setGuestPhone('');
+    setCart([]);
+    setCustomMessage('');
+    toast.success('Request submitted successfully!');
+  } catch (error) {
+    console.error("API Error:", error);
+    toast.error('Failed to submit request. Please try again.');
+  } finally {
+    setIsLoading(false);
+  }
+};
 
   const handleCustomMessageSubmit = async () => {
     if (!customMessage.trim()) {
