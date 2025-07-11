@@ -664,14 +664,19 @@ app.delete('/api/hotels/:hotelId/food-menu/:itemId', authenticateToken, async (r
 app.get('/api/guest/:hotelId/food-menu', async (req, res) => {
   try {
     const { hotelId } = req.params;
+    console.log('Fetching food menu for hotel:', hotelId);
+    
     if (!mongoose.Types.ObjectId.isValid(hotelId)) {
+      console.log('Invalid hotelId:', hotelId);
       return res.status(400).json({ message: 'Invalid hotelId' });
     }
-    // FIX: Use 'new' with ObjectId
+    
     const foodItems = await FoodItem.find({ 
       hotelId: new mongoose.Types.ObjectId(hotelId), 
       isAvailable: true 
     });
+    
+    console.log('Found food items:', foodItems.length);
     res.json(foodItems);
   } catch (error) {
     console.error('Guest food menu error:', error.stack || error);

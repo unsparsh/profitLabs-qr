@@ -29,6 +29,8 @@ export const GuestPortal: React.FC<GuestPortalProps> = ({ hotelId, roomId }) => 
   const [customMessage, setCustomMessage] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [isSubmitted, setIsSubmitted] = useState(false);
+  const [showHousekeepingModal, setShowHousekeepingModal] = useState(false);
+  const [housekeepingOptions, setHousekeepingOptions] = useState<string[]>([]);
 
   useEffect(() => {
     const fetchHotelData = async () => {
@@ -42,10 +44,17 @@ export const GuestPortal: React.FC<GuestPortalProps> = ({ hotelId, roomId }) => 
 
     const fetchFoodMenu = async () => {
       try {
-        const foodMenu = await apiClient.getGuestFoodMenu(hotelId);
-        setFoodItems(foodMenu);
+        const response = await fetch(`/api/guest/${hotelId}/food-menu`);
+        if (response.ok) {
+          const foodMenu = await response.json();
+          console.log('Food items loaded:', foodMenu);
+          setFoodItems(foodMenu);
+        } else {
+          console.error('Failed to fetch food menu:', response.status);
+          setFoodItems([]);
+        }
       } catch (error) {
-        console.error('Failed to load food menu:', error);
+        console.error('Error loading food menu:', error);
         setFoodItems([]); // Set empty array on error
       }
     };
@@ -99,11 +108,20 @@ export const GuestPortal: React.FC<GuestPortalProps> = ({ hotelId, roomId }) => 
   const handleServiceSelect = (serviceId: string) => {
     if (serviceId === 'order-food') {
       setShowFoodMenu(true);
+    } else if (serviceId === 'room-service') {
+      setShowHousekeepingModal(true);
     } else {
       setPendingServiceType(serviceId);
       setShowPhoneModal(true);
     }
     setIsSubmitted(false);
+  };
+
+  const handleHousekeepingSelect = (option: string) => {
+    setShowHousekeepingModal(false);
+    setPendingServiceType('room-service');
+    setCustomMessage(option);
+    setShowPhoneModal(true);
   };
 
   const handlePhoneSubmit = () => {
@@ -302,10 +320,48 @@ export const GuestPortal: React.FC<GuestPortalProps> = ({ hotelId, roomId }) => 
                   <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
                   Sending...
                 </>
-              ) : (
                 <>
-                  <Send className="h-4 w-4" />
-                  Send Message
+                  {foodItems.length === 0 ? (
+                    <div className="text-center py-8">
+                      <UtensilsCrossed className="h-12 w-12 text-gray-400 mx-auto mb-4" />
+                      <p className="text-gray-500">No food items available</p>
+                      <p className="text-sm text-gray-400">Menu will be updated soon</p>
+                    </div>
+                  ) : (
+                    categories.map(category => (
+                      <div key={category} className="mb-6">
+                        <h4 className="text-lg font-semibold text-gray-900 mb-3">{category}</h4>
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                          {foodItems
+                            .filter(item => item.category === category)
+                            .map(item => (
+                              <div key={item._id} className="border border-gray-200 rounded-lg p-4">
+                                {item.image && (
+                                  <img 
+                                    src={item.image} 
+                                    alt={item.name}
+                                    className="w-full h-24 object-cover rounded-lg mb-2"
+                                  />
+                                )}
+                                <h5 className="font-semibold text-gray-900">{item.name}</h5>
+                                {item.description && (
+                                  <p className="text-sm text-gray-600 mb-2">{item.description}</p>
+                                )}
+                                <div className="flex justify-between items-center">
+                                  <span className="text-lg font-bold text-orange-600">₹{item.price}</span>
+                                  <button
+                                    onClick={() => addToCart(item)}
+                                    className="bg-orange-600 text-white px-3 py-1 rounded-lg text-sm hover:bg-orange-700 transition-colors"
+                                  >
+                                    Add to Cart
+                                  </button>
+                                </div>
+                              </div>
+                            ))}
+                        </div>
+                      </div>
+                    ))
+                  )}
                 </>
               )}
             </button>
@@ -345,6 +401,8 @@ export const GuestPortal: React.FC<GuestPortalProps> = ({ hotelId, roomId }) => 
                         totalAmount: getTotalAmount()
                       };
                       handleSubmit('order-food', 'Food order placed', orderDetails);
+                    } else if (pendingServiceType === 'room-service') {
+                      handleSubmit('room-service', customMessage);
                     } else {
                       handleSubmit(selectedService);
                     }
@@ -355,6 +413,43 @@ export const GuestPortal: React.FC<GuestPortalProps> = ({ hotelId, roomId }) => 
                   {isLoading ? 'Submitting...' : 'Confirm'}
                 </button>
               </div>
+            </div>
+          </div>
+        )}
+
+        {/* Housekeeping Options Modal */}
+        {showHousekeepingModal && (
+          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
+            <div className="bg-white rounded-2xl max-w-sm w-full p-6">
+              <h3 className="text-lg font-semibold text-gray-900 mb-4">Select Housekeeping Service</h3>
+              <div className="space-y-3">
+                {[
+                  'Clean Room',
+                  'Change Towels',
+                  'Replace Bed Sheets',
+                  'Refill Toiletries',
+                  'Fix Air Conditioning',
+                  'Repair TV/Electronics',
+                  'Plumbing Issue',
+                  'Extra Pillows/Blankets',
+                  'Room Maintenance',
+                  'Other Request'
+                ].map((option) => (
+                  <button
+                    key={option}
+                    onClick={() => handleHousekeepingSelect(option)}
+                    className="w-full text-left p-3 border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors"
+                  >
+                    {option}
+                  </button>
+                ))}
+              </div>
+              <button
+                onClick={() => setShowHousekeepingModal(false)}
+                className="w-full mt-4 bg-gray-200 text-gray-800 py-3 px-4 rounded-lg font-medium hover:bg-gray-300 transition-colors"
+              >
+                Cancel
+              </button>
             </div>
           </div>
         )}
