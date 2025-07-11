@@ -531,6 +531,30 @@ app.put('/api/hotels/:hotelId/requests/:requestId', authenticateToken, async (re
   }
 });
 
+// Guest Food Menu Route (no auth required)
+app.get('/api/guest/:hotelId/food-menu', async (req, res) => {
+  try {
+    const { hotelId } = req.params;
+    console.log('Fetching food menu for hotel:', hotelId);
+    
+    if (!mongoose.Types.ObjectId.isValid(hotelId)) {
+      console.log('Invalid hotelId:', hotelId);
+      return res.status(400).json({ message: 'Invalid hotelId' });
+    }
+    
+    const foodItems = await FoodItem.find({ 
+      hotelId: new mongoose.Types.ObjectId(hotelId), 
+      isAvailable: true 
+    });
+    
+    console.log('Found food items:', foodItems.length);
+    res.json(foodItems);
+  } catch (error) {
+    console.error('Guest food menu error:', error.stack || error);
+    res.status(500).json({ message: 'Server error' });
+  }
+});
+
 // Guest portal routes (no authentication required)
 app.get('/api/guest/:hotelId/:roomId', async (req, res) => {
   try {
@@ -599,7 +623,6 @@ app.post('/api/guest/:hotelId/:roomId/request', async (req, res) => {
 });
 
 
-
 // Food Menu Routes
 app.get('/api/hotels/:hotelId/food-menu', authenticateToken, async (req, res) => {
   try {
@@ -660,29 +683,7 @@ app.delete('/api/hotels/:hotelId/food-menu/:itemId', authenticateToken, async (r
   }
 });
 
-// Guest Food Menu Route (no auth required)
-app.get('/api/guest/:hotelId/food-menu', async (req, res) => {
-  try {
-    const { hotelId } = req.params;
-    console.log('Fetching food menu for hotel:', hotelId);
-    
-    if (!mongoose.Types.ObjectId.isValid(hotelId)) {
-      console.log('Invalid hotelId:', hotelId);
-      return res.status(400).json({ message: 'Invalid hotelId' });
-    }
-    
-    const foodItems = await FoodItem.find({ 
-      hotelId: new mongoose.Types.ObjectId(hotelId), 
-      isAvailable: true 
-    });
-    
-    console.log('Found food items:', foodItems.length);
-    res.json(foodItems);
-  } catch (error) {
-    console.error('Guest food menu error:', error.stack || error);
-    res.status(500).json({ message: 'Server error' });
-  }
-});
+
 
 const PORT = process.env.PORT || 3001;
 server.listen(PORT, () => {
