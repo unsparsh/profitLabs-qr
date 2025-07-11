@@ -1,7 +1,14 @@
-import React, { useState, useEffect } from 'react';
-import { Phone, UtensilsCrossed, ZoomIn as Room, MessageCircle, Send, CheckCircle } from 'lucide-react';
-import { apiClient } from '../../utils/api';
-import toast from 'react-hot-toast';
+import React, { useState, useEffect } from "react";
+import {
+  Phone,
+  UtensilsCrossed,
+  ZoomIn as Room,
+  MessageCircle,
+  Send,
+  CheckCircle,
+} from "lucide-react";
+import { apiClient } from "../../utils/api";
+import toast from "react-hot-toast";
 
 interface GuestPortalProps {
   hotelId: string;
@@ -14,22 +21,25 @@ interface Service {
   description: string;
   icon: React.ReactNode;
   color: string;
-  type: 'call-service' | 'order-food' | 'room-service' | 'complaint';
+  type: "call-service" | "order-food" | "room-service" | "complaint";
 }
 
-export const GuestPortal: React.FC<GuestPortalProps> = ({ hotelId, roomId }) => {
+export const GuestPortal: React.FC<GuestPortalProps> = ({
+  hotelId,
+  roomId,
+}) => {
   // Debug logging to check what we're receiving
-  console.log('GuestPortal props:', { hotelId, roomId });
-  
+  console.log("GuestPortal props:", { hotelId, roomId });
+
   const [hotelData, setHotelData] = useState<any>(null);
   const [selectedService, setSelectedService] = useState<string | null>(null);
   const [showPhoneModal, setShowPhoneModal] = useState(false);
-  const [guestPhone, setGuestPhone] = useState('');
+  const [guestPhone, setGuestPhone] = useState("");
   const [showFoodMenu, setShowFoodMenu] = useState(false);
   const [foodItems, setFoodItems] = useState<any[]>([]);
   const [cart, setCart] = useState<any[]>([]);
-  const [pendingServiceType, setPendingServiceType] = useState<string>('');
-  const [customMessage, setCustomMessage] = useState('');
+  const [pendingServiceType, setPendingServiceType] = useState<string>("");
+  const [customMessage, setCustomMessage] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [isSubmitted, setIsSubmitted] = useState(false);
   const [showHousekeepingModal, setShowHousekeepingModal] = useState(false);
@@ -38,39 +48,42 @@ export const GuestPortal: React.FC<GuestPortalProps> = ({ hotelId, roomId }) => 
   useEffect(() => {
     // Ensure we have valid hotelId and roomId
     if (!hotelId || !roomId) {
-      console.error('Missing hotelId or roomId:', { hotelId, roomId });
-      toast.error('Invalid room access. Please scan the QR code again.');
+      console.error("Missing hotelId or roomId:", { hotelId, roomId });
+      toast.error("Invalid room access. Please scan the QR code again.");
       return;
     }
 
     const fetchHotelData = async () => {
       try {
-        console.log('Fetching hotel data for:', { hotelId, roomId });
+        console.log("Fetching hotel data for:", { hotelId, roomId });
         const data = await apiClient.getGuestPortalData(hotelId, roomId);
-        console.log('Hotel data received:', data);
+        console.log("Hotel data received:", data);
         setHotelData(data);
       } catch (error) {
-        console.error('Error fetching hotel data:', error);
-        toast.error('Unable to load hotel information');
+        console.error("Error fetching hotel data:", error);
+        toast.error("Unable to load hotel information");
       }
     };
 
     const fetchFoodMenu = async () => {
       try {
-        console.log('Fetching food menu for hotelId:', hotelId);
-        const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:3001/api';
-        const response = await fetch(`${API_BASE_URL}/guest/${hotelId}/food-menu`);
-        console.log('Food menu API response status:', response.status);
+        console.log("Fetching food menu for hotelId:", hotelId);
+        const API_BASE_URL =
+          import.meta.env.VITE_API_URL || "http://localhost:3001/api";
+        const response = await fetch(
+          `${API_BASE_URL}/guest/${hotelId}/food-menu`
+        );
+        console.log("Food menu API response status:", response.status);
         if (response.ok) {
           const foodMenu = await response.json();
-          console.log('Food items loaded:', foodMenu);
+          console.log("Food items loaded:", foodMenu);
           setFoodItems(foodMenu);
         } else {
-          console.error('Failed to fetch food menu:', response.status);
+          console.error("Failed to fetch food menu:", response.status);
           setFoodItems([]);
         }
       } catch (error) {
-        console.error('Error loading food menu:', error);
+        console.error("Error loading food menu:", error);
         setFoodItems([]); // Set empty array on error
       }
     };
@@ -80,51 +93,51 @@ export const GuestPortal: React.FC<GuestPortalProps> = ({ hotelId, roomId }) => 
   }, [hotelId, roomId]);
 
   const serviceIdToSettingsKey: Record<string, string> = {
-    'call-service': 'callServiceBoy',
-    'order-food': 'orderFood',
-    'room-service': 'requestRoomService',
-    'complaint': 'lodgeComplaint'
+    "call-service": "callServiceBoy",
+    "order-food": "orderFood",
+    "room-service": "requestRoomService",
+    complaint: "lodgeComplaint",
   };
 
   const services: Service[] = [
     {
-      id: 'call-service',
-      title: 'Call Service Boy',
-      description: 'Request immediate assistance',
+      id: "call-service",
+      title: "Call Service Boy",
+      description: "Request immediate assistance",
       icon: <Phone className="h-8 w-8" />,
-      color: 'bg-blue-500',
-      type: 'call-service'
+      color: "bg-blue-500",
+      type: "call-service",
     },
     {
-      id: 'order-food',
-      title: 'Order Food',
-      description: 'Browse menu and place orders',
+      id: "order-food",
+      title: "Order Food",
+      description: "Browse menu and place orders",
       icon: <UtensilsCrossed className="h-8 w-8" />,
-      color: 'bg-green-500',
-      type: 'order-food'
+      color: "bg-green-500",
+      type: "order-food",
     },
     {
-      id: 'room-service',
-      title: 'Room Service',
-      description: 'Housekeeping and maintenance',
+      id: "room-service",
+      title: "Room Service",
+      description: "Housekeeping and maintenance",
       icon: <Room className="h-8 w-8" />,
-      color: 'bg-purple-500',
-      type: 'room-service'
+      color: "bg-purple-500",
+      type: "room-service",
     },
     {
-      id: 'complaint',
-      title: 'Lodge Complaint',
-      description: 'Report issues or concerns',
+      id: "complaint",
+      title: "Lodge Complaint",
+      description: "Report issues or concerns",
       icon: <MessageCircle className="h-8 w-8" />,
-      color: 'bg-red-500',
-      type: 'complaint'
-    }
+      color: "bg-red-500",
+      type: "complaint",
+    },
   ];
 
   const handleServiceSelect = (serviceId: string) => {
-    if (serviceId === 'order-food') {
+    if (serviceId === "order-food") {
       setShowFoodMenu(true);
-    } else if (serviceId === 'room-service') {
+    } else if (serviceId === "room-service") {
       setShowHousekeepingModal(true);
     } else {
       setPendingServiceType(serviceId);
@@ -135,45 +148,66 @@ export const GuestPortal: React.FC<GuestPortalProps> = ({ hotelId, roomId }) => 
 
   const handleHousekeepingSelect = (option: string) => {
     setShowHousekeepingModal(false);
-    setPendingServiceType('room-service');
+    setPendingServiceType("room-service");
     setCustomMessage(option);
     setShowPhoneModal(true);
   };
 
   const handlePhoneSubmit = () => {
     if (!guestPhone.trim() || guestPhone.length < 10) {
-      toast.error('Please enter a valid phone number');
+      toast.error("Please enter a valid phone number");
       return;
     }
     setShowPhoneModal(false);
     setSelectedService(pendingServiceType);
   };
 
-  const handleSubmit = async (type: string, message: string = '', orderDetails: any = null) => {
+  const handleSubmit = async (
+    type: string,
+    message: string = "",
+    orderDetails: any = null
+  ) => {
     if (!hotelData) return;
 
-    console.log('Submitting request:', { hotelId, roomId, type, message, orderDetails });
+    // Safely extract string values for hotelId and roomId
+    const parsedHotelId = typeof hotelId === "object" ? hotelId._id : hotelId;
+    const parsedRoomId =
+      typeof roomId === "object" ? roomId.uuid || roomId._id : roomId;
+
+    if (!parsedHotelId || !parsedRoomId) {
+      toast.error("Invalid hotel or room information.");
+      return;
+    }
+
+    console.log("Submitting request:", {
+      hotelId: parsedHotelId,
+      roomId: parsedRoomId,
+      type,
+      message,
+      orderDetails,
+    });
 
     setIsLoading(true);
     try {
       await apiClient.submitGuestRequest({
-        hotelId,
-        roomId,
+        hotelId: parsedHotelId,
+        roomId: parsedRoomId,
         type,
         guestPhone,
-        message: message || `${services.find(s => s.type === type)?.title} request`,
-        priority: type === 'complaint' ? 'high' : 'medium',
-        orderDetails
+        message:
+          message || `${services.find((s) => s.type === type)?.title} request`,
+        priority: type === "complaint" ? "high" : "medium",
+        orderDetails,
       });
-      
       setIsSubmitted(true);
       setSelectedService(null);
-      setGuestPhone('');
+      setGuestPhone("");
       setCart([]);
-      setCustomMessage('');
-      toast.success('Request submitted successfully!');
+      setCustomMessage("");
+      toast.success("Request submitted successfully!");
     } catch (error) {
-      toast.error('Failed to submit request. Please try again.');
+      console.error("API Error:", error);
+      toast.error("Failed to submit request. Please try again.");
     } finally {
       setIsLoading(false);
     }
@@ -181,28 +215,34 @@ export const GuestPortal: React.FC<GuestPortalProps> = ({ hotelId, roomId }) => 
 
   const handleCustomMessageSubmit = async () => {
     if (!customMessage.trim()) {
-      toast.error('Please enter a message');
+      toast.error("Please enter a message");
       return;
     }
-    setPendingServiceType('custom-message');
+    setPendingServiceType("custom-message");
     setShowPhoneModal(true);
   };
 
   const addToCart = (item: any) => {
-    const existingItem = cart.find(cartItem => cartItem._id === item._id);
+    const existingItem = cart.find((cartItem) => cartItem._id === item._id);
     if (existingItem) {
-      setCart(cart.map(cartItem => 
-        cartItem._id === item._id 
-          ? { ...cartItem, quantity: cartItem.quantity + 1, total: (cartItem.quantity + 1) * cartItem.price }
-          : cartItem
-      ));
+      setCart(
+        cart.map((cartItem) =>
+          cartItem._id === item._id
+            ? {
+                ...cartItem,
+                quantity: cartItem.quantity + 1,
+                total: (cartItem.quantity + 1) * cartItem.price,
+              }
+            : cartItem
+        )
+      );
     } else {
       setCart([...cart, { ...item, quantity: 1, total: item.price }]);
     }
   };
 
   const removeFromCart = (itemId: string) => {
-    setCart(cart.filter(item => item._id !== itemId));
+    setCart(cart.filter((item) => item._id !== itemId));
   };
 
   const updateQuantity = (itemId: string, quantity: number) => {
@@ -210,11 +250,13 @@ export const GuestPortal: React.FC<GuestPortalProps> = ({ hotelId, roomId }) => 
       removeFromCart(itemId);
       return;
     }
-    setCart(cart.map(item => 
-      item._id === itemId 
-        ? { ...item, quantity, total: quantity * item.price }
-        : item
-    ));
+    setCart(
+      cart.map((item) =>
+        item._id === itemId
+          ? { ...item, quantity, total: quantity * item.price }
+          : item
+      )
+    );
   };
 
   const getTotalAmount = () => {
@@ -223,26 +265,26 @@ export const GuestPortal: React.FC<GuestPortalProps> = ({ hotelId, roomId }) => 
 
   const handleFoodOrderSubmit = () => {
     if (cart.length === 0) {
-      toast.error('Please add items to cart');
+      toast.error("Please add items to cart");
       return;
     }
-    
+
     const orderDetails = {
-      items: cart.map(item => ({
+      items: cart.map((item) => ({
         itemId: item._id,
         name: item.name,
         price: item.price,
         quantity: item.quantity,
-        total: item.total
+        total: item.total,
       })),
-      totalAmount: getTotalAmount()
+      totalAmount: getTotalAmount(),
     };
-    
-    setPendingServiceType('order-food');
+
+    setPendingServiceType("order-food");
     setShowPhoneModal(true);
   };
 
-  const categories = [...new Set(foodItems.map(item => item.category))];
+  const categories = [...new Set(foodItems.map((item) => item.category))];
 
   if (!hotelData) {
     return (
@@ -261,9 +303,12 @@ export const GuestPortal: React.FC<GuestPortalProps> = ({ hotelId, roomId }) => 
         <div className="bg-white rounded-2xl shadow-xl p-8 max-w-md w-full text-center">
           <div className="mb-6">
             <CheckCircle className="h-16 w-16 text-green-500 mx-auto mb-4" />
-            <h2 className="text-2xl font-bold text-gray-900 mb-2">Request Submitted!</h2>
+            <h2 className="text-2xl font-bold text-gray-900 mb-2">
+              Request Submitted!
+            </h2>
             <p className="text-gray-600">
-              Your request has been sent to the hotel staff. They will respond shortly.
+              Your request has been sent to the hotel staff. They will respond
+              shortly.
             </p>
           </div>
           <button
@@ -283,7 +328,9 @@ export const GuestPortal: React.FC<GuestPortalProps> = ({ hotelId, roomId }) => 
       <div className="bg-white shadow-sm">
         <div className="max-w-md mx-auto px-4 py-6">
           <div className="text-center">
-            <h1 className="text-2xl font-bold text-gray-900">{hotelData.hotel.name}</h1>
+            <h1 className="text-2xl font-bold text-gray-900">
+              {hotelData.hotel.name}
+            </h1>
             <p className="text-gray-600">Room {hotelData.room.number}</p>
           </div>
         </div>
@@ -296,23 +343,35 @@ export const GuestPortal: React.FC<GuestPortalProps> = ({ hotelId, roomId }) => 
             <button
               key={service.id}
               onClick={() => handleServiceSelect(service.id)}
-              disabled={!hotelData.hotel.settings.servicesEnabled[serviceIdToSettingsKey[service.id]]}
+              disabled={
+                !hotelData.hotel.settings.servicesEnabled[
+                  serviceIdToSettingsKey[service.id]
+                ]
+              }
               className={`
                 p-6 rounded-2xl shadow-sm border-2 transition-all duration-200 text-left
-                ${selectedService === service.id
-                  ? 'border-blue-500 bg-blue-50'
-                  : 'border-gray-200 bg-white hover:border-gray-300 hover:shadow-md'
+                ${
+                  selectedService === service.id
+                    ? "border-blue-500 bg-blue-50"
+                    : "border-gray-200 bg-white hover:border-gray-300 hover:shadow-md"
                 }
-                ${!hotelData.hotel.settings.servicesEnabled[serviceIdToSettingsKey[service.id]]
-                  ? 'opacity-50 cursor-not-allowed'
-                  : 'cursor-pointer'
+                ${
+                  !hotelData.hotel.settings.servicesEnabled[
+                    serviceIdToSettingsKey[service.id]
+                  ]
+                    ? "opacity-50 cursor-not-allowed"
+                    : "cursor-pointer"
                 }
               `}
             >
-              <div className={`${service.color} text-white p-3 rounded-xl mb-3 inline-block`}>
+              <div
+                className={`${service.color} text-white p-3 rounded-xl mb-3 inline-block`}
+              >
                 {service.icon}
               </div>
-              <h3 className="font-semibold text-gray-900 mb-1">{service.title}</h3>
+              <h3 className="font-semibold text-gray-900 mb-1">
+                {service.title}
+              </h3>
               <p className="text-sm text-gray-600">{service.description}</p>
             </button>
           ))}
@@ -351,7 +410,7 @@ export const GuestPortal: React.FC<GuestPortalProps> = ({ hotelId, roomId }) => 
           <div className="bg-white rounded-2xl shadow-sm border border-gray-200 p-6">
             <div className="text-center">
               <h3 className="font-semibold text-gray-900 mb-3">
-                {services.find(s => s.id === selectedService)?.title}
+                {services.find((s) => s.id === selectedService)?.title}
               </h3>
               <p className="text-gray-600 mb-4">
                 Are you sure you want to request this service?
@@ -365,22 +424,26 @@ export const GuestPortal: React.FC<GuestPortalProps> = ({ hotelId, roomId }) => 
                 </button>
                 <button
                   onClick={() => {
-                    if (pendingServiceType === 'custom-message') {
-                      handleSubmit('custom-message', customMessage);
-                    } else if (pendingServiceType === 'order-food') {
+                    if (pendingServiceType === "custom-message") {
+                      handleSubmit("custom-message", customMessage);
+                    } else if (pendingServiceType === "order-food") {
                       const orderDetails = {
-                        items: cart.map(item => ({
+                        items: cart.map((item) => ({
                           itemId: item._id,
                           name: item.name,
                           price: item.price,
                           quantity: item.quantity,
-                          total: item.total
+                          total: item.total,
                         })),
-                        totalAmount: getTotalAmount()
+                        totalAmount: getTotalAmount(),
                       };
-                      handleSubmit('order-food', 'Food order placed', orderDetails);
-                    } else if (pendingServiceType === 'room-service') {
-                      handleSubmit('room-service', customMessage);
+                      handleSubmit(
+                        "order-food",
+                        "Food order placed",
+                        orderDetails
+                      );
+                    } else if (pendingServiceType === "room-service") {
+                      handleSubmit("room-service", customMessage);
                     } else {
                       handleSubmit(selectedService);
                     }
@@ -388,7 +451,7 @@ export const GuestPortal: React.FC<GuestPortalProps> = ({ hotelId, roomId }) => 
                   disabled={isLoading}
                   className="flex-1 bg-blue-600 text-white py-3 px-4 rounded-lg font-medium hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
                 >
-                  {isLoading ? 'Submitting...' : 'Confirm'}
+                  {isLoading ? "Submitting..." : "Confirm"}
                 </button>
               </div>
             </div>
@@ -399,19 +462,21 @@ export const GuestPortal: React.FC<GuestPortalProps> = ({ hotelId, roomId }) => 
         {showHousekeepingModal && (
           <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
             <div className="bg-white rounded-2xl max-w-sm w-full p-6">
-              <h3 className="text-lg font-semibold text-gray-900 mb-4">Select Housekeeping Service</h3>
+              <h3 className="text-lg font-semibold text-gray-900 mb-4">
+                Select Housekeeping Service
+              </h3>
               <div className="space-y-3">
                 {[
-                  'Clean Room',
-                  'Change Towels',
-                  'Replace Bed Sheets',
-                  'Refill Toiletries',
-                  'Fix Air Conditioning',
-                  'Repair TV/Electronics',
-                  'Plumbing Issue',
-                  'Extra Pillows/Blankets',
-                  'Room Maintenance',
-                  'Other Request'
+                  "Clean Room",
+                  "Change Towels",
+                  "Replace Bed Sheets",
+                  "Refill Toiletries",
+                  "Fix Air Conditioning",
+                  "Repair TV/Electronics",
+                  "Plumbing Issue",
+                  "Extra Pillows/Blankets",
+                  "Room Maintenance",
+                  "Other Request",
                 ].map((option) => (
                   <button
                     key={option}
@@ -436,8 +501,13 @@ export const GuestPortal: React.FC<GuestPortalProps> = ({ hotelId, roomId }) => 
         {showPhoneModal && (
           <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
             <div className="bg-white rounded-2xl max-w-sm w-full p-6">
-              <h3 className="text-lg font-semibold text-gray-900 mb-4">Enter Your Phone Number</h3>
-              <p className="text-gray-600 mb-4">We need your phone number so our staff can contact you if needed.</p>
+              <h3 className="text-lg font-semibold text-gray-900 mb-4">
+                Enter Your Phone Number
+              </h3>
+              <p className="text-gray-600 mb-4">
+                We need your phone number so our staff can contact you if
+                needed.
+              </p>
               <input
                 type="tel"
                 value={guestPhone}
@@ -449,8 +519,8 @@ export const GuestPortal: React.FC<GuestPortalProps> = ({ hotelId, roomId }) => 
                 <button
                   onClick={() => {
                     setShowPhoneModal(false);
-                    setGuestPhone('');
-                    setPendingServiceType('');
+                    setGuestPhone("");
+                    setPendingServiceType("");
                   }}
                   className="flex-1 bg-gray-200 text-gray-800 py-3 px-4 rounded-lg font-medium hover:bg-gray-300 transition-colors"
                 >
@@ -473,7 +543,9 @@ export const GuestPortal: React.FC<GuestPortalProps> = ({ hotelId, roomId }) => 
             <div className="bg-white rounded-2xl max-w-4xl w-full max-h-[90vh] overflow-hidden">
               <div className="p-6 border-b border-gray-200">
                 <div className="flex justify-between items-center">
-                  <h3 className="text-xl font-semibold text-gray-900">Food Menu</h3>
+                  <h3 className="text-xl font-semibold text-gray-900">
+                    Food Menu
+                  </h3>
                   <button
                     onClick={() => setShowFoodMenu(false)}
                     className="text-gray-400 hover:text-gray-600"
@@ -482,7 +554,7 @@ export const GuestPortal: React.FC<GuestPortalProps> = ({ hotelId, roomId }) => 
                   </button>
                 </div>
               </div>
-              
+
               <div className="flex h-[calc(90vh-120px)]">
                 {/* Menu Items */}
                 <div className="flex-1 overflow-y-auto p-6">
@@ -490,31 +562,44 @@ export const GuestPortal: React.FC<GuestPortalProps> = ({ hotelId, roomId }) => 
                     <div className="text-center py-8">
                       <UtensilsCrossed className="h-12 w-12 text-gray-400 mx-auto mb-4" />
                       <p className="text-gray-500">Unable to load food menu</p>
-                      <p className="text-sm text-gray-400">Please try again later or contact staff</p>
+                      <p className="text-sm text-gray-400">
+                        Please try again later or contact staff
+                      </p>
                     </div>
                   ) : (
                     <>
-                      {categories.map(category => (
+                      {categories.map((category) => (
                         <div key={category} className="mb-6">
-                          <h4 className="text-lg font-semibold text-gray-900 mb-3">{category}</h4>
+                          <h4 className="text-lg font-semibold text-gray-900 mb-3">
+                            {category}
+                          </h4>
                           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                             {foodItems
-                              .filter(item => item.category === category)
-                              .map(item => (
-                                <div key={item._id} className="border border-gray-200 rounded-lg p-4">
+                              .filter((item) => item.category === category)
+                              .map((item) => (
+                                <div
+                                  key={item._id}
+                                  className="border border-gray-200 rounded-lg p-4"
+                                >
                                   {item.image && (
-                                    <img 
-                                      src={item.image} 
+                                    <img
+                                      src={item.image}
                                       alt={item.name}
                                       className="w-full h-24 object-cover rounded-lg mb-2"
                                     />
                                   )}
-                                  <h5 className="font-semibold text-gray-900">{item.name}</h5>
+                                  <h5 className="font-semibold text-gray-900">
+                                    {item.name}
+                                  </h5>
                                   {item.description && (
-                                    <p className="text-sm text-gray-600 mb-2">{item.description}</p>
+                                    <p className="text-sm text-gray-600 mb-2">
+                                      {item.description}
+                                    </p>
                                   )}
                                   <div className="flex justify-between items-center">
-                                    <span className="text-lg font-bold text-orange-600">₹{item.price}</span>
+                                    <span className="text-lg font-bold text-orange-600">
+                                      ₹{item.price}
+                                    </span>
                                     <button
                                       onClick={() => addToCart(item)}
                                       className="bg-orange-600 text-white px-3 py-1 rounded-lg text-sm hover:bg-orange-700 transition-colors"
@@ -533,16 +618,23 @@ export const GuestPortal: React.FC<GuestPortalProps> = ({ hotelId, roomId }) => 
 
                 {/* Cart */}
                 <div className="w-80 border-l border-gray-200 p-6 bg-gray-50">
-                  <h4 className="text-lg font-semibold text-gray-900 mb-4">Your Order</h4>
+                  <h4 className="text-lg font-semibold text-gray-900 mb-4">
+                    Your Order
+                  </h4>
                   {cart.length === 0 ? (
                     <p className="text-gray-500">No items in cart</p>
                   ) : (
                     <>
                       <div className="space-y-3 mb-4">
-                        {cart.map(item => (
-                          <div key={item._id} className="bg-white p-3 rounded-lg">
+                        {cart.map((item) => (
+                          <div
+                            key={item._id}
+                            className="bg-white p-3 rounded-lg"
+                          >
                             <div className="flex justify-between items-start mb-2">
-                              <h5 className="font-medium text-gray-900">{item.name}</h5>
+                              <h5 className="font-medium text-gray-900">
+                                {item.name}
+                              </h5>
                               <button
                                 onClick={() => removeFromCart(item._id)}
                                 className="text-red-500 hover:text-red-700"
@@ -553,29 +645,39 @@ export const GuestPortal: React.FC<GuestPortalProps> = ({ hotelId, roomId }) => 
                             <div className="flex justify-between items-center">
                               <div className="flex items-center gap-2">
                                 <button
-                                  onClick={() => updateQuantity(item._id, item.quantity - 1)}
+                                  onClick={() =>
+                                    updateQuantity(item._id, item.quantity - 1)
+                                  }
                                   className="w-6 h-6 bg-gray-200 rounded-full flex items-center justify-center text-sm"
                                 >
                                   -
                                 </button>
-                                <span className="font-medium">{item.quantity}</span>
+                                <span className="font-medium">
+                                  {item.quantity}
+                                </span>
                                 <button
-                                  onClick={() => updateQuantity(item._id, item.quantity + 1)}
+                                  onClick={() =>
+                                    updateQuantity(item._id, item.quantity + 1)
+                                  }
                                   className="w-6 h-6 bg-gray-200 rounded-full flex items-center justify-center text-sm"
                                 >
                                   +
                                 </button>
                               </div>
-                              <span className="font-bold text-orange-600">₹{item.total}</span>
+                              <span className="font-bold text-orange-600">
+                                ₹{item.total}
+                              </span>
                             </div>
                           </div>
                         ))}
                       </div>
-                      
+
                       <div className="border-t border-gray-300 pt-4">
                         <div className="flex justify-between items-center mb-4">
                           <span className="text-lg font-bold">Total</span>
-                          <span className="text-xl font-bold text-orange-600">₹{getTotalAmount()}</span>
+                          <span className="text-xl font-bold text-orange-600">
+                            ₹{getTotalAmount()}
+                          </span>
                         </div>
                         <button
                           onClick={() => {
