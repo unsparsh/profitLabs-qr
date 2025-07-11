@@ -488,13 +488,14 @@ app.post('/api/hotels/:hotelId/requests', authenticateToken, async (req, res) =>
 
     const request = new Request({
       hotelId,
-      roomId,
+      roomId: room._id,
       roomNumber: room.number,
-      guestPhone,
-      type,
-      message,
-      orderDetails,
-      priority: priority || 'medium',
+      guestPhone: requestData.guestPhone,
+      type: requestData.type,
+      message: requestData.message,
+      orderDetails: requestData.orderDetails,
+      priority: requestData.priority || 'medium',
+      status: 'pending'
     });
 
     await request.save();
@@ -613,13 +614,17 @@ app.post('/api/guest/:hotelId/:roomId/request', async (req, res) => {
 
     
     const requestData = req.body;
-    const request = new Request({
-      hotel: hotelId,
-      room: room._id, 
-      ...requestData,
-      status: 'pending',
-      createdAt: new Date()
-    });
+   const request = new Request({
+  hotelId,
+  roomId: room._id,
+  roomNumber: room.number,
+  guestPhone: requestData.guestPhone,
+  type: requestData.type,
+  message: requestData.message,
+  orderDetails: requestData.orderDetails,
+  priority: requestData.priority || 'medium',
+  status: 'pending'
+});
 
     await request.save();
 
