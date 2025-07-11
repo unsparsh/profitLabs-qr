@@ -120,6 +120,7 @@ class ApiClient {
   }
 
   async submitGuestRequest(hotelId: string, roomId: string, requestData: any) {
+    console.log('API submitGuestRequest called with:', { hotelId, roomId, requestData });
     return this.request<any>(`/guest/${hotelId}/${roomId}/request`, {
       method: 'POST',
       body: JSON.stringify(requestData),
@@ -152,7 +153,24 @@ class ApiClient {
   }
 
   async getGuestFoodMenu(hotelId: string) {
-    return this.request<any[]>(`/guest/${hotelId}/food-menu`);
+    const url = `${this.baseURL}/guest/${hotelId}/food-menu`;
+    console.log('Fetching food menu from:', url);
+
+    const response = await fetch(url, {
+      method: 'GET',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+    });
+
+    if (!response.ok) {
+      console.error('Food menu API response not ok:', response.status, response.statusText);
+      throw new Error(`HTTP error! status: ${response.status}`);
+    }
+
+    const data = await response.json();
+    console.log('Food menu data received:', data);
+    return data;
   }
 }
 

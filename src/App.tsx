@@ -13,6 +13,22 @@ type Hotel = any;
 
 function GuestPortalWrapper() {
   const { hotelId, roomId } = useParams<{ hotelId: string; roomId: string }>();
+  
+  // Debug logging
+  console.log('GuestPortalWrapper params:', { hotelId, roomId });
+  
+  // Ensure we have valid parameters
+  if (!hotelId || !roomId) {
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <div className="text-center">
+          <p className="text-red-500 text-lg font-semibold">Invalid Room Access</p>
+          <p className="text-gray-600">Please scan the QR code again</p>
+        </div>
+      </div>
+    );
+  }
+  
   return <GuestPortal hotelId={hotelId!} roomId={roomId!} />;
 }
 

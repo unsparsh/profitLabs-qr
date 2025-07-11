@@ -18,6 +18,9 @@ interface Service {
 }
 
 export const GuestPortal: React.FC<GuestPortalProps> = ({ hotelId, roomId }) => {
+  // Debug logging to check what we're receiving
+  console.log('GuestPortal props:', { hotelId, roomId });
+  
   const [hotelData, setHotelData] = useState<any>(null);
   const [selectedService, setSelectedService] = useState<string | null>(null);
   const [showPhoneModal, setShowPhoneModal] = useState(false);
@@ -33,18 +36,31 @@ export const GuestPortal: React.FC<GuestPortalProps> = ({ hotelId, roomId }) => 
   const [housekeepingOptions, setHousekeepingOptions] = useState<string[]>([]);
 
   useEffect(() => {
+    // Ensure we have valid hotelId and roomId
+    if (!hotelId || !roomId) {
+      console.error('Missing hotelId or roomId:', { hotelId, roomId });
+      toast.error('Invalid room access. Please scan the QR code again.');
+      return;
+    }
+
     const fetchHotelData = async () => {
       try {
+        console.log('Fetching hotel data for:', { hotelId, roomId });
         const data = await apiClient.getGuestPortalData(hotelId, roomId);
+        console.log('Hotel data received:', data);
         setHotelData(data);
       } catch (error) {
+        console.error('Error fetching hotel data:', error);
         toast.error('Unable to load hotel information');
       }
     };
 
     const fetchFoodMenu = async () => {
       try {
-        const response = await fetch(`/api/guest/${hotelId}/food-menu`);
+        console.log('Fetching food menu for hotelId:', hotelId);
+        const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:3001/api';
+        const response = await fetch(`${API_BASE_URL}/guest/${hotelId}/food-menu`);
+        console.log('Food menu API response status:', response.status);
         if (response.ok) {
           const foodMenu = await response.json();
           console.log('Food items loaded:', foodMenu);
@@ -136,9 +152,13 @@ export const GuestPortal: React.FC<GuestPortalProps> = ({ hotelId, roomId }) => 
   const handleSubmit = async (type: string, message: string = '', orderDetails: any = null) => {
     if (!hotelData) return;
 
+    console.log('Submitting request:', { hotelId, roomId, type, message, orderDetails });
+
     setIsLoading(true);
     try {
-      await apiClient.submitGuestRequest(hotelId, roomId, {
+      await apiClient.submitGuestRequest({
+        hotelId,
+        roomId,
         type,
         guestPhone,
         message: message || `${services.find(s => s.type === type)?.title} request`,
@@ -277,7 +297,6 @@ export const GuestPortal: React.FC<GuestPortalProps> = ({ hotelId, roomId }) => 
               key={service.id}
               onClick={() => handleServiceSelect(service.id)}
               disabled={!hotelData.hotel.settings.servicesEnabled[serviceIdToSettingsKey[service.id]]}
-
               className={`
                 p-6 rounded-2xl shadow-sm border-2 transition-all duration-200 text-left
                 ${selectedService === service.id
@@ -299,76 +318,33 @@ export const GuestPortal: React.FC<GuestPortalProps> = ({ hotelId, roomId }) => 
           ))}
         </div>
 
-      {/* Custom Message */}
-{hotelData.hotel.settings.servicesEnabled.customMessage && (
-  <div className="bg-white rounded-2xl shadow-sm border border-gray-200 p-6 mb-6">
-    <h3 className="font-semibold text-gray-900 mb-3">Custom Message</h3>
-    <textarea
-      value={customMessage}
-      onChange={(e) => setCustomMessage(e.target.value)}
-      placeholder="Type your message here..."
-      className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent resize-none"
-      rows={4}
-    />
-    <button
-      onClick={handleCustomMessageSubmit}
-      disabled={isLoading || !customMessage.trim()}
-      className="mt-3 w-full bg-blue-600 text-white py-3 px-4 rounded-lg font-medium hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors flex items-center justify-center gap-2"
-    >
-      {isLoading ? (
-        <>
-          <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
-          Sending...
-        </>
-      ) : (
-        "Send Message"
-      )}
-    </button>
-
-    {/* 🍽️ Food Menu Display */}
-    {foodItems.length === 0 ? (
-      <div className="text-center py-8">
-        <UtensilsCrossed className="h-12 w-12 text-gray-400 mx-auto mb-4" />
-        <p className="text-gray-500">No food items available</p>
-        <p className="text-sm text-gray-400">Menu will be updated soon</p>
-      </div>
-    ) : (
-      categories.map(category => (
-        <div key={category} className="mb-6">
-          <h4 className="text-lg font-semibold text-gray-900 mb-3">{category}</h4>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            {foodItems
-              .filter(item => item.category === category)
-              .map(item => (
-                <div key={item._id} className="border border-gray-200 rounded-lg p-4">
-                  {item.image && (
-                    <img 
-                      src={item.image} 
-                      alt={item.name}
-                      className="w-full h-24 object-cover rounded-lg mb-2"
-                    />
-                  )}
-                  <h5 className="font-semibold text-gray-900">{item.name}</h5>
-                  {item.description && (
-                    <p className="text-sm text-gray-600 mb-2">{item.description}</p>
-                  )}
-                  <div className="flex justify-between items-center">
-                    <span className="text-lg font-bold text-orange-600">₹{item.price}</span>
-                    <button
-                      onClick={() => addToCart(item)}
-                      className="bg-orange-600 text-white px-3 py-1 rounded-lg text-sm hover:bg-orange-700 transition-colors"
-                    >
-                      Add to Cart
-                    </button>
-                  </div>
-                </div>
-              ))}
+        {/* Custom Message */}
+        {hotelData.hotel.settings.servicesEnabled.customMessage && (
+          <div className="bg-white rounded-2xl shadow-sm border border-gray-200 p-6 mb-6">
+            <h3 className="font-semibold text-gray-900 mb-3">Custom Message</h3>
+            <textarea
+              value={customMessage}
+              onChange={(e) => setCustomMessage(e.target.value)}
+              placeholder="Type your message here..."
+              className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent resize-none"
+              rows={4}
+            />
+            <button
+              onClick={handleCustomMessageSubmit}
+              disabled={isLoading || !customMessage.trim()}
+              className="mt-3 w-full bg-blue-600 text-white py-3 px-4 rounded-lg font-medium hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors flex items-center justify-center gap-2"
+            >
+              {isLoading ? (
+                <>
+                  <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
+                  Sending...
+                </>
+              ) : (
+                "Send Message"
+              )}
+            </button>
           </div>
-        </div>
-      ))
-    )}
-  </div>
-)}
+        )}
 
         {/* Selected Service Action */}
         {selectedService && (
@@ -519,37 +495,37 @@ export const GuestPortal: React.FC<GuestPortalProps> = ({ hotelId, roomId }) => 
                   ) : (
                     <>
                       {categories.map(category => (
-                    <div key={category} className="mb-6">
-                      <h4 className="text-lg font-semibold text-gray-900 mb-3">{category}</h4>
-                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                        {foodItems
-                          .filter(item => item.category === category)
-                          .map(item => (
-                            <div key={item._id} className="border border-gray-200 rounded-lg p-4">
-                              {item.image && (
-                                <img 
-                                  src={item.image} 
-                                  alt={item.name}
-                                  className="w-full h-24 object-cover rounded-lg mb-2"
-                                />
-                              )}
-                              <h5 className="font-semibold text-gray-900">{item.name}</h5>
-                              {item.description && (
-                                <p className="text-sm text-gray-600 mb-2">{item.description}</p>
-                              )}
-                              <div className="flex justify-between items-center">
-                                <span className="text-lg font-bold text-orange-600">₹{item.price}</span>
-                                <button
-                                  onClick={() => addToCart(item)}
-                                  className="bg-orange-600 text-white px-3 py-1 rounded-lg text-sm hover:bg-orange-700 transition-colors"
-                                >
-                                  Add to Cart
-                                </button>
-                              </div>
-                            </div>
-                          ))}
-                      </div>
-                    </div>
+                        <div key={category} className="mb-6">
+                          <h4 className="text-lg font-semibold text-gray-900 mb-3">{category}</h4>
+                          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            {foodItems
+                              .filter(item => item.category === category)
+                              .map(item => (
+                                <div key={item._id} className="border border-gray-200 rounded-lg p-4">
+                                  {item.image && (
+                                    <img 
+                                      src={item.image} 
+                                      alt={item.name}
+                                      className="w-full h-24 object-cover rounded-lg mb-2"
+                                    />
+                                  )}
+                                  <h5 className="font-semibold text-gray-900">{item.name}</h5>
+                                  {item.description && (
+                                    <p className="text-sm text-gray-600 mb-2">{item.description}</p>
+                                  )}
+                                  <div className="flex justify-between items-center">
+                                    <span className="text-lg font-bold text-orange-600">₹{item.price}</span>
+                                    <button
+                                      onClick={() => addToCart(item)}
+                                      className="bg-orange-600 text-white px-3 py-1 rounded-lg text-sm hover:bg-orange-700 transition-colors"
+                                    >
+                                      Add to Cart
+                                    </button>
+                                  </div>
+                                </div>
+                              ))}
+                          </div>
+                        </div>
                       ))}
                     </>
                   )}
