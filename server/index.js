@@ -597,10 +597,15 @@ app.post('/api/guest/:hotelId/:roomId/request', async (req, res) => {
 
   try {
     // ✅ Find the actual room using UUID
+    console.log('Looking for room:', {
+      hotelId: new mongoose.Types.ObjectId(hotelId),
+      uuid: roomId
+    });
     const room = await Room.findOne({
       hotelId: new mongoose.Types.ObjectId(hotelId),
       uuid: roomId
     });
+    console.log('Room found:', room);
 
     if (!room) {
       return res.status(404).json({ message: 'Room not found' });
