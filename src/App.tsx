@@ -39,22 +39,60 @@ function App() {
   const [authMode, setAuthMode] = useState<'login' | 'register'>('login');
 
   useEffect(() => {
-    const token = localStorage.getItem('authToken');
-    if (token) {
-      apiClient.setToken(token);
-      // You can hit /auth/verify here if backend supports verification
-    }
-    setIsLoading(false);
+    const initializeAuth = async () => {
+      try {
+        // Check for existing token
+        const token = localStorage.getItem('authToken');
+        if (token) {
+          apiClient.setToken(token);
+          
+          // Try to get stored user and hotel data
+          const storedUser = localStorage.getItem('userData');
+          const storedHotel = localStorage.getItem('hotelData');
+          
+          if (storedUser && storedHotel) {
+            // Restore from localStorage
+            setUser(JSON.parse(storedUser));
+            setHotel(JSON.parse(storedHotel));
+          }
+          
+          // Optional: Verify token with backend (if you have a verify endpoint)
+          // const response = await apiClient.verifyToken();
+          // if (!response.valid) {
+          //   handleLogout();
+          // }
+        }
+      } catch (error) {
+        console.error('Auth initialization error:', error);
+        handleLogout(); // Clear invalid data
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    initializeAuth();
   }, []);
 
   const handleAuthSuccess = (userData: User, hotelData: Hotel) => {
+    // Store in state
     setUser(userData);
     setHotel(hotelData);
+    
+    // Store in localStorage
+    localStorage.setItem('userData', JSON.stringify(userData));
+    localStorage.setItem('hotelData', JSON.stringify(hotelData));
   };
 
   const handleLogout = () => {
+    // Clear localStorage
     localStorage.removeItem('authToken');
+    localStorage.removeItem('userData');
+    localStorage.removeItem('hotelData');
+    
+    // Clear API client token
     apiClient.setToken(null);
+    
+    // Clear state
     setUser(null);
     setHotel(null);
   };
