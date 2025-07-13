@@ -36,7 +36,7 @@ export const GuestPortal: React.FC<GuestPortalProps> = ({
   roomId,
 }) => {
   // Debug logging to check what we're receiving
-  console.log("GuestPortal props:", { hotelId, roomId });
+  // console.log("GuestPortal props:", { hotelId, roomId });
 
   const [hotelData, setHotelData] = useState<any>(null);
   const [selectedService, setSelectedService] = useState<string | null>(null);
@@ -82,17 +82,17 @@ export const GuestPortal: React.FC<GuestPortalProps> = ({
       return;
     }
 
-    console.log("Fetching hotel data for:", {
-      parsedHotelId,
-      parsedRoomId,
-    });
+    // console.log("Fetching hotel data for:", {
+    //   parsedHotelId,
+    //   parsedRoomId,
+    // });
 
     const data = await apiClient.getGuestPortalData(
       parsedHotelId,
       parsedRoomId
     );
 
-    console.log("✅ Hotel data received:", data);
+    // console.log("✅ Hotel data received:", data);
     setHotelData(data);
   } catch (error) {
     console.error("❌ Error fetching hotel data:", error);
@@ -103,7 +103,7 @@ export const GuestPortal: React.FC<GuestPortalProps> = ({
 
     const fetchFoodMenu = async () => {
       try {
-        console.log("Fetching food menu for hotelId:", hotelId);
+        // console.log("Fetching food menu for hotelId:", hotelId);
         const API_BASE_URL =
           import.meta.env.VITE_API_URL || "http://localhost:3001/api";
         const response = await fetch(
@@ -216,11 +216,11 @@ const handleSubmit = async (
       ? roomId.uuid || roomId._id || roomId.id || ""
       : hotelData?.room?.uuid || roomId;
 
-  console.log("🧠 Parsed IDs for request:", {
-    parsedHotelId,
-    parsedRoomId,
-    phone: guestPhone,
-  });
+  // console.log("🧠 Parsed IDs for request:", {
+  //   parsedHotelId,
+  //   parsedRoomId,
+  //   phone: guestPhone,
+  // });
 
   if (!parsedHotelId || !parsedRoomId) {
     toast.error("Invalid hotel or room ID");
