@@ -627,6 +627,10 @@ app.post('/api/guest/:hotelId/:roomId/request', async (req, res) => {
 });
 
     await request.save();
+    
+    // ✅ Emit real-time notification to admin dashboard
+    console.log('🔔 Emitting newRequest to hotel room:', hotelId);
+    io.to(hotelId).emit('newRequest', request);
 
     res.status(201).json({ message: 'Request submitted successfully', request });
   } catch (err) {
