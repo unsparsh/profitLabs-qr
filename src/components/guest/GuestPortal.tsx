@@ -580,7 +580,7 @@ const handleSubmit = async (
         {/* Food Menu Modal */}
         {showFoodMenu && (
           <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
-            <div className="bg-white rounded-2xl max-w-4xl w-full max-h-[90vh] overflow-hidden">
+            <div className="bg-white rounded-2xl w-full max-w-sm sm:max-w-2xl lg:max-w-4xl max-h-[90vh] overflow-hidden">
               <div className="p-6 border-b border-gray-200">
                 <div className="flex justify-between items-center">
                   <h3 className="text-xl font-semibold text-gray-900">
@@ -595,9 +595,9 @@ const handleSubmit = async (
                 </div>
               </div>
 
-              <div className="flex h-[calc(90vh-120px)]">
+              <div className="flex flex-col lg:flex-row h-[calc(90vh-120px)]">
                 {/* Menu Items */}
-                <div className="flex-1 overflow-y-auto p-6">
+                <div className="flex-1 overflow-y-auto p-4 lg:p-6">
                   {foodItems.length === 0 ? (
                     <div className="text-center py-8">
                       <UtensilsCrossed className="h-12 w-12 text-gray-400 mx-auto mb-4" />
@@ -610,39 +610,39 @@ const handleSubmit = async (
                     <>
                       {categories.map((category) => (
                         <div key={category} className="mb-6">
-                          <h4 className="text-lg font-semibold text-gray-900 mb-3">
+                          <h4 className="text-base lg:text-lg font-semibold text-gray-900 mb-3">
                             {category}
                           </h4>
-                          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 lg:gap-4">
                             {foodItems
                               .filter((item) => item.category === category)
                               .map((item) => (
                                 <div
                                   key={item._id}
-                                  className="border border-gray-200 rounded-lg p-4"
+                                  className="border border-gray-200 rounded-lg p-3 lg:p-4"
                                 >
                                   {item.image && (
                                     <img
                                       src={item.image}
                                       alt={item.name}
-                                      className="w-full h-24 object-cover rounded-lg mb-2"
+                                      className="w-full h-20 lg:h-24 object-cover rounded-lg mb-2"
                                     />
                                   )}
-                                  <h5 className="font-semibold text-gray-900">
+                                  <h5 className="text-sm lg:text-base font-semibold text-gray-900">
                                     {item.name}
                                   </h5>
                                   {item.description && (
-                                    <p className="text-sm text-gray-600 mb-2">
+                                    <p className="text-xs lg:text-sm text-gray-600 mb-2">
                                       {item.description}
                                     </p>
                                   )}
-                                  <div className="flex justify-between items-center">
-                                    <span className="text-lg font-bold text-orange-600">
+                                  <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2">
+                                    <span className="text-base lg:text-lg font-bold text-orange-600">
                                       ₹{item.price}
                                     </span>
                                     <button
                                       onClick={() => addToCart(item)}
-                                      className="bg-orange-600 text-white px-3 py-1 rounded-lg text-sm hover:bg-orange-700 transition-colors"
+                                      className="bg-orange-600 text-white px-3 py-1.5 rounded-lg text-xs lg:text-sm hover:bg-orange-700 transition-colors w-full sm:w-auto"
                                     >
                                       Add to Cart
                                     </button>
@@ -657,54 +657,54 @@ const handleSubmit = async (
                 </div>
 
                 {/* Cart */}
-                <div className="w-80 border-l border-gray-200 p-6 bg-gray-50">
-                  <h4 className="text-lg font-semibold text-gray-900 mb-4">
+                <div className="w-full lg:w-80 border-t lg:border-t-0 lg:border-l border-gray-200 p-4 lg:p-6 bg-gray-50">
+                  <h4 className="text-base lg:text-lg font-semibold text-gray-900 mb-4">
                     Your Order
                   </h4>
                   {cart.length === 0 ? (
-                    <p className="text-gray-500">No items in cart</p>
+                    <p className="text-sm text-gray-500">No items in cart</p>
                   ) : (
                     <>
                       <div className="space-y-3 mb-4">
                         {cart.map((item) => (
                           <div
                             key={item._id}
-                            className="bg-white p-3 rounded-lg"
+                            className="bg-white p-2 lg:p-3 rounded-lg"
                           >
                             <div className="flex justify-between items-start mb-2">
-                              <h5 className="font-medium text-gray-900">
+                              <h5 className="text-sm font-medium text-gray-900 flex-1 mr-2">
                                 {item.name}
                               </h5>
                               <button
                                 onClick={() => removeFromCart(item._id)}
-                                className="text-red-500 hover:text-red-700"
+                                className="text-red-500 hover:text-red-700 text-sm"
                               >
                                 ✕
                               </button>
                             </div>
                             <div className="flex justify-between items-center">
-                              <div className="flex items-center gap-2">
+                              <div className="flex items-center gap-1 lg:gap-2">
                                 <button
                                   onClick={() =>
                                     updateQuantity(item._id, item.quantity - 1)
                                   }
-                                  className="w-6 h-6 bg-gray-200 rounded-full flex items-center justify-center text-sm"
+                                  className="w-5 h-5 lg:w-6 lg:h-6 bg-gray-200 rounded-full flex items-center justify-center text-xs lg:text-sm"
                                 >
                                   -
                                 </button>
-                                <span className="font-medium">
+                                <span className="text-sm font-medium min-w-[20px] text-center">
                                   {item.quantity}
                                 </span>
                                 <button
                                   onClick={() =>
                                     updateQuantity(item._id, item.quantity + 1)
                                   }
-                                  className="w-6 h-6 bg-gray-200 rounded-full flex items-center justify-center text-sm"
+                                  className="w-5 h-5 lg:w-6 lg:h-6 bg-gray-200 rounded-full flex items-center justify-center text-xs lg:text-sm"
                                 >
                                   +
                                 </button>
                               </div>
-                              <span className="font-bold text-orange-600">
+                              <span className="text-sm lg:text-base font-bold text-orange-600">
                                 ₹{item.total}
                               </span>
                             </div>
@@ -714,8 +714,8 @@ const handleSubmit = async (
 
                       <div className="border-t border-gray-300 pt-4">
                         <div className="flex justify-between items-center mb-4">
-                          <span className="text-lg font-bold">Total</span>
-                          <span className="text-xl font-bold text-orange-600">
+                          <span className="text-base lg:text-lg font-bold">Total</span>
+                          <span className="text-lg lg:text-xl font-bold text-orange-600">
                             ₹{getTotalAmount()}
                           </span>
                         </div>
@@ -724,7 +724,7 @@ const handleSubmit = async (
                             setShowFoodMenu(false);
                             handleFoodOrderSubmit();
                           }}
-                          className="w-full bg-orange-600 text-white py-3 px-4 rounded-lg font-medium hover:bg-orange-700 transition-colors"
+                          className="w-full bg-orange-600 text-white py-2.5 lg:py-3 px-4 rounded-lg text-sm lg:text-base font-medium hover:bg-orange-700 transition-colors"
                         >
                           Place Order
                         </button>
