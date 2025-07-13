@@ -32,6 +32,7 @@ const crypto = require('crypto');
 
 // Middleware
 app.use(cors());
+app.options('*', cors());
 app.use(express.json());
 
 //Adding RazorPay Payment Gateway
