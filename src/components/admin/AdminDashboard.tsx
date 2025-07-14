@@ -125,29 +125,29 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ user, hotel, onL
     <div className="min-h-screen bg-gray-50">
       {/* Header */}
       <div className="bg-white shadow-sm border-b">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex justify-between items-center py-4">
+        <div className="max-w-7xl mx-auto px-3 sm:px-4 lg:px-8">
+          <div className="flex justify-between items-center py-3 sm:py-4">
             <div className="flex items-center">
-              <div className="bg-blue-600 text-white p-2 rounded-lg mr-3">
-                <Users className="h-6 w-6" />
+              <div className="bg-blue-600 text-white p-1.5 sm:p-2 rounded-lg mr-2 sm:mr-3">
+                <Users className="h-4 w-4 sm:h-6 sm:w-6" />
               </div>
               <div>
-                <h1 className="text-xl font-bold text-gray-900">ProfitLabs</h1>
-                <p className="text-sm text-gray-600">{hotel.name}</p>
+                <h1 className="text-lg sm:text-xl font-bold text-gray-900">ProfitLabs</h1>
+                <p className="text-xs sm:text-sm text-gray-600 truncate max-w-[150px] sm:max-w-none">{hotel.name}</p>
               </div>
             </div>
 
-            <div className="flex items-center space-x-4">
-              <div className="text-right">
-                <p className="text-sm font-medium text-gray-900">{user.name}</p>
+            <div className="flex items-center space-x-2 sm:space-x-4">
+              <div className="text-right hidden sm:block">
+                <p className="text-sm font-medium text-gray-900 truncate">{user.name}</p>
                 <p className="text-xs text-gray-500">{user.role}</p>
               </div>
               <button
                 onClick={onLogout}
-                className="p-2 text-gray-400 hover:text-gray-600 transition-colors"
+                className="p-1.5 sm:p-2 text-gray-400 hover:text-gray-600 transition-colors"
                 title="Logout"
               >
-                <LogOut className="h-5 w-5" />
+                <LogOut className="h-4 w-4 sm:h-5 sm:w-5" />
               </button>
             </div>
           </div>
@@ -156,24 +156,25 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ user, hotel, onL
 
       {/* Navigation Tabs */}
       <div className="bg-white shadow-sm">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex space-x-8">
+        <div className="max-w-7xl mx-auto px-3 sm:px-4 lg:px-8">
+          <div className="flex space-x-2 sm:space-x-4 lg:space-x-8 overflow-x-auto">
             {tabs.map((tab) => (
               <button
                 key={tab.id}
                 onClick={() => handleTabChange(tab.id)}
                 className={`
-                  flex items-center space-x-2 py-4 px-1 border-b-2 font-medium text-sm relative
+                  flex items-center space-x-1 sm:space-x-2 py-3 sm:py-4 px-1 sm:px-2 border-b-2 font-medium text-xs sm:text-sm relative whitespace-nowrap
                   ${activeTab === tab.id
                     ? 'border-blue-500 text-blue-600'
                     : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
                   }
                 `}
               >
-                <tab.icon className="h-4 w-4" />
-                <span>{tab.label}</span>
+                <tab.icon className="h-3 w-3 sm:h-4 sm:w-4" />
+                <span className="hidden sm:inline">{tab.label}</span>
+                <span className="sm:hidden">{tab.label.split(' ')[0]}</span>
                 {tab.hasNotification && (
-                  <span className="absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full h-5 w-5 flex items-center justify-center">
+                  <span className="absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full h-4 w-4 sm:h-5 sm:w-5 flex items-center justify-center">
                     {unreadCount > 99 ? '99+' : unreadCount}
                   </span>
                 )}
@@ -184,7 +185,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ user, hotel, onL
       </div>
 
       {/* Content */}
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
+      <div className="max-w-7xl mx-auto px-3 sm:px-4 lg:px-8 py-3 sm:py-6">
         {isLoading ? (
           <div className="text-center py-12">
             <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>

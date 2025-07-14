@@ -86,17 +86,17 @@ export const AnalyticsPanel: React.FC<AnalyticsPanelProps> = ({
   return (
     <div className="space-y-6">
       {/* Stats Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-6">
         {stats.map((stat, index) => (
-          <div key={index} className="bg-white rounded-lg shadow-sm p-6">
+          <div key={index} className="bg-white rounded-lg shadow-sm p-3 sm:p-6">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm font-medium text-gray-500">{stat.title}</p>
-                <p className="text-2xl font-bold text-gray-900">{stat.value}</p>
-                <p className="text-sm text-green-600">{stat.change}</p>
+                <p className="text-xs sm:text-sm font-medium text-gray-500 truncate">{stat.title}</p>
+                <p className="text-lg sm:text-2xl font-bold text-gray-900">{stat.value}</p>
+                <p className="text-xs sm:text-sm text-green-600">{stat.change}</p>
               </div>
-              <div className={`p-3 rounded-full ${stat.color}`}>
-                <stat.icon className="h-6 w-6 text-white" />
+              <div className={`p-2 sm:p-3 rounded-full ${stat.color}`}>
+                <stat.icon className="h-4 w-4 sm:h-6 sm:w-6 text-white" />
               </div>
             </div>
           </div>
@@ -104,11 +104,11 @@ export const AnalyticsPanel: React.FC<AnalyticsPanelProps> = ({
       </div>
 
       {/* Charts */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6">
         {/* Weekly Requests Chart */}
-        <div className="bg-white rounded-lg shadow-sm p-6">
-          <h3 className="text-lg font-medium text-gray-900 mb-4">Weekly Requests</h3>
-          <ResponsiveContainer width="100%" height={300}>
+        <div className="bg-white rounded-lg shadow-sm p-3 sm:p-6">
+          <h3 className="text-base sm:text-lg font-medium text-gray-900 mb-4">Weekly Requests</h3>
+          <ResponsiveContainer width="100%" height={250}>
             <BarChart data={weeklyData}>
               <CartesianGrid strokeDasharray="3 3" />
               <XAxis dataKey="day" />
@@ -120,9 +120,9 @@ export const AnalyticsPanel: React.FC<AnalyticsPanelProps> = ({
         </div>
 
         {/* Request Types Chart */}
-        <div className="bg-white rounded-lg shadow-sm p-6">
-          <h3 className="text-lg font-medium text-gray-900 mb-4">Request Types</h3>
-          <ResponsiveContainer width="100%" height={300}>
+        <div className="bg-white rounded-lg shadow-sm p-3 sm:p-6">
+          <h3 className="text-base sm:text-lg font-medium text-gray-900 mb-4">Request Types</h3>
+          <ResponsiveContainer width="100%" height={250}>
             <PieChart>
               <Pie
                 data={typeData}
@@ -145,15 +145,15 @@ export const AnalyticsPanel: React.FC<AnalyticsPanelProps> = ({
       </div>
 
       {/* Recent Activity */}
-      <div className="bg-white rounded-lg shadow-sm p-6">
-        <h3 className="text-lg font-medium text-gray-900 mb-4">Recent Activity</h3>
+      <div className="bg-white rounded-lg shadow-sm p-3 sm:p-6">
+        <h3 className="text-base sm:text-lg font-medium text-gray-900 mb-4">Recent Activity</h3>
         <div className="space-y-4">
           {requests.slice(0, 5).map((request) => (
-            <div key={request._id} className="flex items-center justify-between py-3 border-b border-gray-200 last:border-b-0">
-              <div className="flex items-center space-x-3">
+            <div key={request._id} className="flex flex-col sm:flex-row sm:items-center justify-between py-3 border-b border-gray-200 last:border-b-0 gap-2 sm:gap-0">
+              <div className="flex items-center space-x-2 sm:space-x-3">
                 <div className="w-2 h-2 bg-blue-500 rounded-full"></div>
                 <div>
-                  <p className="text-sm font-medium text-gray-900">
+                  <p className="text-xs sm:text-sm font-medium text-gray-900">
                     {request.type.split('-').map(word => 
                       word.charAt(0).toUpperCase() + word.slice(1)
                     ).join(' ')} - Room {request.roomNumber}

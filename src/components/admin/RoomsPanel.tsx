@@ -102,24 +102,25 @@ export const RoomsPanel: React.FC<RoomsPanelProps> = ({
     <div className="space-y-6">
       {/* Header */}
       <div className="flex justify-between items-center">
-        <h2 className="text-2xl font-bold text-gray-900">Rooms & QR Codes</h2>
+        <h2 className="text-xl sm:text-2xl font-bold text-gray-900">Rooms & QR Codes</h2>
         <button
           onClick={() => setIsAddingRoom(true)}
-          className="bg-blue-600 text-white px-4 py-2 rounded-lg font-medium hover:bg-blue-700 transition-colors flex items-center gap-2"
+          className="bg-blue-600 text-white px-3 sm:px-4 py-2 rounded-lg text-sm sm:text-base font-medium hover:bg-blue-700 transition-colors flex items-center gap-1 sm:gap-2"
         >
-          <Plus className="h-4 w-4" />
-          Add Room
+          <Plus className="h-3 w-3 sm:h-4 sm:w-4" />
+          <span className="hidden sm:inline">Add Room</span>
+          <span className="sm:hidden">Add</span>
         </button>
       </div>
 
       {/* Add Room Form */}
       {isAddingRoom && (
-        <div className="bg-white rounded-lg shadow-sm p-6">
-          <h3 className="text-lg font-medium text-gray-900 mb-4">Add New Room</h3>
+        <div className="bg-white rounded-lg shadow-sm p-4 sm:p-6">
+          <h3 className="text-base sm:text-lg font-medium text-gray-900 mb-4">Add New Room</h3>
           <form onSubmit={handleAddRoom} className="space-y-4">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
-                <label htmlFor="roomNumber" className="block text-sm font-medium text-gray-700 mb-2">
+                <label htmlFor="roomNumber" className="block text-xs sm:text-sm font-medium text-gray-700 mb-2">
                   Room Number *
                 </label>
                 <input
@@ -133,7 +134,7 @@ export const RoomsPanel: React.FC<RoomsPanelProps> = ({
                 />
               </div>
               <div>
-                <label htmlFor="roomName" className="block text-sm font-medium text-gray-700 mb-2">
+                <label htmlFor="roomName" className="block text-xs sm:text-sm font-medium text-gray-700 mb-2">
                   Room Name (Optional)
                 </label>
                 <input
@@ -146,18 +147,18 @@ export const RoomsPanel: React.FC<RoomsPanelProps> = ({
                 />
               </div>
             </div>
-            <div className="flex gap-3">
+            <div className="flex flex-col sm:flex-row gap-2 sm:gap-3">
               <button
                 type="button"
                 onClick={() => setIsAddingRoom(false)}
-                className="px-4 py-2 text-gray-700 bg-gray-200 rounded-lg hover:bg-gray-300 transition-colors"
+                className="px-4 py-2 text-sm sm:text-base text-gray-700 bg-gray-200 rounded-lg hover:bg-gray-300 transition-colors"
               >
                 Cancel
               </button>
               <button
                 type="submit"
                 disabled={isLoading}
-                className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                className="px-4 py-2 text-sm sm:text-base bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
               >
                 {isLoading ? 'Adding...' : 'Add Room'}
               </button>
@@ -167,16 +168,16 @@ export const RoomsPanel: React.FC<RoomsPanelProps> = ({
       )}
 
       {/* Rooms Grid */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
         {rooms.map((room) => (
           <div key={room._id} className="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden">
-            <div className="p-4">
+            <div className="p-3 sm:p-4">
               <div className="flex justify-between items-start mb-3">
                 <div>
-                  <h3 className="text-lg font-semibold text-gray-900">
+                  <h3 className="text-base sm:text-lg font-semibold text-gray-900">
                     Room {room.number}
                   </h3>
-                  <p className="text-sm text-gray-600">{room.name}</p>
+                  <p className="text-xs sm:text-sm text-gray-600 truncate">{room.name}</p>
                 </div>
                 <div className="flex items-center gap-2">
                   <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
@@ -191,45 +192,48 @@ export const RoomsPanel: React.FC<RoomsPanelProps> = ({
               
               {/* QR Code */}
               <div className="flex justify-center mb-4">
-                <div className="bg-gray-100 p-4 rounded-lg">
+                <div className="bg-gray-100 p-2 sm:p-4 rounded-lg">
                   <img 
                     src={room.qrCode} 
                     alt={`QR Code for Room ${room.number}`}
-                    className="w-32 h-32"
+                    className="w-24 h-24 sm:w-32 sm:h-32"
                   />
                 </div>
               </div>
               
-              <div className="text-center text-sm text-gray-600 mb-4">
+              <div className="text-center text-xs sm:text-sm text-gray-600 mb-4">
                 <p>Scan to access room services</p>
               </div>
               
               {/* Actions */}
-              <div className="flex gap-2">
+              <div className="flex flex-col sm:flex-row gap-2">
                 <button
                   onClick={() => downloadQRCode(room)}
-                  className="flex-1 bg-blue-600 text-white py-2 px-3 rounded-lg font-medium hover:bg-blue-700 transition-colors flex items-center justify-center gap-2"
+                  className="flex-1 bg-blue-600 text-white py-2 px-3 rounded-lg text-xs sm:text-sm font-medium hover:bg-blue-700 transition-colors flex items-center justify-center gap-1 sm:gap-2"
                 >
-                  <Download className="h-4 w-4" />
+                  <Download className="h-3 w-3 sm:h-4 sm:w-4" />
                   Download
                 </button>
-                <button
+                <div className="flex gap-2">
+                  <button
                   onClick={() => handleToggleRoom(room._id, room.isActive)}
-                  className={`flex-1 py-2 px-3 rounded-lg font-medium transition-colors flex items-center justify-center gap-2 ${
+                  className={`flex-1 py-2 px-3 rounded-lg text-xs sm:text-sm font-medium transition-colors flex items-center justify-center gap-1 sm:gap-2 ${
                     room.isActive
                       ? 'bg-yellow-600 text-white hover:bg-yellow-700'
                       : 'bg-green-600 text-white hover:bg-green-700'
                   }`}
                 >
-                  <Settings className="h-4 w-4" />
-                  {room.isActive ? 'Disable' : 'Enable'}
+                  <Settings className="h-3 w-3 sm:h-4 sm:w-4" />
+                  <span className="hidden sm:inline">{room.isActive ? 'Disable' : 'Enable'}</span>
+                  <span className="sm:hidden">{room.isActive ? 'Off' : 'On'}</span>
                 </button>
                 <button
                   onClick={() => handleDeleteRoom(room._id)}
-                  className="p-2 text-red-600 hover:bg-red-50 rounded-lg transition-colors"
+                  className="p-2 text-red-600 hover:bg-red-50 rounded-lg transition-colors flex-shrink-0"
                 >
-                  <Trash2 className="h-4 w-4" />
+                  <Trash2 className="h-3 w-3 sm:h-4 sm:w-4" />
                 </button>
+                </div>
               </div>
             </div>
           </div>
