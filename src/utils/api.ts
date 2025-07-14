@@ -177,6 +177,56 @@ async submitGuestRequest(hotelId: string, roomId: string, requestData: {
     console.log('Food menu data received:', data);
     return data;
   }
+
+  // Room Service Menu endpoints
+  async getRoomServiceMenu(hotelId: string) {
+    return this.request<any[]>(`/hotels/${hotelId}/room-service-menu`);
+  }
+
+  async createRoomServiceItem(hotelId: string, itemData: any) {
+    return this.request<any>(`/hotels/${hotelId}/room-service-menu`, {
+      method: 'POST',
+      body: JSON.stringify(itemData),
+    });
+  }
+
+  async updateRoomServiceItem(hotelId: string, itemId: string, data: any) {
+    return this.request<any>(`/hotels/${hotelId}/room-service-menu/${itemId}`, {
+      method: 'PUT',
+      body: JSON.stringify(data),
+    });
+  }
+
+  async deleteRoomServiceItem(hotelId: string, itemId: string) {
+    return this.request<any>(`/hotels/${hotelId}/room-service-menu/${itemId}`, {
+      method: 'DELETE',
+    });
+  }
+
+  // Complaint Menu endpoints
+  async getComplaintMenu(hotelId: string) {
+    return this.request<any[]>(`/hotels/${hotelId}/complaint-menu`);
+  }
+
+  async createComplaintItem(hotelId: string, itemData: any) {
+    return this.request<any>(`/hotels/${hotelId}/complaint-menu`, {
+      method: 'POST',
+      body: JSON.stringify(itemData),
+    });
+  }
+
+  async updateComplaintItem(hotelId: string, itemId: string, data: any) {
+    return this.request<any>(`/hotels/${hotelId}/complaint-menu/${itemId}`, {
+      method: 'PUT',
+      body: JSON.stringify(data),
+    });
+  }
+
+  async deleteComplaintItem(hotelId: string, itemId: string) {
+    return this.request<any>(`/hotels/${hotelId}/complaint-menu/${itemId}`, {
+      method: 'DELETE',
+    });
+  }
 }
 
 export const apiClient = new ApiClient(API_BASE_URL);

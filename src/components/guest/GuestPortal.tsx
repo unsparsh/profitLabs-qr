@@ -195,7 +195,27 @@ export const GuestPortal: React.FC<GuestPortalProps> = ({
       return;
     }
     setShowPhoneModal(false);
-    setSelectedService(pendingServiceType || "call-service");
+    
+    // Submit request directly after phone number entry
+    if (pendingServiceType === "custom-message") {
+      handleSubmit("custom-message", customMessage);
+    } else if (pendingServiceType === "order-food") {
+      const orderDetails = {
+        items: cart.map((item) => ({
+          itemId: item._id,
+          name: item.name,
+          price: item.price,
+          quantity: item.quantity,
+          total: item.total,
+        })),
+        totalAmount: getTotalAmount(),
+      };
+      handleSubmit("order-food", "Food order placed", orderDetails);
+    } else if (pendingServiceType === "room-service") {
+      handleSubmit("room-service", customMessage);
+    } else {
+      handleSubmit(pendingServiceType || "call-service");
+    }
   };
 
 
@@ -579,8 +599,8 @@ const handleSubmit = async (
 
         {/* Food Menu Modal */}
         {showFoodMenu && (
-          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
-            <div className="bg-white rounded-2xl w-full max-w-sm sm:max-w-2xl lg:max-w-4xl max-h-[90vh] overflow-hidden">
+          <div className="fixed inset-0 bg-black bg-opacity-50 z-50 lg:flex lg:items-center lg:justify-center lg:p-4">
+            <div className="bg-white h-full w-full lg:rounded-2xl lg:w-full lg:max-w-2xl xl:max-w-4xl lg:max-h-[90vh] overflow-hidden flex flex-col">
               <div className="p-6 border-b border-gray-200">
                 <div className="flex justify-between items-center">
                   <h3 className="text-xl font-semibold text-gray-900">
@@ -595,9 +615,9 @@ const handleSubmit = async (
                 </div>
               </div>
 
-              <div className="flex flex-col lg:flex-row h-[calc(90vh-120px)]">
+              <div className="flex flex-col lg:flex-row flex-1 min-h-0">
                 {/* Menu Items */}
-                <div className="flex-1 overflow-y-auto p-4 lg:p-6">
+                <div className="flex-1 overflow-y-auto p-4 lg:p-6 lg:min-h-0">
                   {foodItems.length === 0 ? (
                     <div className="text-center py-8">
                       <UtensilsCrossed className="h-12 w-12 text-gray-400 mx-auto mb-4" />
@@ -657,7 +677,7 @@ const handleSubmit = async (
                 </div>
 
                 {/* Cart */}
-                <div className="w-full lg:w-80 border-t lg:border-t-0 lg:border-l border-gray-200 p-4 lg:p-6 bg-gray-50">
+                <div className="w-full lg:w-80 border-t lg:border-t-0 lg:border-l border-gray-200 p-4 lg:p-6 bg-gray-50 flex-shrink-0 max-h-[40vh] lg:max-h-none overflow-y-auto lg:overflow-visible">
                   <h4 className="text-base lg:text-lg font-semibold text-gray-900 mb-4">
                     Your Order
                   </h4>
@@ -689,53 +709,6 @@ const handleSubmit = async (
                                     updateQuantity(item._id, item.quantity - 1)
                                   }
                                   className="w-5 h-5 lg:w-6 lg:h-6 bg-gray-200 rounded-full flex items-center justify-center text-xs lg:text-sm"
-                                >
-                                  -
-                                </button>
-                                <span className="text-sm font-medium min-w-[20px] text-center">
-                                  {item.quantity}
-                                </span>
-                                <button
-                                  onClick={() =>
-                                    updateQuantity(item._id, item.quantity + 1)
-                                  }
-                                  className="w-5 h-5 lg:w-6 lg:h-6 bg-gray-200 rounded-full flex items-center justify-center text-xs lg:text-sm"
-                                >
-                                  +
-                                </button>
-                              </div>
-                              <span className="text-sm lg:text-base font-bold text-orange-600">
-                                ₹{item.total}
-                              </span>
-                            </div>
-                          </div>
-                        ))}
-                      </div>
-
-                      <div className="border-t border-gray-300 pt-4">
-                        <div className="flex justify-between items-center mb-4">
-                          <span className="text-base lg:text-lg font-bold">Total</span>
-                          <span className="text-lg lg:text-xl font-bold text-orange-600">
-                            ₹{getTotalAmount()}
-                          </span>
-                        </div>
-                        <button
-                          onClick={() => {
-                            setShowFoodMenu(false);
-                            handleFoodOrderSubmit();
-                          }}
-                          className="w-full bg-orange-600 text-white py-2.5 lg:py-3 px-4 rounded-lg text-sm lg:text-base font-medium hover:bg-orange-700 transition-colors"
-                        >
-                          Place Order
-                        </button>
-                      </div>
-                    </>
-                  )}
-                </div>
-              </div>
-            </div>
-          </div>
-        )}
       </div>
     </div>
   );

@@ -142,6 +142,28 @@ const User = mongoose.model('User', userSchema);
 const Room = mongoose.model('Room', roomSchema);
 const Request = mongoose.model('Request', requestSchema);
 const FoodItem = mongoose.model('FoodItem', foodItemSchema);
+const RoomServiceItem = mongoose.model('RoomServiceItem', roomServiceItemSchema);
+const ComplaintItem = mongoose.model('ComplaintItem', complaintItemSchema);
+
+// Room Service Menu Schema
+const roomServiceItemSchema = new mongoose.Schema({
+  hotelId: { type: mongoose.Schema.Types.ObjectId, ref: 'Hotel', required: true },
+  name: { type: String, required: true },
+  description: { type: String },
+  category: { type: String, required: true },
+  estimatedTime: { type: String, required: true },
+  isAvailable: { type: Boolean, default: true },
+}, { timestamps: true });
+
+// Complaint Menu Schema
+const complaintItemSchema = new mongoose.Schema({
+  hotelId: { type: mongoose.Schema.Types.ObjectId, ref: 'Hotel', required: true },
+  name: { type: String, required: true },
+  description: { type: String },
+  category: { type: String, required: true },
+  priority: { type: String, enum: ['low', 'medium', 'high'], required: true },
+  isAvailable: { type: Boolean, default: true },
+}, { timestamps: true });
 
 // Auth middleware
 const authenticateToken = (req, res, next) => {
