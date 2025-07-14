@@ -137,13 +137,6 @@ const foodItemSchema = new mongoose.Schema({
   isAvailable: { type: Boolean, default: true },
   image: { type: String }, // URL to image
 }, { timestamps: true });
-const Hotel = mongoose.model('Hotel', hotelSchema);
-const User = mongoose.model('User', userSchema);
-const Room = mongoose.model('Room', roomSchema);
-const Request = mongoose.model('Request', requestSchema);
-const FoodItem = mongoose.model('FoodItem', foodItemSchema);
-const RoomServiceItem = mongoose.model('RoomServiceItem', roomServiceItemSchema);
-const ComplaintItem = mongoose.model('ComplaintItem', complaintItemSchema);
 
 // Room Service Menu Schema
 const roomServiceItemSchema = new mongoose.Schema({
@@ -164,6 +157,14 @@ const complaintItemSchema = new mongoose.Schema({
   priority: { type: String, enum: ['low', 'medium', 'high'], required: true },
   isAvailable: { type: Boolean, default: true },
 }, { timestamps: true });
+
+const Hotel = mongoose.model('Hotel', hotelSchema);
+const User = mongoose.model('User', userSchema);
+const Room = mongoose.model('Room', roomSchema);
+const Request = mongoose.model('Request', requestSchema);
+const FoodItem = mongoose.model('FoodItem', foodItemSchema);
+const RoomServiceItem = mongoose.model('RoomServiceItem', roomServiceItemSchema);
+const ComplaintItem = mongoose.model('ComplaintItem', complaintItemSchema);
 
 // Auth middleware
 const authenticateToken = (req, res, next) => {
@@ -723,7 +724,123 @@ app.delete('/api/hotels/:hotelId/food-menu/:itemId', authenticateToken, async (r
   }
 });
 
+// Room Service Menu Routes
+app.get('/api/hotels/:hotelId/room-service-menu', authenticateToken, async (req, res) => {
+  try {
+    const roomServiceItems = await RoomServiceItem.find({ hotelId: req.params.hotelId });
+    res.json(roomServiceItems);
+  } catch (error) {
+    res.status(500).json({ message: 'Server error' });
+  }
+});
 
+app.post('/api/hotels/:hotelId/room-service-menu', authenticateToken, async (req, res) => {
+  try {
+    const { name, description, category, estimatedTime } = req.body;
+    const { hotelId } = req.params;
+
+    const roomServiceItem = new RoomServiceItem({
+      hotelId,
+      name,
+      description,
+      category,
+      estimatedTime,
+    });
+
+    await roomServiceItem.save();
+    res.json(roomServiceItem);
+  } catch (error) {
+    console.error('Room service item creation error:', error);
+    res.status(500).json({ message: 'Server error' });
+  }
+});
+
+app.put('/api/hotels/:hotelId/room-service-menu/:itemId', authenticateToken, async (req, res) => {
+  try {
+    const roomServiceItem = await RoomServiceItem.findByIdAndUpdate(
+      req.params.itemId,
+      req.body,
+      { new: true }
+    );
+    if (!roomServiceItem) {
+      return res.status(404).json({ message: 'Room service item not found' });
+    }
+    res.json(roomServiceItem);
+  } catch (error) {
+    res.status(500).json({ message: 'Server error' });
+  }
+});
+
+app.delete('/api/hotels/:hotelId/room-service-menu/:itemId', authenticateToken, async (req, res) => {
+  try {
+    const roomServiceItem = await RoomServiceItem.findByIdAndDelete(req.params.itemId);
+    if (!roomServiceItem) {
+      return res.status(404).json({ message: 'Room service item not found' });
+    }
+    res.json({ message: 'Room service item deleted successfully' });
+  } catch (error) {
+    res.status(500).json({ message: 'Server error' });
+  }
+});
+
+// Complaint Menu Routes
+app.get('/api/hotels/:hotelId/complaint-menu', authenticateToken, async (req, res) => {
+  try {
+    const complaintItems = await ComplaintItem.find({ hotelId: req.params.hotelId });
+    res.json(complaintItems);
+  } catch (error) {
+    res.status(500).json({ message: 'Server error' });
+  }
+});
+
+app.post('/api/hotels/:hotelId/complaint-menu', authenticateToken, async (req, res) => {
+  try {
+    const { name, description, category, priority } = req.body;
+    const { hotelId } = req.params;
+
+    const complaintItem = new ComplaintItem({
+      hotelId,
+      name,
+      description,
+      category,
+      priority,
+    });
+
+    await complaintItem.save();
+    res.json(complaintItem);
+  } catch (error) {
+    console.error('Complaint item creation error:', error);
+    res.status(500).json({ message: 'Server error' });
+  }
+});
+
+app.put('/api/hotels/:hotelId/complaint-menu/:itemId', authenticateToken, async (req, res) => {
+  try {
+    const complaintItem = await ComplaintItem.findByIdAndUpdate(
+      req.params.itemId,
+      req.body,
+      { new: true }
+    );
+    if (!complaintItem) {
+      return res.status(404).json({ message: 'Complaint item not found' });
+    }
+    res.json(complaintItem);
+  } catch (error) {
+    res.status(500).json({ message: 'Server error' });
+  }
+});
+
+app.delete('/api/hotels/:hotelId/complaint-menu/:itemId', authenticateToken, async (req, res) => {
+  try {
+    const complaintItem = await ComplaintItem.findByIdAndDelete(req.params.itemId);
+    if (!complaintItem) {
+      return res.status(404).json({ message: 'Complaint item not found' });
+    }
+    res.json({ message: 'Complaint item deleted successfully' });
+  } catch (error) {
+    res.status(500).json({ message: 'Server error' });
+  }
+});
 
 const PORT = process.env.PORT || 3001;
 server.listen(PORT, () => {
