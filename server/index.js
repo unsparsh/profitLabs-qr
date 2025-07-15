@@ -662,6 +662,8 @@ app.post('/api/guest/:hotelId/:roomId/request', async (req, res) => {
    } else if (requestData.type === 'complaint' && requestData.complaintDetails) {
      const complaint = requestData.complaintDetails;
      message = `Complaint: ${complaint.complaintName}\nCategory: ${complaint.category}\nPriority: ${complaint.priority}\nDescription: ${complaint.description || 'N/A'}`;
+   } else if (requestData.type === 'custom-message' && requestData.customMessageDetails) {
+     message = requestData.customMessageDetails.message;
    } else {
      message = requestData.message || 'No additional details provided';
    }

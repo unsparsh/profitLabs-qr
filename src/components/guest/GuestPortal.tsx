@@ -163,6 +163,7 @@ export default function GuestPortal({ hotelId, roomId }: GuestPortalProps) {
         orderDetails: type === 'order-food' ? details : undefined,
         serviceDetails: type === 'room-service' ? details : undefined,
         complaintDetails: type === 'complaint' ? details : undefined,
+        customMessageDetails: type === 'custom-message' ? details : undefined,
         priority: 'medium'
       });
       
