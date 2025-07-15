@@ -638,14 +638,42 @@ app.post('/api/guest/:hotelId/:roomId/request', async (req, res) => {
 
     
     const requestData = req.body;
+   
+   // ✅ Process different request types and create proper message
+   let message = '';
+   let orderDetails = null;
+   
+   if (requestData.type === 'order-food' && requestData.orderDetails) {
+     const order = requestData.orderDetails;
+     message = `Food Order:\n${order.items.map(item => `${item.name} x${item.quantity} = ₹${item.price * item.quantity}`).join('\n')}\nTotal: ₹${order.total}`;
+     orderDetails = {
+       items: order.items.map(item => ({
+         itemId: null,
+         name: item.name,
+         price: item.price,
+         quantity: item.quantity,
+         total: item.price * item.quantity
+       })),
+       totalAmount: order.total
+     };
+   } else if (requestData.type === 'room-service' && requestData.serviceDetails) {
+     const service = requestData.serviceDetails;
+     message = `Room Service Request: ${service.serviceName}\nCategory: ${service.category}\nEstimated Time: ${service.estimatedTime}\nDescription: ${service.description || 'N/A'}`;
+   } else if (requestData.type === 'complaint' && requestData.complaintDetails) {
+     const complaint = requestData.complaintDetails;
+     message = `Complaint: ${complaint.complaintName}\nCategory: ${complaint.category}\nPriority: ${complaint.priority}\nDescription: ${complaint.description || 'N/A'}`;
+   } else {
+     message = requestData.message || 'No additional details provided';
+   }
+
    const request = new Request({
   hotelId,
   roomId: room._id,
   roomNumber: room.number,
   guestPhone: requestData.guestPhone,
   type: requestData.type,
-  message: requestData.message,
-  orderDetails: requestData.orderDetails,
+  message: message,
+  orderDetails: orderDetails,
   priority: requestData.priority || 'medium',
   status: 'pending'
 });

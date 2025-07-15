@@ -122,9 +122,10 @@ class ApiClient {
   async submitGuestRequest(hotelId: string, roomId: string, requestData: {
   type: string;
   guestPhone: string;
-  message?: string;
   priority?: 'low' | 'medium' | 'high';
   orderDetails?: any;
+  serviceDetails?: any;
+  complaintDetails?: any;
 }) {
   return this.request<any>(`/guest/${hotelId}/${roomId}/request`, {
     method: 'POST',

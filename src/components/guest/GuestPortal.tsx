@@ -160,7 +160,9 @@ export default function GuestPortal({ hotelId, roomId }: GuestPortalProps) {
       await apiClient.submitGuestRequest(hotelId, roomId, {
         type,
         guestPhone: phoneNumber.trim(),
-        message: JSON.stringify(details),
+        orderDetails: type === 'order-food' ? details : undefined,
+        serviceDetails: type === 'room-service' ? details : undefined,
+        complaintDetails: type === 'complaint' ? details : undefined,
         priority: 'medium'
       });
       
@@ -191,25 +193,27 @@ export default function GuestPortal({ hotelId, roomId }: GuestPortalProps) {
       total: getTotalPrice()
     };
     
-    submitRequest('food', orderDetails);
+    submitRequest('order-food', orderDetails);
   };
 
   const handleRoomServiceRequest = (service: RoomServiceItem) => {
-    submitRequest('room-service', {
+    const serviceDetails = {
       serviceName: service.name,
       description: service.description,
       category: service.category,
       estimatedTime: service.estimatedTime
-    });
+    };
+    submitRequest('room-service', serviceDetails);
   };
 
   const handleComplaintSubmission = (complaint: ComplaintItem) => {
-    submitRequest('complaint', {
+    const complaintDetails = {
       complaintName: complaint.name,
       description: complaint.description,
       category: complaint.category,
       priority: complaint.priority
-    });
+    };
+    submitRequest('complaint', complaintDetails);
   };
 
   const getUniqueCategories = (items: any[]) => {
