@@ -119,7 +119,7 @@ class ApiClient {
     return this.request<any>(`/guest/${hotelId}/${roomId}`);
   }
 
-async submitGuestRequest(hotelId: string, roomId: string, requestData: {
+  async submitGuestRequest(hotelId: string, roomId: string, requestData: {
   type: string;
   guestPhone: string;
   message?: string;
