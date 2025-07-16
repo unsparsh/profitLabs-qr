@@ -283,6 +283,19 @@ export default function GuestPortal({ hotelId, roomId }: GuestPortalProps) {
             </button>
 
             <button
+              onClick={() => setActiveService('custom-message')}
+              className="w-full bg-white rounded-xl shadow-lg p-6 flex items-center space-x-4 hover:shadow-xl transition-all duration-200 transform hover:scale-105"
+            >
+              <div className="bg-purple-100 p-3 rounded-full">
+                <MessageSquare className="w-6 h-6 text-purple-600" />
+              </div>
+              <div className="flex-1 text-left">
+                <h3 className="font-semibold text-gray-800">Send Message</h3>
+                <p className="text-sm text-gray-600">Send a custom message to hotel staff</p>
+              </div>
+            </button>
+
+            <button
               onClick={() => setActiveService('complaint')}
               className="w-full bg-white rounded-xl shadow-lg p-6 flex items-center space-x-4 hover:shadow-xl transition-all duration-200 transform hover:scale-105"
             >
@@ -294,6 +307,66 @@ export default function GuestPortal({ hotelId, roomId }: GuestPortalProps) {
                 <p className="text-sm text-gray-600">Report issues or concerns</p>
               </div>
             </button>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  if (activeService === 'custom-message') {
+    return (
+      <div className="min-h-screen bg-gray-50 p-4">
+        <div className="max-w-md mx-auto">
+          <div className="bg-white rounded-lg shadow-sm p-6 mb-6">
+            <div className="flex items-center justify-between mb-4">
+              <button
+                onClick={() => setActiveService(null)}
+                className="flex items-center space-x-2 text-gray-600 hover:text-gray-800"
+              >
+                <X className="w-5 h-5" />
+                <span>Back</span>
+              </button>
+              <h1 className="text-xl font-bold text-gray-800">Send Message</h1>
+              <div></div>
+            </div>
+
+            <div className="space-y-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Your Phone Number *
+                </label>
+                <input
+                  type="tel"
+                  placeholder="Enter your phone number"
+                  value={phoneNumber}
+                  onChange={(e) => setPhoneNumber(e.target.value)}
+                  className="w-full p-3 border rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+                  required
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Your Message *
+                </label>
+                <textarea
+                  placeholder="Type your message here..."
+                  value={customMessage}
+                  onChange={(e) => setCustomMessage(e.target.value)}
+                  className="w-full p-3 border rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+                  rows={6}
+                  required
+                />
+              </div>
+
+              <button
+                onClick={handleCustomMessageSubmission}
+                disabled={loading || !phoneNumber.trim() || !customMessage.trim()}
+                className="w-full bg-purple-500 text-white py-3 rounded-lg font-semibold hover:bg-purple-600 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                {loading ? 'Sending Message...' : 'Send Message'}
+              </button>
+            </div>
           </div>
         </div>
       </div>
