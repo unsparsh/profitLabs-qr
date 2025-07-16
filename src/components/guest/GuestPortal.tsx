@@ -50,6 +50,7 @@ export default function GuestPortal({ hotelId, roomId }: GuestPortalProps) {
   const [cart, setCart] = useState<CartItem[]>([]);
   const [loading, setLoading] = useState(false);
   const [selectedCategory, setSelectedCategory] = useState('All');
+  const [customMessage, setCustomMessage] = useState('');
 
   useEffect(() => {
     fetchGuestPortalData();
@@ -170,6 +171,7 @@ export default function GuestPortal({ hotelId, roomId }: GuestPortalProps) {
       toast.success('Request submitted successfully!');
       setActiveService(null);
       setPhoneNumber('');
+      setCustomMessage('');
       setCart([]);
     } catch (error) {
       console.error('Failed to submit request:', error);
@@ -215,6 +217,18 @@ export default function GuestPortal({ hotelId, roomId }: GuestPortalProps) {
       priority: complaint.priority
     };
     submitRequest('complaint', complaintDetails);
+  };
+
+  const handleCustomMessageSubmission = () => {
+    if (!customMessage.trim()) {
+      toast.error('Please enter a message');
+      return;
+    }
+    
+    const customMessageDetails = {
+      message: customMessage.trim()
+    };
+    submitRequest('custom-message', customMessageDetails);
   };
 
   const getUniqueCategories = (items: any[]) => {
