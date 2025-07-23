@@ -1,17 +1,30 @@
 import React, { useState, useEffect } from 'react';
-import { Bot, MessageSquare, FileText, Send, Loader, Star, Calendar, User, Edit3, Save, X, Plus, Trash2 } from 'lucide-react';
+import { Bot, MessageSquare, FileText, Send, Loader, Star, Calendar, User, Edit3, Save, X, Plus, Trash2, LogIn } from 'lucide-react';
 import { apiClient } from '../../utils/api';
 import toast from 'react-hot-toast';
 
 interface Review {
-  _id: string;
   reviewId: string;
-  customerName: string;
-  rating: number;
-  reviewText: string;
-  date: string;
-  replied: boolean;
-  replyText?: string;
+  reviewer: {
+    displayName: string;
+    profilePhotoUrl?: string;
+  };
+  starRating: 'ONE' | 'TWO' | 'THREE' | 'FOUR' | 'FIVE';
+  comment: string;
+  createTime: string;
+  updateTime: string;
+  reviewReply?: {
+    comment: string;
+    updateTime: string;
+  };
+}
+
+interface GoogleAccount {
+  name: string;
+  email: string;
+  picture: string;
+  businessName: string;
+  businessId: string;
 }
 
 interface Template {
@@ -27,6 +40,7 @@ interface AIAssistantPanelProps {
 
 export const AIAssistantPanel: React.FC<AIAssistantPanelProps> = ({ hotelId }) => {
   const [activeTab, setActiveTab] = useState<'reviews' | 'templates'>('reviews');
+  const [googleAccount, setGoogleAccount] = useState<GoogleAccount | null>(null);
   const [reviews, setReviews] = useState<Review[]>([]);
   const [templates, setTemplates] = useState<Template[]>([]);
   const [selectedReview, setSelectedReview] = useState<Review | null>(null);
@@ -35,6 +49,7 @@ export const AIAssistantPanel: React.FC<AIAssistantPanelProps> = ({ hotelId }) =
   const [finalReply, setFinalReply] = useState<string>('');
   const [isGenerating, setIsGenerating] = useState(false);
   const [isSending, setIsSending] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
   const [isAddingTemplate, setIsAddingTemplate] = useState(false);
   const [editingTemplate, setEditingTemplate] = useState<Template | null>(null);
   const [newTemplate, setNewTemplate] = useState({
@@ -44,106 +59,112 @@ export const AIAssistantPanel: React.FC<AIAssistantPanelProps> = ({ hotelId }) =
   });
 
   useEffect(() => {
-    fetchReviews();
+    checkGoogleAuth();
     fetchTemplates();
   }, [hotelId]);
 
-  const fetchReviews = async () => {
+  useEffect(() => {
+    if (googleAccount) {
+      fetchGoogleReviews();
+    }
+  }, [googleAccount]);
+
+  const checkGoogleAuth = async () => {
     try {
-      // Mock data for now - replace with actual Google Business API
-      const mockReviews: Review[] = [
-        {
-          _id: '1',
-          reviewId: 'google_123',
-          customerName: 'John Smith',
-          rating: 5,
-          reviewText: 'Amazing stay! The staff was incredibly helpful and the room was spotless. Will definitely come back!',
-          date: '2024-01-15',
-          replied: false
-        },
-        {
-          _id: '2',
-          reviewId: 'google_124',
-          customerName: 'Sarah Johnson',
-          rating: 4,
-          reviewText: 'Great hotel with excellent service. The breakfast was delicious. Only minor issue was the WiFi speed.',
-          date: '2024-01-14',
-          replied: false
-        },
-        {
-          _id: '3',
-          reviewId: 'google_125',
-          customerName: 'Mike Wilson',
-          rating: 2,
-          reviewText: 'Room was not clean when we arrived. Had to wait 30 minutes for housekeeping. Not impressed.',
-          date: '2024-01-13',
-          replied: true,
-          replyText: 'Thank you for your feedback. We sincerely apologize for the inconvenience...'
-        }
-      ];
-      setReviews(mockReviews);
+      const authStatus = await apiClient.request(`/google-auth/status/${hotelId}`, {
+        method: 'GET'
+      });
+      if (authStatus.authenticated) {
+        setGoogleAccount(authStatus.account);
+      }
     } catch (error) {
-      toast.error('Failed to fetch reviews');
+      console.log('Not authenticated with Google');
+    }
+  };
+
+  const handleGoogleSignIn = async () => {
+    try {
+      setIsLoading(true);
+      // Get Google OAuth URL from backend
+      const authUrl = await apiClient.request(`/google-auth/url/${hotelId}`, {
+        method: 'GET'
+      });
+      
+      // Open Google OAuth in popup
+      const popup = window.open(
+        authUrl.url,
+        'google-auth',
+        'width=500,height=600,scrollbars=yes,resizable=yes'
+      );
+
+      // Listen for auth completion
+      const checkClosed = setInterval(() => {
+        if (popup?.closed) {
+          clearInterval(checkClosed);
+          checkGoogleAuth(); // Recheck auth status
+        }
+      }, 1000);
+
+    } catch (error) {
+      toast.error('Failed to initiate Google sign-in');
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const fetchGoogleReviews = async () => {
+    if (!googleAccount) return;
+    
+    try {
+      setIsLoading(true);
+      const reviewsData = await apiClient.request(`/google-reviews/${hotelId}`, {
+        method: 'GET'
+      });
+      setReviews(reviewsData.reviews || []);
+    } catch (error) {
+      toast.error('Failed to fetch Google reviews');
+    } finally {
+      setIsLoading(false);
     }
   };
 
   const fetchTemplates = async () => {
     try {
-      // Mock templates for now
-      const mockTemplates: Template[] = [
-        {
-          _id: '1',
-          name: 'Positive Review Response',
-          content: 'Thank you so much for your wonderful review, {customerName}! We\'re thrilled to hear about your positive experience. {ai_content} We look forward to welcoming you back soon!',
-          tone: 'friendly'
-        },
-        {
-          _id: '2',
-          name: 'Negative Review Apology',
-          content: 'Dear {customerName}, we sincerely apologize for the issues you experienced during your stay. {ai_content} We would love the opportunity to make this right. Please contact us directly.',
-          tone: 'apologetic'
-        },
-        {
-          _id: '3',
-          name: 'Professional Standard',
-          content: 'Thank you for taking the time to review our hotel, {customerName}. {ai_content} We appreciate your feedback and look forward to serving you again.',
-          tone: 'professional'
-        }
-      ];
-      setTemplates(mockTemplates);
+      const templatesData = await apiClient.request(`/templates/${hotelId}`, {
+        method: 'GET'
+      });
+      setTemplates(templatesData);
     } catch (error) {
-      toast.error('Failed to fetch templates');
+      console.error('Failed to fetch templates');
     }
   };
 
   const generateAIReply = async (review: Review, tone: string = 'professional') => {
     setIsGenerating(true);
     try {
-      // Mock AI generation for now - replace with actual OpenAI API call
-      await new Promise(resolve => setTimeout(resolve, 2000)); // Simulate API delay
+      const response = await apiClient.request('/generate-reply', {
+        method: 'POST',
+        body: JSON.stringify({
+          reviewText: review.comment,
+          rating: getNumericRating(review.starRating),
+          customerName: review.reviewer.displayName,
+          tone: tone
+        })
+      });
       
-      const aiResponses = {
-        5: "Your kind words about our staff and cleanliness standards truly make our day. We're delighted that we exceeded your expectations.",
-        4: "We're pleased you enjoyed your stay with us. Thank you for noting our excellent service and delicious breakfast. We'll work on improving our WiFi connectivity.",
-        3: "We appreciate your balanced feedback and are glad you found some aspects of your stay satisfactory. We'll continue working to improve all areas of our service.",
-        2: "We deeply regret that your experience didn't meet our usual standards. Your feedback about room cleanliness and wait times is invaluable for our improvement.",
-        1: "We are truly sorry that we failed to provide the quality experience you deserved. This is not reflective of our standards and we take full responsibility."
-      };
-      
-      const generatedReply = aiResponses[review.rating as keyof typeof aiResponses] || "Thank you for your feedback. We value all guest experiences and continuously strive to improve our services.";
-      setAiReply(generatedReply);
+      setAiReply(response.aiReply);
       
       // If template is selected, merge with AI content
       if (selectedTemplate) {
         const template = templates.find(t => t._id === selectedTemplate);
         if (template) {
           const mergedReply = template.content
-            .replace('{customerName}', review.customerName)
-            .replace('{ai_content}', generatedReply);
+            .replace('{customerName}', review.reviewer.displayName)
+            .replace('{ai_content}', response.aiReply);
           setFinalReply(mergedReply);
         }
       } else {
-        setFinalReply(generatedReply);
+        setFinalReply(response.aiReply);
       }
       
       toast.success('AI reply generated successfully!');
@@ -162,13 +183,24 @@ export const AIAssistantPanel: React.FC<AIAssistantPanelProps> = ({ hotelId }) =
 
     setIsSending(true);
     try {
-      // Mock sending to Google - replace with actual Google Business API
-      await new Promise(resolve => setTimeout(resolve, 1500));
+      await apiClient.request(`/send-reply/${hotelId}`, {
+        method: 'POST',
+        body: JSON.stringify({
+          reviewId: selectedReview.reviewId,
+          replyText: finalReply
+        })
+      });
       
-      // Update review as replied
+      // Update review as replied locally
       setReviews(prev => prev.map(review => 
-        review._id === selectedReview._id 
-          ? { ...review, replied: true, replyText: finalReply }
+        review.reviewId === selectedReview.reviewId 
+          ? { 
+              ...review, 
+              reviewReply: { 
+                comment: finalReply, 
+                updateTime: new Date().toISOString() 
+              } 
+            }
           : review
       ));
       
@@ -191,7 +223,7 @@ export const AIAssistantPanel: React.FC<AIAssistantPanelProps> = ({ hotelId }) =
       const template = templates.find(t => t._id === templateId);
       if (template) {
         const mergedReply = template.content
-          .replace('{customerName}', selectedReview.customerName)
+          .replace('{customerName}', selectedReview.reviewer.displayName)
           .replace('{ai_content}', aiReply);
         setFinalReply(mergedReply);
       }
@@ -206,10 +238,10 @@ export const AIAssistantPanel: React.FC<AIAssistantPanelProps> = ({ hotelId }) =
     }
 
     try {
-      const template: Template = {
-        _id: Date.now().toString(),
-        ...newTemplate
-      };
+      const template = await apiClient.request(`/templates/${hotelId}`, {
+        method: 'POST',
+        body: JSON.stringify(newTemplate)
+      });
       setTemplates(prev => [...prev, template]);
       setNewTemplate({ name: '', content: '', tone: 'professional' });
       setIsAddingTemplate(false);
@@ -224,8 +256,12 @@ export const AIAssistantPanel: React.FC<AIAssistantPanelProps> = ({ hotelId }) =
     if (!editingTemplate) return;
 
     try {
+      const updatedTemplate = await apiClient.request(`/templates/${hotelId}/${editingTemplate._id}`, {
+        method: 'PUT',
+        body: JSON.stringify(editingTemplate)
+      });
       setTemplates(prev => prev.map(t => 
-        t._id === editingTemplate._id ? editingTemplate : t
+        t._id === editingTemplate._id ? updatedTemplate : t
       ));
       setEditingTemplate(null);
       toast.success('Template updated successfully');
@@ -238,6 +274,9 @@ export const AIAssistantPanel: React.FC<AIAssistantPanelProps> = ({ hotelId }) =
     if (!confirm('Are you sure you want to delete this template?')) return;
 
     try {
+      await apiClient.request(`/templates/${hotelId}/${templateId}`, {
+        method: 'DELETE'
+      });
       setTemplates(prev => prev.filter(t => t._id !== templateId));
       toast.success('Template deleted successfully');
     } catch (error) {
@@ -245,7 +284,13 @@ export const AIAssistantPanel: React.FC<AIAssistantPanelProps> = ({ hotelId }) =
     }
   };
 
-  const getRatingStars = (rating: number) => {
+  const getNumericRating = (starRating: string): number => {
+    const ratingMap = { 'ONE': 1, 'TWO': 2, 'THREE': 3, 'FOUR': 4, 'FIVE': 5 };
+    return ratingMap[starRating as keyof typeof ratingMap] || 3;
+  };
+
+  const getRatingStars = (starRating: string) => {
+    const rating = getNumericRating(starRating);
     return Array.from({ length: 5 }, (_, i) => (
       <Star
         key={i}
@@ -254,20 +299,105 @@ export const AIAssistantPanel: React.FC<AIAssistantPanelProps> = ({ hotelId }) =
     ));
   };
 
-  const getRatingColor = (rating: number) => {
+  const getRatingColor = (starRating: string) => {
+    const rating = getNumericRating(starRating);
     if (rating >= 4) return 'text-green-600 bg-green-50';
     if (rating >= 3) return 'text-yellow-600 bg-yellow-50';
     return 'text-red-600 bg-red-50';
   };
 
+  const formatDate = (dateString: string) => {
+    return new Date(dateString).toLocaleDateString('en-US', {
+      year: 'numeric',
+      month: 'short',
+      day: 'numeric'
+    });
+  };
+
+  // If not authenticated with Google, show sign-in screen
+  if (!googleAccount) {
+    return (
+      <div className="space-y-6">
+        {/* Header */}
+        <div className="flex items-center gap-3">
+          <Bot className="h-8 w-8 text-purple-600" />
+          <div>
+            <h2 className="text-2xl font-bold text-gray-900">AI Review Assistant</h2>
+            <p className="text-gray-600">Connect with Google My Business to manage reviews</p>
+          </div>
+        </div>
+
+        {/* Google Sign-In Card */}
+        <div className="max-w-md mx-auto">
+          <div className="bg-white rounded-2xl shadow-lg p-8 text-center">
+            <div className="w-20 h-20 bg-purple-100 rounded-full flex items-center justify-center mx-auto mb-6">
+              <Bot className="w-10 h-10 text-purple-600" />
+            </div>
+            
+            <h3 className="text-xl font-bold text-gray-900 mb-3">
+              Connect Google My Business
+            </h3>
+            <p className="text-gray-600 mb-6">
+              Sign in with Google to access your business reviews and start using AI-powered reply assistance.
+            </p>
+
+            <button
+              onClick={handleGoogleSignIn}
+              disabled={isLoading}
+              className="w-full bg-white border-2 border-gray-300 text-gray-700 py-3 px-6 rounded-xl font-semibold hover:border-gray-400 hover:shadow-md transition-all duration-200 flex items-center justify-center gap-3 disabled:opacity-50"
+            >
+              {isLoading ? (
+                <>
+                  <Loader className="h-5 w-5 animate-spin" />
+                  Connecting...
+                </>
+              ) : (
+                <>
+                  <svg className="w-5 h-5" viewBox="0 0 24 24">
+                    <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
+                    <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/>
+                    <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"/>
+                    <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/>
+                  </svg>
+                  Sign in with Google
+                </>
+              )}
+            </button>
+
+            <div className="mt-6 p-4 bg-blue-50 rounded-lg">
+              <p className="text-sm text-blue-800">
+                <strong>Powered by OpenAI GPT-4</strong><br/>
+                Generate professional, SEO-optimized replies to customer reviews automatically.
+              </p>
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="space-y-6">
-      {/* Header */}
-      <div className="flex items-center gap-3">
-        <Bot className="h-8 w-8 text-purple-600" />
-        <div>
-          <h2 className="text-2xl font-bold text-gray-900">AI Review Assistant</h2>
-          <p className="text-gray-600">Manage Google reviews with AI-powered responses</p>
+      {/* Header with Google Account Info */}
+      <div className="flex items-center justify-between">
+        <div className="flex items-center gap-3">
+          <Bot className="h-8 w-8 text-purple-600" />
+          <div>
+            <h2 className="text-2xl font-bold text-gray-900">AI Review Assistant</h2>
+            <p className="text-gray-600">Manage Google reviews with AI-powered responses</p>
+          </div>
+        </div>
+        
+        <div className="flex items-center gap-3 bg-white rounded-lg p-3 shadow-sm">
+          <img 
+            src={googleAccount.picture} 
+            alt={googleAccount.name}
+            className="w-8 h-8 rounded-full"
+          />
+          <div className="text-sm">
+            <p className="font-medium text-gray-900">{googleAccount.businessName}</p>
+            <p className="text-gray-500">{googleAccount.email}</p>
+          </div>
         </div>
       </div>
 
@@ -283,7 +413,7 @@ export const AIAssistantPanel: React.FC<AIAssistantPanelProps> = ({ hotelId }) =
             }`}
           >
             <MessageSquare className="h-4 w-4 inline mr-2" />
-            Reply to Reviews
+            Reply to Reviews ({reviews.length})
           </button>
           <button
             onClick={() => setActiveTab('templates')}
@@ -294,7 +424,7 @@ export const AIAssistantPanel: React.FC<AIAssistantPanelProps> = ({ hotelId }) =
             }`}
           >
             <FileText className="h-4 w-4 inline mr-2" />
-            Manage Templates
+            Manage Templates ({templates.length})
           </button>
         </nav>
       </div>
@@ -304,44 +434,71 @@ export const AIAssistantPanel: React.FC<AIAssistantPanelProps> = ({ hotelId }) =
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
           {/* Reviews List */}
           <div className="bg-white rounded-lg shadow-sm">
-            <div className="p-6 border-b border-gray-200">
-              <h3 className="text-lg font-medium text-gray-900">Recent Google Reviews</h3>
+            <div className="p-6 border-b border-gray-200 flex items-center justify-between">
+              <h3 className="text-lg font-medium text-gray-900">Google My Business Reviews</h3>
+              <button
+                onClick={fetchGoogleReviews}
+                disabled={isLoading}
+                className="text-sm text-purple-600 hover:text-purple-700 font-medium"
+              >
+                {isLoading ? 'Refreshing...' : 'Refresh'}
+              </button>
             </div>
             <div className="divide-y divide-gray-200 max-h-96 overflow-y-auto">
-              {reviews.map((review) => (
-                <div
-                  key={review._id}
-                  onClick={() => setSelectedReview(review)}
-                  className={`p-4 cursor-pointer hover:bg-gray-50 transition-colors ${
-                    selectedReview?._id === review._id ? 'bg-purple-50 border-l-4 border-purple-500' : ''
-                  }`}
-                >
-                  <div className="flex items-start justify-between mb-2">
-                    <div className="flex items-center space-x-2">
-                      <User className="h-4 w-4 text-gray-400" />
-                      <span className="font-medium text-gray-900">{review.customerName}</span>
-                      {review.replied && (
-                        <span className="px-2 py-1 bg-green-100 text-green-800 text-xs rounded-full">
-                          Replied
-                        </span>
-                      )}
-                    </div>
-                    <div className="flex items-center space-x-1">
-                      {getRatingStars(review.rating)}
-                    </div>
-                  </div>
-                  <p className="text-sm text-gray-600 line-clamp-2 mb-2">{review.reviewText}</p>
-                  <div className="flex items-center justify-between">
-                    <span className="text-xs text-gray-500 flex items-center">
-                      <Calendar className="h-3 w-3 mr-1" />
-                      {new Date(review.date).toLocaleDateString()}
-                    </span>
-                    <span className={`px-2 py-1 rounded-full text-xs font-medium ${getRatingColor(review.rating)}`}>
-                      {review.rating}/5
-                    </span>
-                  </div>
+              {isLoading ? (
+                <div className="p-8 text-center">
+                  <Loader className="h-8 w-8 animate-spin text-purple-600 mx-auto mb-2" />
+                  <p className="text-gray-500">Loading reviews...</p>
                 </div>
-              ))}
+              ) : reviews.length === 0 ? (
+                <div className="p-8 text-center">
+                  <MessageSquare className="h-12 w-12 text-gray-400 mx-auto mb-4" />
+                  <p className="text-gray-500">No reviews found</p>
+                </div>
+              ) : (
+                reviews.map((review) => (
+                  <div
+                    key={review.reviewId}
+                    onClick={() => setSelectedReview(review)}
+                    className={`p-4 cursor-pointer hover:bg-gray-50 transition-colors ${
+                      selectedReview?.reviewId === review.reviewId ? 'bg-purple-50 border-l-4 border-purple-500' : ''
+                    }`}
+                  >
+                    <div className="flex items-start justify-between mb-2">
+                      <div className="flex items-center space-x-2">
+                        {review.reviewer.profilePhotoUrl ? (
+                          <img 
+                            src={review.reviewer.profilePhotoUrl} 
+                            alt={review.reviewer.displayName}
+                            className="w-6 h-6 rounded-full"
+                          />
+                        ) : (
+                          <User className="h-4 w-4 text-gray-400" />
+                        )}
+                        <span className="font-medium text-gray-900">{review.reviewer.displayName}</span>
+                        {review.reviewReply && (
+                          <span className="px-2 py-1 bg-green-100 text-green-800 text-xs rounded-full">
+                            Replied
+                          </span>
+                        )}
+                      </div>
+                      <div className="flex items-center space-x-1">
+                        {getRatingStars(review.starRating)}
+                      </div>
+                    </div>
+                    <p className="text-sm text-gray-600 line-clamp-2 mb-2">{review.comment}</p>
+                    <div className="flex items-center justify-between">
+                      <span className="text-xs text-gray-500 flex items-center">
+                        <Calendar className="h-3 w-3 mr-1" />
+                        {formatDate(review.createTime)}
+                      </span>
+                      <span className={`px-2 py-1 rounded-full text-xs font-medium ${getRatingColor(review.starRating)}`}>
+                        {getNumericRating(review.starRating)}/5
+                      </span>
+                    </div>
+                  </div>
+                ))
+              )}
             </div>
           </div>
 
@@ -349,6 +506,7 @@ export const AIAssistantPanel: React.FC<AIAssistantPanelProps> = ({ hotelId }) =
           <div className="bg-white rounded-lg shadow-sm">
             <div className="p-6 border-b border-gray-200">
               <h3 className="text-lg font-medium text-gray-900">AI Reply Assistant</h3>
+              <p className="text-sm text-gray-500 mt-1">Powered by OpenAI GPT-4</p>
             </div>
             <div className="p-6 space-y-4">
               {selectedReview ? (
@@ -356,12 +514,13 @@ export const AIAssistantPanel: React.FC<AIAssistantPanelProps> = ({ hotelId }) =
                   {/* Selected Review */}
                   <div className="bg-gray-50 rounded-lg p-4">
                     <div className="flex items-center justify-between mb-2">
-                      <span className="font-medium text-gray-900">{selectedReview.customerName}</span>
+                      <span className="font-medium text-gray-900">{selectedReview.reviewer.displayName}</span>
                       <div className="flex items-center space-x-1">
-                        {getRatingStars(selectedReview.rating)}
+                        {getRatingStars(selectedReview.starRating)}
                       </div>
                     </div>
-                    <p className="text-sm text-gray-600">{selectedReview.reviewText}</p>
+                    <p className="text-sm text-gray-600">{selectedReview.comment}</p>
+                    <p className="text-xs text-gray-500 mt-2">{formatDate(selectedReview.createTime)}</p>
                   </div>
 
                   {/* Template Selection */}
@@ -386,7 +545,7 @@ export const AIAssistantPanel: React.FC<AIAssistantPanelProps> = ({ hotelId }) =
                   {/* Generate AI Reply */}
                   <button
                     onClick={() => generateAIReply(selectedReview, templates.find(t => t._id === selectedTemplate)?.tone)}
-                    disabled={isGenerating}
+                    disabled={isGenerating || !!selectedReview.reviewReply}
                     className="w-full bg-purple-600 text-white py-2 px-4 rounded-lg font-medium hover:bg-purple-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors flex items-center justify-center gap-2"
                   >
                     {isGenerating ? (
@@ -394,10 +553,12 @@ export const AIAssistantPanel: React.FC<AIAssistantPanelProps> = ({ hotelId }) =
                         <Loader className="h-4 w-4 animate-spin" />
                         Generating AI Reply...
                       </>
+                    ) : selectedReview.reviewReply ? (
+                      'Already Replied'
                     ) : (
                       <>
                         <Bot className="h-4 w-4" />
-                        Generate AI Reply
+                        Generate AI Reply with GPT-4
                       </>
                     )}
                   </button>
@@ -419,10 +580,10 @@ export const AIAssistantPanel: React.FC<AIAssistantPanelProps> = ({ hotelId }) =
                   )}
 
                   {/* Send Reply */}
-                  {finalReply && (
+                  {finalReply && !selectedReview.reviewReply && (
                     <button
                       onClick={sendReplyToGoogle}
-                      disabled={isSending || selectedReview.replied}
+                      disabled={isSending}
                       className="w-full bg-green-600 text-white py-2 px-4 rounded-lg font-medium hover:bg-green-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors flex items-center justify-center gap-2"
                     >
                       {isSending ? (
@@ -433,10 +594,21 @@ export const AIAssistantPanel: React.FC<AIAssistantPanelProps> = ({ hotelId }) =
                       ) : (
                         <>
                           <Send className="h-4 w-4" />
-                          Send Reply to Google
+                          Send Reply to Google My Business
                         </>
                       )}
                     </button>
+                  )}
+
+                  {/* Existing Reply */}
+                  {selectedReview.reviewReply && (
+                    <div className="bg-green-50 rounded-lg p-4">
+                      <h4 className="font-medium text-green-800 mb-2">Your Reply:</h4>
+                      <p className="text-sm text-green-700">{selectedReview.reviewReply.comment}</p>
+                      <p className="text-xs text-green-600 mt-2">
+                        Replied on {formatDate(selectedReview.reviewReply.updateTime)}
+                      </p>
+                    </div>
                   )}
                 </>
               ) : (

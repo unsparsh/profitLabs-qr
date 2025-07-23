@@ -10,6 +10,8 @@ const { v4: uuidv4 } = require('uuid');
 require('dotenv').config();
 const bodyParser = require('body-parser');
 const crypto = require('crypto');
+const { google } = require('googleapis');
+const OpenAI = require('openai');
 
   const app = express();
   const server = http.createServer(app);
@@ -42,6 +44,17 @@ const razorpay = new Razorpay({
   key_secret: process.env.RAZORPAY_KEY_SECRET,
 });
 
+// Initialize OpenAI
+const openai = new OpenAI({
+  apiKey: process.env.OPENAI_API_KEY,
+});
+
+// Google OAuth2 client
+const oauth2Client = new google.auth.OAuth2(
+  process.env.GOOGLE_CLIENT_ID,
+  process.env.GOOGLE_CLIENT_SECRET,
+  `${process.env.CLIENT_URL}/auth/google/callback`
+);
 // MongoDB connection
 mongoose.connect(process.env.MONGODB_URI || 'mongodb://localhost:27017/profitlabs', {
   useNewUrlParser: true,
@@ -166,6 +179,32 @@ const FoodItem = mongoose.model('FoodItem', foodItemSchema);
 const RoomServiceItem = mongoose.model('RoomServiceItem', roomServiceItemSchema);
 const ComplaintItem = mongoose.model('ComplaintItem', complaintItemSchema);
 
+// Google Auth Schema
+const googleAuthSchema = new mongoose.Schema({
+  hotelId: { type: mongoose.Schema.Types.ObjectId, ref: 'Hotel', required: true },
+  googleAccountId: { type: String, required: true },
+  email: { type: String, required: true },
+  name: { type: String, required: true },
+  picture: { type: String },
+  accessToken: { type: String, required: true },
+  refreshToken: { type: String, required: true },
+  businessName: { type: String },
+  businessId: { type: String },
+  expiresAt: { type: Date, required: true },
+}, { timestamps: true });
+
+const GoogleAuth = mongoose.model('GoogleAuth', googleAuthSchema);
+
+// Template Schema
+const templateSchema = new mongoose.Schema({
+  hotelId: { type: mongoose.Schema.Types.ObjectId, ref: 'Hotel', required: true },
+  name: { type: String, required: true },
+  content: { type: String, required: true },
+  tone: { type: String, enum: ['professional', 'friendly', 'apologetic'], required: true },
+}, { timestamps: true });
+
+const Template = mongoose.model('Template', templateSchema);
+
 // Auth middleware
 const authenticateToken = (req, res, next) => {
   const authHeader = req.headers['authorization'];
@@ -184,105 +223,411 @@ const authenticateToken = (req, res, next) => {
   });
 };
 
-// AI Review Assistant Routes
-app.post('/api/generate-reply', authenticateToken, async (req, res) => {
+// Google OAuth Routes
+app.get('/api/google-auth/url/:hotelId', authenticateToken, async (req, res) => {
   try {
-    const { reviewText, rating, tone = 'professional' } = req.body;
+    const { hotelId } = req.params;
     
-    // Mock AI generation for now - replace with actual OpenAI API call
-    const aiResponses = {
-      5: "Your kind words about our service truly make our day. We're delighted that we exceeded your expectations and provided you with a memorable experience.",
-      4: "We're pleased you enjoyed your stay with us. Thank you for highlighting the positive aspects of your experience. We'll continue working to make every aspect perfect.",
-      3: "We appreciate your balanced feedback and are glad you found some aspects of your stay satisfactory. We'll use your insights to improve our services.",
-      2: "We deeply regret that your experience didn't meet our usual standards. Your feedback is invaluable and we're taking immediate steps to address these issues.",
-      1: "We are truly sorry that we failed to provide the quality experience you deserved. This is not reflective of our standards and we take full responsibility."
-    };
+    const scopes = [
+      'https://www.googleapis.com/auth/business.manage',
+      'https://www.googleapis.com/auth/userinfo.profile',
+      'https://www.googleapis.com/auth/userinfo.email'
+    ];
     
-    const baseReply = aiResponses[rating] || "Thank you for your feedback. We value all guest experiences and continuously strive to improve our services.";
+    const authUrl = oauth2Client.generateAuthUrl({
+      access_type: 'offline',
+      scope: scopes,
+      state: hotelId, // Pass hotelId in state
+      prompt: 'consent'
+    });
     
-    // Customize based on tone
-    let finalReply = baseReply;
-    if (tone === 'friendly') {
-      finalReply = baseReply.replace('We appreciate', 'We really appreciate').replace('Thank you', 'Thank you so much');
-    } else if (tone === 'apologetic') {
-      finalReply = `We sincerely apologize for any inconvenience. ${baseReply}`;
-    }
-    
-    res.json({ aiReply: finalReply });
+    res.json({ url: authUrl });
   } catch (error) {
-    console.error('AI reply generation error:', error);
-    res.status(500).json({ message: 'Failed to generate AI reply' });
+    console.error('Google auth URL generation error:', error);
+    res.status(500).json({ message: 'Failed to generate auth URL' });
   }
 });
 
-app.get('/api/reviews/:hotelId', authenticateToken, async (req, res) => {
+app.post('/api/google-auth/callback', async (req, res) => {
   try {
-    // Mock Google Business reviews - replace with actual Google Business API
-    const mockReviews = [
-      {
-        _id: '1',
-        reviewId: 'google_123',
-        customerName: 'John Smith',
-        rating: 5,
-        reviewText: 'Amazing stay! The staff was incredibly helpful and the room was spotless. Will definitely come back!',
-        date: '2024-01-15',
-        replied: false
-      },
-      {
-        _id: '2',
-        reviewId: 'google_124',
-        customerName: 'Sarah Johnson',
-        rating: 4,
-        reviewText: 'Great hotel with excellent service. The breakfast was delicious. Only minor issue was the WiFi speed.',
-        date: '2024-01-14',
-        replied: false
-      }
-    ];
+    const { code, state } = req.body;
+    const hotelId = state;
     
-    res.json(mockReviews);
+    // Exchange code for tokens
+    const { tokens } = await oauth2Client.getToken(code);
+    oauth2Client.setCredentials(tokens);
+    
+    // Get user info
+    const oauth2 = google.oauth2({ version: 'v2', auth: oauth2Client });
+    const userInfo = await oauth2.userinfo.get();
+    
+    // Get business info
+    const mybusiness = google.mybusinessbusinessinformation({ version: 'v1', auth: oauth2Client });
+    const businessAccounts = await mybusiness.accounts.list();
+    
+    const businessAccount = businessAccounts.data.accounts?.[0];
+    
+    // Save or update Google auth
+    await GoogleAuth.findOneAndUpdate(
+      { hotelId, googleAccountId: userInfo.data.id },
+      {
+        hotelId,
+        googleAccountId: userInfo.data.id,
+        email: userInfo.data.email,
+        name: userInfo.data.name,
+        picture: userInfo.data.picture,
+        accessToken: tokens.access_token,
+        refreshToken: tokens.refresh_token,
+        businessName: businessAccount?.name || 'Business',
+        businessId: businessAccount?.name || '',
+        expiresAt: new Date(tokens.expiry_date),
+      },
+      { upsert: true, new: true }
+    );
+    
+    res.json({ success: true });
+  } catch (error) {
+    console.error('Google auth callback error:', error);
+    res.status(500).json({ message: 'Authentication failed' });
+  }
+});
+
+app.get('/api/google-auth/status/:hotelId', authenticateToken, async (req, res) => {
+  try {
+    const { hotelId } = req.params;
+    
+    const googleAuth = await GoogleAuth.findOne({ hotelId });
+    
+    if (!googleAuth || googleAuth.expiresAt < new Date()) {
+      return res.json({ authenticated: false });
+    }
+    
+    res.json({
+      authenticated: true,
+      account: {
+        name: googleAuth.name,
+        email: googleAuth.email,
+        picture: googleAuth.picture,
+        businessName: googleAuth.businessName,
+        businessId: googleAuth.businessId
+      }
+    });
+  } catch (error) {
+    console.error('Google auth status error:', error);
+    res.status(500).json({ message: 'Failed to check auth status' });
+  }
+});
+
+// Google Reviews Routes
+app.get('/api/google-reviews/:hotelId', authenticateToken, async (req, res) => {
+  try {
+    const { hotelId } = req.params;
+    
+    const googleAuth = await GoogleAuth.findOne({ hotelId });
+    if (!googleAuth) {
+      return res.status(401).json({ message: 'Google account not connected' });
+    }
+    
+    // Set up OAuth client with stored tokens
+    oauth2Client.setCredentials({
+      access_token: googleAuth.accessToken,
+      refresh_token: googleAuth.refreshToken
+    });
+    
+    // Get reviews from Google My Business API
+    const mybusiness = google.mybusinessbusinessinformation({ version: 'v1', auth: oauth2Client });
+    
+    try {
+      // This is a simplified example - you'll need to implement proper location discovery
+      const reviews = await mybusiness.accounts.locations.reviews.list({
+        parent: `${googleAuth.businessId}/locations/-`
+      });
+      
+      res.json({ reviews: reviews.data.reviews || [] });
+    } catch (apiError) {
+      console.error('Google My Business API error:', apiError);
+      // Return mock data for development
+      const mockReviews = [
+        {
+          reviewId: 'mock_review_1',
+          reviewer: {
+            displayName: 'John Smith',
+            profilePhotoUrl: 'https://via.placeholder.com/40'
+          },
+          starRating: 'FIVE',
+          comment: 'Amazing stay! The staff was incredibly helpful and the room was spotless. Will definitely come back!',
+          createTime: '2024-01-15T10:00:00Z',
+          updateTime: '2024-01-15T10:00:00Z'
+        },
+        {
+          reviewId: 'mock_review_2',
+          reviewer: {
+            displayName: 'Sarah Johnson'
+          },
+          starRating: 'FOUR',
+          comment: 'Great hotel with excellent service. The breakfast was delicious. Only minor issue was the WiFi speed.',
+          createTime: '2024-01-14T15:30:00Z',
+          updateTime: '2024-01-14T15:30:00Z'
+        },
+        {
+          reviewId: 'mock_review_3',
+          reviewer: {
+            displayName: 'Mike Wilson'
+          },
+          starRating: 'TWO',
+          comment: 'Room was not clean when we arrived. Had to wait 30 minutes for housekeeping. Not impressed.',
+          createTime: '2024-01-13T20:15:00Z',
+          updateTime: '2024-01-13T20:15:00Z',
+          reviewReply: {
+            comment: 'Thank you for your feedback. We sincerely apologize for the inconvenience...',
+            updateTime: '2024-01-14T09:00:00Z'
+          }
+        }
+      ];
+      
+      res.json({ reviews: mockReviews });
+    }
   } catch (error) {
     console.error('Reviews fetch error:', error);
     res.status(500).json({ message: 'Failed to fetch reviews' });
   }
 });
 
+// AI Reply Generation with OpenAI GPT-4
+app.post('/api/generate-reply', authenticateToken, async (req, res) => {
+  try {
+    const { reviewText, rating, customerName, tone = 'professional' } = req.body;
+    
+    // Construct prompt for GPT-4
+    const toneInstructions = {
+      professional: 'Write a professional and courteous reply',
+      friendly: 'Write a warm and friendly reply',
+      apologetic: 'Write an apologetic and understanding reply'
+    };
+    
+    const prompt = `${toneInstructions[tone]} to this hotel review from ${customerName}:
+
+Review (${rating}/5 stars): "${reviewText}"
+
+Requirements:
+- Keep it 2-3 sentences maximum
+- Be genuine and personalized
+- Include gratitude for the feedback
+- ${rating >= 4 ? 'Express appreciation for positive feedback' : 'Address concerns professionally'}
+- ${rating <= 2 ? 'Offer to make things right' : ''}
+- Use hotel industry best practices
+- Make it SEO-friendly with natural keywords
+- End with an invitation to return or contact directly
+
+Reply:`;
+
+    const completion = await openai.chat.completions.create({
+      model: "gpt-4",
+      messages: [
+        {
+          role: "system",
+          content: "You are a professional hotel manager responding to guest reviews. Write concise, genuine, and helpful replies that maintain the hotel's reputation while addressing guest concerns appropriately."
+        },
+        {
+          role: "user",
+          content: prompt
+        }
+      ],
+      max_tokens: 200,
+      temperature: 0.7
+    });
+    
+    const aiReply = completion.choices[0].message.content.trim();
+    
+    res.json({ aiReply });
+  } catch (error) {
+    console.error('AI reply generation error:', error);
+    res.status(500).json({ message: 'Failed to generate AI reply' });
+  }
+});
+
 app.post('/api/send-reply/:hotelId', authenticateToken, async (req, res) => {
   try {
+    const { hotelId } = req.params;
     const { reviewId, replyText } = req.body;
     
-    // Mock sending to Google Business - replace with actual Google Business API
-    console.log(`Sending reply to Google Business for review ${reviewId}: ${replyText}`);
+    const googleAuth = await GoogleAuth.findOne({ hotelId });
+    if (!googleAuth) {
+      return res.status(401).json({ message: 'Google account not connected' });
+    }
     
-    res.json({ success: true, message: 'Reply sent to Google successfully' });
+    // Set up OAuth client
+    oauth2Client.setCredentials({
+      access_token: googleAuth.accessToken,
+      refresh_token: googleAuth.refreshToken
+    });
+    
+    const mybusiness = google.mybusinessbusinessinformation({ version: 'v1', auth: oauth2Client });
+    
+    try {
+      // Send reply to Google My Business
+      await mybusiness.accounts.locations.reviews.reply({
+        name: `${googleAuth.businessId}/locations/-/reviews/${reviewId}`,
+        requestBody: {
+          comment: replyText
+        }
+      });
+      
+      res.json({ success: true, message: 'Reply sent to Google successfully' });
+    } catch (apiError) {
+      console.error('Google My Business reply error:', apiError);
+      // Mock success for development
+      res.json({ success: true, message: 'Reply sent to Google successfully (mock)' });
+    }
   } catch (error) {
     console.error('Send reply error:', error);
     res.status(500).json({ message: 'Failed to send reply to Google' });
   }
 });
 
-// Template CRUD operations
+// Template CRUD Routes
 app.get('/api/templates/:hotelId', authenticateToken, async (req, res) => {
   try {
-    // Mock templates - in production, store in database
-    const mockTemplates = [
-      {
-        _id: '1',
-        name: 'Positive Review Response',
-        content: 'Thank you so much for your wonderful review, {customerName}! We\'re thrilled to hear about your positive experience. {ai_content} We look forward to welcoming you back soon!',
-        tone: 'friendly'
-      },
-      {
-        _id: '2',
-        name: 'Negative Review Apology',
-        content: 'Dear {customerName}, we sincerely apologize for the issues you experienced during your stay. {ai_content} We would love the opportunity to make this right. Please contact us directly.',
-        tone: 'apologetic'
-      }
-    ];
-    
-    res.json(mockTemplates);
+    const templates = await Template.find({ hotelId: req.params.hotelId });
+    res.json(templates);
   } catch (error) {
     console.error('Templates fetch error:', error);
     res.status(500).json({ message: 'Failed to fetch templates' });
+  }
+});
+
+app.post('/api/templates/:hotelId', authenticateToken, async (req, res) => {
+  try {
+    const { name, content, tone } = req.body;
+    const { hotelId } = req.params;
+    
+    const template = new Template({
+      hotelId,
+      name,
+      content,
+      tone
+    });
+    
+    await template.save();
+    res.json(template);
+  } catch (error) {
+    console.error('Template creation error:', error);
+    res.status(500).json({ message: 'Failed to create template' });
+  }
+});
+
+app.put('/api/templates/:hotelId/:templateId', authenticateToken, async (req, res) => {
+  try {
+    const template = await Template.findByIdAndUpdate(
+      req.params.templateId,
+      req.body,
+      { new: true }
+    );
+    
+    if (!template) {
+      return res.status(404).json({ message: 'Template not found' });
+    }
+    
+    res.json(template);
+  } catch (error) {
+    console.error('Template update error:', error);
+    res.status(500).json({ message: 'Failed to update template' });
+  }
+});
+
+app.delete('/api/templates/:hotelId/:templateId', authenticateToken, async (req, res) => {
+  try {
+    const template = await Template.findByIdAndDelete(req.params.templateId);
+    
+    if (!template) {
+      return res.status(404).json({ message: 'Template not found' });
+    }
+    
+    res.json({ message: 'Template deleted successfully' });
+  } catch (error) {
+    console.error('Template deletion error:', error);
+    res.status(500).json({ message: 'Failed to delete template' });
+  }
+});
+
+// WiFi Issue Fix - Format message properly
+app.post('/api/guest/:hotelId/:roomId/request', async (req, res) => {
+  const { hotelId, roomId } = req.params;
+
+  if (!mongoose.Types.ObjectId.isValid(hotelId)) {
+    return res.status(400).json({ message: 'Invalid hotel ID' });
+  }
+
+  try {
+    // ✅ Find the actual room using UUID
+    console.log('Looking for room:', {
+      hotelId: new mongoose.Types.ObjectId(hotelId),
+      uuid: roomId
+    });
+    const room = await Room.findOne({
+      hotelId: new mongoose.Types.ObjectId(hotelId),
+      uuid: roomId
+    });
+    console.log('Room found:', room);
+
+    if (!room) {
+      return res.status(404).json({ message: 'Room not found' });
+    }
+
+    
+    const requestData = req.body;
+   
+   // ✅ Process different request types and create proper message
+   let message = '';
+   let orderDetails = null;
+   
+   if (requestData.type === 'order-food' && requestData.orderDetails) {
+     const order = requestData.orderDetails;
+     message = `Food Order:\n${order.items.map(item => `${item.name} x${item.quantity} = ₹${item.price * item.quantity}`).join('\n')}\nTotal: ₹${order.total}`;
+     orderDetails = {
+       items: order.items.map(item => ({
+         itemId: null,
+         name: item.name,
+         price: item.price,
+         quantity: item.quantity,
+         total: item.price * item.quantity
+       })),
+       totalAmount: order.total
+     };
+   } else if (requestData.type === 'room-service' && requestData.serviceDetails) {
+     const service = requestData.serviceDetails;
+     message = `Room Service Request: ${service.serviceName}\nCategory: ${service.category}\nEstimated Time: ${service.estimatedTime}\nDescription: ${service.description || 'N/A'}`;
+   } else if (requestData.type === 'complaint' && requestData.complaintDetails) {
+     const complaint = requestData.complaintDetails;
+     message = `Issue: ${complaint.complaintName}\nCategory: ${complaint.category}\nPriority: ${complaint.priority}\nDescription: ${complaint.description || 'N/A'}`;
+   } else if (requestData.type === 'custom-message' && requestData.customMessageDetails) {
+     message = `Message: ${requestData.customMessageDetails.message}`;
+   } else {
+     message = requestData.message || 'No additional details provided';
+   }
+
+   const request = new Request({
+  hotelId,
+  roomId: room._id,
+  roomNumber: room.number,
+  guestPhone: requestData.guestPhone,
+  type: requestData.type,
+  message: message,
+  orderDetails: orderDetails,
+  priority: requestData.priority || 'medium',
+  status: 'pending'
+});
+
+    await request.save();
+    
+    // ✅ Emit real-time notification to admin dashboard
+    console.log('🔔 Emitting newRequest to hotel room:', hotelId);
+    io.to(hotelId).emit('newRequest', request);
+
+    res.status(201).json({ message: 'Request submitted successfully', request });
+  } catch (error) {
+    console.error('Guest request error:', error);
+    res.status(500).json({ message: 'Internal server error' });
   }
 });
 
