@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Phone, UtensilsCrossed, Wrench, MessageSquare, ShoppingCart, X, Plus, Minus, Star, Clock, Users, AlertCircle, ArrowLeft } from 'lucide-react';
+import { Phone, UtensilsCrossed, Wrench, MessageSquare, ShoppingCart, X, Plus, Minus, ArrowLeft, Wifi, AlertCircle, Clock } from 'lucide-react';
 import { toast } from 'react-hot-toast';
 import { apiClient } from '../../utils/api';
 
@@ -227,6 +227,13 @@ export default function GuestPortal({ hotelId, roomId }: GuestPortalProps) {
     submitRequest('custom-message', customMessageDetails);
   };
 
+  const handleWifiIssueSubmission = () => {
+    const wifiDetails = {
+      message: 'WiFi connection issue reported from room'
+    };
+    submitRequest('complaint', wifiDetails);
+  };
+
   const handlePhoneSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (!phoneNumber.trim()) {
@@ -263,53 +270,46 @@ export default function GuestPortal({ hotelId, roomId }: GuestPortalProps) {
   // Phone Number Step
   if (step === 'phone') {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-purple-50 flex items-center justify-center p-4">
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center p-4">
         <div className="w-full max-w-md">
-          {/* Hotel Info Card */}
-          <div className="bg-white rounded-3xl shadow-xl p-8 mb-6 text-center">
-            <div className="w-20 h-20 bg-gradient-to-r from-blue-500 to-purple-600 rounded-full flex items-center justify-center mx-auto mb-6">
-              <Phone className="w-10 h-10 text-white" />
+          {/* Hotel Info */}
+          <div className="text-center mb-8">
+            <div className="w-16 h-16 bg-blue-600 rounded-full flex items-center justify-center mx-auto mb-4">
+              <Phone className="w-8 h-8 text-white" />
             </div>
-            <h1 className="text-2xl font-bold text-gray-800 mb-2">
+            <h1 className="text-2xl font-bold text-gray-900 mb-2">
               Welcome to Room {roomData?.number || 'Loading...'}
             </h1>
             {hotelData && (
-              <p className="text-gray-600 mb-6">
+              <p className="text-gray-600">
                 {hotelData.name}
               </p>
             )}
-            <div className="w-16 h-1 bg-gradient-to-r from-blue-500 to-purple-600 rounded-full mx-auto"></div>
           </div>
 
-          {/* Phone Input Card */}
-          <div className="bg-white rounded-3xl shadow-xl p-8">
-            <h2 className="text-xl font-semibold text-gray-800 mb-6 text-center">
+          {/* Phone Input Form */}
+          <div className="bg-white rounded-lg shadow-sm border p-6">
+            <h2 className="text-lg font-semibold text-gray-900 mb-4 text-center">
               Enter Your Phone Number
             </h2>
-            <form onSubmit={handlePhoneSubmit} className="space-y-6">
-              <div className="relative">
-                <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
-                  <Phone className="h-5 w-5 text-gray-400" />
-                </div>
+            <form onSubmit={handlePhoneSubmit} className="space-y-4">
+              <div>
                 <input
                   type="tel"
                   value={phoneNumber}
                   onChange={(e) => setPhoneNumber(e.target.value)}
-                  className="w-full pl-12 pr-4 py-4 border-2 border-gray-200 rounded-2xl focus:border-blue-500 focus:ring-0 transition-colors text-lg"
+                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-center text-lg"
                   placeholder="Enter your phone number"
                   required
                 />
               </div>
               <button
                 type="submit"
-                className="w-full bg-gradient-to-r from-blue-500 to-purple-600 text-white py-4 rounded-2xl font-semibold text-lg hover:from-blue-600 hover:to-purple-700 transition-all duration-200 transform hover:scale-105 shadow-lg"
+                className="w-full bg-blue-600 text-white py-3 rounded-lg font-medium hover:bg-blue-700 transition-colors"
               >
                 Continue
               </button>
             </form>
-            <p className="text-sm text-gray-500 text-center mt-4">
-              We'll use this to contact you about your requests
-            </p>
           </div>
         </div>
       </div>
@@ -319,103 +319,122 @@ export default function GuestPortal({ hotelId, roomId }: GuestPortalProps) {
   // Services Selection Step
   if (step === 'services') {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-purple-50 p-4">
-        <div className="max-w-md mx-auto">
-          {/* Header */}
-          <div className="bg-white rounded-3xl shadow-xl p-6 mb-6">
-            <div className="flex items-center justify-between mb-4">
-              <div>
-                <h1 className="text-xl font-bold text-gray-800">
-                  Room {roomData?.number}
-                </h1>
-                <p className="text-gray-600 text-sm">{hotelData?.name}</p>
-              </div>
-              <div className="text-right">
-                <p className="text-sm text-gray-500">Phone</p>
-                <p className="text-sm font-medium text-blue-600">{phoneNumber}</p>
-              </div>
+      <div className="min-h-screen bg-gray-50">
+        {/* Header */}
+        <div className="bg-white border-b px-4 py-4">
+          <div className="max-w-md mx-auto flex items-center justify-between">
+            <div>
+              <h1 className="text-lg font-semibold text-gray-900">
+                Room {roomData?.number}
+              </h1>
+              <p className="text-sm text-gray-600">{hotelData?.name}</p>
             </div>
-            <div className="w-full h-1 bg-gradient-to-r from-blue-500 to-purple-600 rounded-full"></div>
+            <div className="text-right">
+              <p className="text-xs text-gray-500">Phone</p>
+              <p className="text-sm font-medium text-blue-600">{phoneNumber}</p>
+            </div>
           </div>
+        </div>
 
-          {/* Service Options */}
-          <div className="space-y-4">
-            <button
-              onClick={() => {
-                setActiveService('food');
-                setStep('service-detail');
-              }}
-              className="w-full bg-white rounded-2xl shadow-lg p-6 flex items-center space-x-4 hover:shadow-xl transition-all duration-200 transform hover:scale-105"
-            >
-              <div className="w-14 h-14 bg-gradient-to-r from-orange-400 to-red-500 rounded-2xl flex items-center justify-center">
-                <UtensilsCrossed className="w-7 h-7 text-white" />
-              </div>
-              <div className="flex-1 text-left">
-                <h3 className="font-semibold text-gray-800 text-lg">Order Food</h3>
-                <p className="text-gray-600 text-sm">Browse our delicious menu</p>
-              </div>
-              <div className="w-6 h-6 bg-gray-100 rounded-full flex items-center justify-center">
-                <span className="text-gray-400">→</span>
-              </div>
-            </button>
+        {/* Service Options */}
+        <div className="max-w-md mx-auto p-4 space-y-3">
+          {/* Food Order */}
+          <button
+            onClick={() => {
+              setActiveService('food');
+              setStep('service-detail');
+            }}
+            className="w-full bg-white rounded-lg border p-4 flex items-center space-x-4 hover:bg-green-50 hover:border-green-200 transition-all duration-200 group"
+          >
+            <div className="w-12 h-12 bg-orange-100 rounded-lg flex items-center justify-center group-hover:bg-green-100 transition-colors">
+              <UtensilsCrossed className="w-6 h-6 text-orange-600 group-hover:text-green-600" />
+            </div>
+            <div className="flex-1 text-left">
+              <h3 className="font-medium text-gray-900 group-hover:text-green-700">Order Food</h3>
+              <p className="text-sm text-gray-500 group-hover:text-green-600">Browse our menu</p>
+            </div>
+            <div className="text-gray-400 group-hover:text-green-500">
+              <ArrowLeft className="w-5 h-5 rotate-180" />
+            </div>
+          </button>
 
-            <button
-              onClick={() => {
-                setActiveService('room-service');
-                setStep('service-detail');
-              }}
-              className="w-full bg-white rounded-2xl shadow-lg p-6 flex items-center space-x-4 hover:shadow-xl transition-all duration-200 transform hover:scale-105"
-            >
-              <div className="w-14 h-14 bg-gradient-to-r from-blue-400 to-indigo-500 rounded-2xl flex items-center justify-center">
-                <Wrench className="w-7 h-7 text-white" />
-              </div>
-              <div className="flex-1 text-left">
-                <h3 className="font-semibold text-gray-800 text-lg">Room Service</h3>
-                <p className="text-gray-600 text-sm">Housekeeping & maintenance</p>
-              </div>
-              <div className="w-6 h-6 bg-gray-100 rounded-full flex items-center justify-center">
-                <span className="text-gray-400">→</span>
-              </div>
-            </button>
+          {/* Room Service */}
+          <button
+            onClick={() => {
+              setActiveService('room-service');
+              setStep('service-detail');
+            }}
+            className="w-full bg-white rounded-lg border p-4 flex items-center space-x-4 hover:bg-green-50 hover:border-green-200 transition-all duration-200 group"
+          >
+            <div className="w-12 h-12 bg-blue-100 rounded-lg flex items-center justify-center group-hover:bg-green-100 transition-colors">
+              <Wrench className="w-6 h-6 text-blue-600 group-hover:text-green-600" />
+            </div>
+            <div className="flex-1 text-left">
+              <h3 className="font-medium text-gray-900 group-hover:text-green-700">Room Service</h3>
+              <p className="text-sm text-gray-500 group-hover:text-green-600">Housekeeping & maintenance</p>
+            </div>
+            <div className="text-gray-400 group-hover:text-green-500">
+              <ArrowLeft className="w-5 h-5 rotate-180" />
+            </div>
+          </button>
 
-            <button
-              onClick={() => {
-                setActiveService('custom-message');
-                setStep('service-detail');
-              }}
-              className="w-full bg-white rounded-2xl shadow-lg p-6 flex items-center space-x-4 hover:shadow-xl transition-all duration-200 transform hover:scale-105"
-            >
-              <div className="w-14 h-14 bg-gradient-to-r from-purple-400 to-pink-500 rounded-2xl flex items-center justify-center">
-                <MessageSquare className="w-7 h-7 text-white" />
-              </div>
-              <div className="flex-1 text-left">
-                <h3 className="font-semibold text-gray-800 text-lg">Send Message</h3>
-                <p className="text-gray-600 text-sm">Custom message to staff</p>
-              </div>
-              <div className="w-6 h-6 bg-gray-100 rounded-full flex items-center justify-center">
-                <span className="text-gray-400">→</span>
-              </div>
-            </button>
+          {/* WiFi Issue */}
+          <button
+            onClick={handleWifiIssueSubmission}
+            disabled={loading}
+            className="w-full bg-white rounded-lg border p-4 flex items-center space-x-4 hover:bg-green-50 hover:border-green-200 transition-all duration-200 group disabled:opacity-50"
+          >
+            <div className="w-12 h-12 bg-purple-100 rounded-lg flex items-center justify-center group-hover:bg-green-100 transition-colors">
+              <Wifi className="w-6 h-6 text-purple-600 group-hover:text-green-600" />
+            </div>
+            <div className="flex-1 text-left">
+              <h3 className="font-medium text-gray-900 group-hover:text-green-700">WiFi Issue</h3>
+              <p className="text-sm text-gray-500 group-hover:text-green-600">Report connectivity problems</p>
+            </div>
+            <div className="text-gray-400 group-hover:text-green-500">
+              <ArrowLeft className="w-5 h-5 rotate-180" />
+            </div>
+          </button>
 
-            <button
-              onClick={() => {
-                setActiveService('complaint');
-                setStep('service-detail');
-              }}
-              className="w-full bg-white rounded-2xl shadow-lg p-6 flex items-center space-x-4 hover:shadow-xl transition-all duration-200 transform hover:scale-105"
-            >
-              <div className="w-14 h-14 bg-gradient-to-r from-red-400 to-pink-500 rounded-2xl flex items-center justify-center">
-                <AlertCircle className="w-7 h-7 text-white" />
-              </div>
-              <div className="flex-1 text-left">
-                <h3 className="font-semibold text-gray-800 text-lg">Lodge Complaint</h3>
-                <p className="text-gray-600 text-sm">Report issues or concerns</p>
-              </div>
-              <div className="w-6 h-6 bg-gray-100 rounded-full flex items-center justify-center">
-                <span className="text-gray-400">→</span>
-              </div>
-            </button>
-          </div>
+          {/* Custom Message */}
+          <button
+            onClick={() => {
+              setActiveService('custom-message');
+              setStep('service-detail');
+            }}
+            className="w-full bg-white rounded-lg border p-4 flex items-center space-x-4 hover:bg-green-50 hover:border-green-200 transition-all duration-200 group"
+          >
+            <div className="w-12 h-12 bg-green-100 rounded-lg flex items-center justify-center group-hover:bg-green-100 transition-colors">
+              <MessageSquare className="w-6 h-6 text-green-600 group-hover:text-green-600" />
+            </div>
+            <div className="flex-1 text-left">
+              <h3 className="font-medium text-gray-900 group-hover:text-green-700">Send Message</h3>
+              <p className="text-sm text-gray-500 group-hover:text-green-600">Custom message to staff</p>
+            </div>
+            <div className="text-gray-400 group-hover:text-green-500">
+              <ArrowLeft className="w-5 h-5 rotate-180" />
+            </div>
+          </button>
+
+          {/* Lodge Complaint */}
+          <button
+            onClick={() => {
+              setActiveService('complaint');
+              setStep('service-detail');
+            }}
+            className="w-full bg-white rounded-lg border p-4 flex items-center space-x-4 hover:bg-green-50 hover:border-green-200 transition-all duration-200 group"
+          >
+            <div className="w-12 h-12 bg-red-100 rounded-lg flex items-center justify-center group-hover:bg-green-100 transition-colors">
+              <AlertCircle className="w-6 h-6 text-red-600 group-hover:text-green-600" />
+            </div>
+            <div className="flex-1 text-left">
+              <h3 className="font-medium text-gray-900 group-hover:text-green-700">Lodge Complaint</h3>
+              <p className="text-sm text-gray-500 group-hover:text-green-600">Report issues or concerns</p>
+            </div>
+            <div className="text-gray-400 group-hover:text-green-500">
+              <ArrowLeft className="w-5 h-5 rotate-180" />
+            </div>
+          </button>
         </div>
       </div>
     );
@@ -426,48 +445,45 @@ export default function GuestPortal({ hotelId, roomId }: GuestPortalProps) {
     // Custom Message Interface
     if (activeService === 'custom-message') {
       return (
-        <div className="min-h-screen bg-gradient-to-br from-purple-50 via-white to-pink-50 p-4">
-          <div className="max-w-md mx-auto">
-            {/* Header */}
-            <div className="bg-white rounded-3xl shadow-xl p-6 mb-6">
-              <div className="flex items-center justify-between mb-4">
-                <button
-                  onClick={() => setStep('services')}
-                  className="w-10 h-10 bg-gray-100 rounded-full flex items-center justify-center hover:bg-gray-200 transition-colors"
-                >
-                  <ArrowLeft className="w-5 h-5 text-gray-600" />
-                </button>
-                <h1 className="text-xl font-bold text-gray-800">Send Message</h1>
-                <div className="w-10 h-10"></div>
-              </div>
-              <div className="w-full h-1 bg-gradient-to-r from-purple-500 to-pink-600 rounded-full"></div>
+        <div className="min-h-screen bg-gray-50">
+          {/* Header */}
+          <div className="bg-white border-b px-4 py-4">
+            <div className="max-w-md mx-auto flex items-center justify-between">
+              <button
+                onClick={() => setStep('services')}
+                className="w-10 h-10 bg-gray-100 rounded-lg flex items-center justify-center hover:bg-gray-200 transition-colors"
+              >
+                <ArrowLeft className="w-5 h-5 text-gray-600" />
+              </button>
+              <h1 className="text-lg font-semibold text-gray-900">Send Message</h1>
+              <div className="w-10 h-10"></div>
             </div>
+          </div>
 
-            {/* Message Form */}
-            <div className="bg-white rounded-3xl shadow-xl p-6">
-              <div className="space-y-6">
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-3">
-                    Your Message
-                  </label>
-                  <textarea
-                    placeholder="Type your message here..."
-                    value={customMessage}
-                    onChange={(e) => setCustomMessage(e.target.value)}
-                    className="w-full p-4 border-2 border-gray-200 rounded-2xl focus:border-purple-500 focus:ring-0 transition-colors resize-none"
-                    rows={6}
-                    required
-                  />
-                </div>
-
-                <button
-                  onClick={handleCustomMessageSubmission}
-                  disabled={loading || !customMessage.trim()}
-                  className="w-full bg-gradient-to-r from-purple-500 to-pink-600 text-white py-4 rounded-2xl font-semibold text-lg hover:from-purple-600 hover:to-pink-700 transition-all duration-200 transform hover:scale-105 shadow-lg disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none"
-                >
-                  {loading ? 'Sending Message...' : 'Send Message'}
-                </button>
+          {/* Message Form */}
+          <div className="max-w-md mx-auto p-4">
+            <div className="bg-white rounded-lg border p-6 space-y-6">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-3">
+                  Your Message
+                </label>
+                <textarea
+                  placeholder="Type your message here..."
+                  value={customMessage}
+                  onChange={(e) => setCustomMessage(e.target.value)}
+                  className="w-full p-4 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent resize-none"
+                  rows={6}
+                  required
+                />
               </div>
+
+              <button
+                onClick={handleCustomMessageSubmission}
+                disabled={loading || !customMessage.trim()}
+                className="w-full bg-blue-600 text-white py-3 rounded-lg font-medium hover:bg-blue-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                {loading ? 'Sending Message...' : 'Send Message'}
+              </button>
             </div>
           </div>
         </div>
@@ -480,18 +496,17 @@ export default function GuestPortal({ hotelId, roomId }: GuestPortalProps) {
       const filteredItems = filterItemsByCategory(foodItems);
 
       return (
-        <div className="min-h-screen bg-gradient-to-br from-orange-50 via-white to-red-50">
-          {/* Mobile Layout */}
-          <div className="lg:hidden">
-            {/* Header */}
-            <div className="bg-white shadow-sm p-4 flex items-center justify-between sticky top-0 z-50">
+        <div className="min-h-screen bg-gray-50">
+          {/* Header */}
+          <div className="bg-white border-b px-4 py-4 sticky top-0 z-50">
+            <div className="max-w-md mx-auto flex items-center justify-between">
               <button
                 onClick={() => setStep('services')}
-                className="w-10 h-10 bg-gray-100 rounded-full flex items-center justify-center hover:bg-gray-200 transition-colors"
+                className="w-10 h-10 bg-gray-100 rounded-lg flex items-center justify-center hover:bg-gray-200 transition-colors"
               >
                 <ArrowLeft className="w-5 h-5 text-gray-600" />
               </button>
-              <h1 className="font-semibold text-gray-800">Food Menu</h1>
+              <h1 className="text-lg font-semibold text-gray-900">Food Menu</h1>
               <div className="flex items-center space-x-2">
                 <ShoppingCart className="w-5 h-5 text-gray-600" />
                 <span className="bg-red-500 text-white text-xs rounded-full w-5 h-5 flex items-center justify-center">
@@ -499,9 +514,11 @@ export default function GuestPortal({ hotelId, roomId }: GuestPortalProps) {
                 </span>
               </div>
             </div>
+          </div>
 
-            {/* Categories */}
-            <div className="bg-white p-4 border-b">
+          {/* Categories */}
+          <div className="bg-white border-b px-4 py-3">
+            <div className="max-w-md mx-auto">
               <div className="flex space-x-2 overflow-x-auto">
                 {categories.map(category => (
                   <button
@@ -509,7 +526,7 @@ export default function GuestPortal({ hotelId, roomId }: GuestPortalProps) {
                     onClick={() => setSelectedCategory(category)}
                     className={`px-4 py-2 rounded-full whitespace-nowrap text-sm font-medium transition-colors ${
                       selectedCategory === category
-                        ? 'bg-orange-500 text-white'
+                        ? 'bg-blue-600 text-white'
                         : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
                     }`}
                   >
@@ -518,91 +535,91 @@ export default function GuestPortal({ hotelId, roomId }: GuestPortalProps) {
                 ))}
               </div>
             </div>
+          </div>
 
-            {/* Menu Items */}
-            <div className="p-4 pb-80">
-              {loading ? (
-                <div className="text-center py-8">
-                  <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-orange-500 mx-auto"></div>
-                </div>
-              ) : (
-                <div className="space-y-4">
-                  {filteredItems.map(item => (
-                    <div key={item._id} className="bg-white rounded-2xl shadow-lg p-4">
-                      <div className="flex justify-between items-start mb-2">
-                        <h3 className="font-semibold text-gray-800">{item.name}</h3>
-                        <span className="font-bold text-green-600">₹{item.price}</span>
-                      </div>
-                      <p className="text-gray-600 text-sm mb-3">{item.description}</p>
-                      <button
-                        onClick={() => addToCart(item)}
-                        className="w-full bg-gradient-to-r from-orange-500 to-red-500 text-white py-2 rounded-xl font-medium hover:from-orange-600 hover:to-red-600 transition-all duration-200 transform hover:scale-105"
-                      >
-                        Add to Cart
-                      </button>
+          {/* Menu Items */}
+          <div className="max-w-md mx-auto p-4 pb-80">
+            {loading ? (
+              <div className="text-center py-8">
+                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto"></div>
+              </div>
+            ) : (
+              <div className="space-y-4">
+                {filteredItems.map(item => (
+                  <div key={item._id} className="bg-white rounded-lg border p-4">
+                    <div className="flex justify-between items-start mb-2">
+                      <h3 className="font-medium text-gray-900">{item.name}</h3>
+                      <span className="font-semibold text-green-600">₹{item.price}</span>
                     </div>
-                  ))}
-                </div>
-              )}
-            </div>
-
-            {/* Fixed Cart Bottom Sheet */}
-            {cart.length > 0 && (
-              <div className="fixed bottom-0 left-0 right-0 bg-white border-t shadow-lg max-h-80 flex flex-col rounded-t-3xl">
-                {/* Cart Header */}
-                <div className="p-4 border-b">
-                  <h3 className="font-semibold text-gray-800">Your Order</h3>
-                </div>
-
-                {/* Cart Items - Scrollable */}
-                <div className="flex-1 overflow-y-auto p-4 space-y-3">
-                  {cart.map(item => (
-                    <div key={item._id} className="flex items-center justify-between">
-                      <div className="flex-1">
-                        <h4 className="font-medium text-sm">{item.name}</h4>
-                        <p className="text-green-600 font-semibold">₹{item.price}</p>
-                      </div>
-                      <div className="flex items-center space-x-2">
-                        <button
-                          onClick={() => updateQuantity(item._id, -1)}
-                          className="w-8 h-8 rounded-full bg-gray-100 flex items-center justify-center"
-                        >
-                          <Minus className="w-4 h-4" />
-                        </button>
-                        <span className="w-8 text-center font-medium">{item.quantity}</span>
-                        <button
-                          onClick={() => updateQuantity(item._id, 1)}
-                          className="w-8 h-8 rounded-full bg-gray-100 flex items-center justify-center"
-                        >
-                          <Plus className="w-4 h-4" />
-                        </button>
-                        <button
-                          onClick={() => removeFromCart(item._id)}
-                          className="w-8 h-8 rounded-full bg-red-100 flex items-center justify-center ml-2"
-                        >
-                          <X className="w-4 h-4 text-red-600" />
-                        </button>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-
-                {/* Checkout */}
-                <div className="p-4 border-t bg-gray-50 rounded-t-3xl">
-                  <div className="flex items-center justify-between mb-3">
-                    <span className="font-semibold text-lg">Total: ₹{getTotalPrice()}</span>
+                    <p className="text-sm text-gray-600 mb-3">{item.description}</p>
+                    <button
+                      onClick={() => addToCart(item)}
+                      className="w-full bg-blue-600 text-white py-2 rounded-lg font-medium hover:bg-blue-700 transition-colors"
+                    >
+                      Add to Cart
+                    </button>
                   </div>
-                  <button
-                    onClick={handleFoodOrder}
-                    disabled={loading}
-                    className="w-full bg-gradient-to-r from-green-500 to-emerald-600 text-white py-3 rounded-2xl font-semibold hover:from-green-600 hover:to-emerald-700 transition-all duration-200 transform hover:scale-105 disabled:opacity-50"
-                  >
-                    {loading ? 'Placing Order...' : 'Place Order'}
-                  </button>
-                </div>
+                ))}
               </div>
             )}
           </div>
+
+          {/* Fixed Cart Bottom Sheet */}
+          {cart.length > 0 && (
+            <div className="fixed bottom-0 left-0 right-0 bg-white border-t shadow-lg max-h-80 flex flex-col">
+              {/* Cart Header */}
+              <div className="p-4 border-b">
+                <h3 className="font-semibold text-gray-900">Your Order</h3>
+              </div>
+
+              {/* Cart Items - Scrollable */}
+              <div className="flex-1 overflow-y-auto p-4 space-y-3">
+                {cart.map(item => (
+                  <div key={item._id} className="flex items-center justify-between">
+                    <div className="flex-1">
+                      <h4 className="font-medium text-sm">{item.name}</h4>
+                      <p className="text-green-600 font-semibold">₹{item.price}</p>
+                    </div>
+                    <div className="flex items-center space-x-2">
+                      <button
+                        onClick={() => updateQuantity(item._id, -1)}
+                        className="w-8 h-8 rounded-full bg-gray-100 flex items-center justify-center"
+                      >
+                        <Minus className="w-4 h-4" />
+                      </button>
+                      <span className="w-8 text-center font-medium">{item.quantity}</span>
+                      <button
+                        onClick={() => updateQuantity(item._id, 1)}
+                        className="w-8 h-8 rounded-full bg-gray-100 flex items-center justify-center"
+                      >
+                        <Plus className="w-4 h-4" />
+                      </button>
+                      <button
+                        onClick={() => removeFromCart(item._id)}
+                        className="w-8 h-8 rounded-full bg-red-100 flex items-center justify-center ml-2"
+                      >
+                        <X className="w-4 h-4 text-red-600" />
+                      </button>
+                    </div>
+                  </div>
+                ))}
+              </div>
+
+              {/* Checkout */}
+              <div className="p-4 border-t bg-gray-50">
+                <div className="flex items-center justify-between mb-3">
+                  <span className="font-semibold text-lg">Total: ₹{getTotalPrice()}</span>
+                </div>
+                <button
+                  onClick={handleFoodOrder}
+                  disabled={loading}
+                  className="w-full bg-green-600 text-white py-3 rounded-lg font-semibold hover:bg-green-700 transition-colors disabled:opacity-50"
+                >
+                  {loading ? 'Placing Order...' : 'Place Order'}
+                </button>
+              </div>
+            </div>
+          )}
         </div>
       );
     }
@@ -613,25 +630,24 @@ export default function GuestPortal({ hotelId, roomId }: GuestPortalProps) {
       const filteredItems = filterItemsByCategory(roomServiceItems);
 
       return (
-        <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-indigo-50 p-4">
-          <div className="max-w-4xl mx-auto">
-            {/* Header */}
-            <div className="bg-white rounded-3xl shadow-xl p-6 mb-6">
-              <div className="flex items-center justify-between mb-4">
-                <button
-                  onClick={() => setStep('services')}
-                  className="w-10 h-10 bg-gray-100 rounded-full flex items-center justify-center hover:bg-gray-200 transition-colors"
-                >
-                  <ArrowLeft className="w-5 h-5 text-gray-600" />
-                </button>
-                <h1 className="text-xl font-bold text-gray-800">Room Service</h1>
-                <div className="w-10 h-10"></div>
-              </div>
-              <div className="w-full h-1 bg-gradient-to-r from-blue-500 to-indigo-600 rounded-full"></div>
+        <div className="min-h-screen bg-gray-50">
+          {/* Header */}
+          <div className="bg-white border-b px-4 py-4">
+            <div className="max-w-4xl mx-auto flex items-center justify-between">
+              <button
+                onClick={() => setStep('services')}
+                className="w-10 h-10 bg-gray-100 rounded-lg flex items-center justify-center hover:bg-gray-200 transition-colors"
+              >
+                <ArrowLeft className="w-5 h-5 text-gray-600" />
+              </button>
+              <h1 className="text-lg font-semibold text-gray-900">Room Service</h1>
+              <div className="w-10 h-10"></div>
             </div>
+          </div>
 
-            {/* Categories */}
-            <div className="bg-white rounded-3xl shadow-xl p-4 mb-6">
+          {/* Categories */}
+          <div className="bg-white border-b px-4 py-3">
+            <div className="max-w-4xl mx-auto">
               <div className="flex flex-wrap gap-2">
                 {categories.map(category => (
                   <button
@@ -639,7 +655,7 @@ export default function GuestPortal({ hotelId, roomId }: GuestPortalProps) {
                     onClick={() => setSelectedCategory(category)}
                     className={`px-4 py-2 rounded-full text-sm font-medium transition-colors ${
                       selectedCategory === category
-                        ? 'bg-blue-500 text-white'
+                        ? 'bg-blue-600 text-white'
                         : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
                     }`}
                   >
@@ -648,17 +664,19 @@ export default function GuestPortal({ hotelId, roomId }: GuestPortalProps) {
                 ))}
               </div>
             </div>
+          </div>
 
+          <div className="max-w-4xl mx-auto p-4">
             {loading ? (
               <div className="text-center py-12">
-                <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-500 mx-auto"></div>
+                <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto"></div>
               </div>
             ) : (
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                 {filteredItems.map(service => (
-                  <div key={service._id} className="bg-white rounded-3xl shadow-xl p-6 hover:shadow-2xl transition-all duration-200 transform hover:scale-105">
+                  <div key={service._id} className="bg-white rounded-lg border p-6 hover:shadow-md transition-shadow">
                     <div className="flex items-start justify-between mb-3">
-                      <h3 className="font-semibold text-gray-800 text-lg">{service.name}</h3>
+                      <h3 className="font-semibold text-gray-900 text-lg">{service.name}</h3>
                       <div className="flex items-center text-sm text-gray-500">
                         <Clock className="w-4 h-4 mr-1" />
                         {service.estimatedTime}
@@ -672,7 +690,7 @@ export default function GuestPortal({ hotelId, roomId }: GuestPortalProps) {
                       <button
                         onClick={() => handleRoomServiceRequest(service)}
                         disabled={loading}
-                        className="bg-gradient-to-r from-blue-500 to-indigo-600 text-white px-4 py-2 rounded-xl font-medium hover:from-blue-600 hover:to-indigo-700 transition-all duration-200 transform hover:scale-105 disabled:opacity-50"
+                        className="bg-blue-600 text-white px-4 py-2 rounded-lg font-medium hover:bg-blue-700 transition-colors disabled:opacity-50"
                       >
                         {loading ? 'Requesting...' : 'Request'}
                       </button>
@@ -692,25 +710,24 @@ export default function GuestPortal({ hotelId, roomId }: GuestPortalProps) {
       const filteredItems = filterItemsByCategory(complaintItems);
 
       return (
-        <div className="min-h-screen bg-gradient-to-br from-red-50 via-white to-pink-50 p-4">
-          <div className="max-w-4xl mx-auto">
-            {/* Header */}
-            <div className="bg-white rounded-3xl shadow-xl p-6 mb-6">
-              <div className="flex items-center justify-between mb-4">
-                <button
-                  onClick={() => setStep('services')}
-                  className="w-10 h-10 bg-gray-100 rounded-full flex items-center justify-center hover:bg-gray-200 transition-colors"
-                >
-                  <ArrowLeft className="w-5 h-5 text-gray-600" />
-                </button>
-                <h1 className="text-xl font-bold text-gray-800">Lodge Complaint</h1>
-                <div className="w-10 h-10"></div>
-              </div>
-              <div className="w-full h-1 bg-gradient-to-r from-red-500 to-pink-600 rounded-full"></div>
+        <div className="min-h-screen bg-gray-50">
+          {/* Header */}
+          <div className="bg-white border-b px-4 py-4">
+            <div className="max-w-4xl mx-auto flex items-center justify-between">
+              <button
+                onClick={() => setStep('services')}
+                className="w-10 h-10 bg-gray-100 rounded-lg flex items-center justify-center hover:bg-gray-200 transition-colors"
+              >
+                <ArrowLeft className="w-5 h-5 text-gray-600" />
+              </button>
+              <h1 className="text-lg font-semibold text-gray-900">Lodge Complaint</h1>
+              <div className="w-10 h-10"></div>
             </div>
+          </div>
 
-            {/* Categories */}
-            <div className="bg-white rounded-3xl shadow-xl p-4 mb-6">
+          {/* Categories */}
+          <div className="bg-white border-b px-4 py-3">
+            <div className="max-w-4xl mx-auto">
               <div className="flex flex-wrap gap-2">
                 {categories.map(category => (
                   <button
@@ -718,7 +735,7 @@ export default function GuestPortal({ hotelId, roomId }: GuestPortalProps) {
                     onClick={() => setSelectedCategory(category)}
                     className={`px-4 py-2 rounded-full text-sm font-medium transition-colors ${
                       selectedCategory === category
-                        ? 'bg-red-500 text-white'
+                        ? 'bg-red-600 text-white'
                         : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
                     }`}
                   >
@@ -727,17 +744,19 @@ export default function GuestPortal({ hotelId, roomId }: GuestPortalProps) {
                 ))}
               </div>
             </div>
+          </div>
 
+          <div className="max-w-4xl mx-auto p-4">
             {loading ? (
               <div className="text-center py-12">
-                <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-red-500 mx-auto"></div>
+                <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-red-600 mx-auto"></div>
               </div>
             ) : (
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                 {filteredItems.map(complaint => (
-                  <div key={complaint._id} className="bg-white rounded-3xl shadow-xl p-6 hover:shadow-2xl transition-all duration-200 transform hover:scale-105">
+                  <div key={complaint._id} className="bg-white rounded-lg border p-6 hover:shadow-md transition-shadow">
                     <div className="flex items-start justify-between mb-3">
-                      <h3 className="font-semibold text-gray-800 text-lg">{complaint.name}</h3>
+                      <h3 className="font-semibold text-gray-900 text-lg">{complaint.name}</h3>
                       <span className={`px-3 py-1 rounded-full text-sm font-medium ${getPriorityColor(complaint.priority)}`}>
                         {complaint.priority} Priority
                       </span>
@@ -750,7 +769,7 @@ export default function GuestPortal({ hotelId, roomId }: GuestPortalProps) {
                       <button
                         onClick={() => handleComplaintSubmission(complaint)}
                         disabled={loading}
-                        className="bg-gradient-to-r from-red-500 to-pink-600 text-white px-4 py-2 rounded-xl font-medium hover:from-red-600 hover:to-pink-700 transition-all duration-200 transform hover:scale-105 disabled:opacity-50"
+                        className="bg-red-600 text-white px-4 py-2 rounded-lg font-medium hover:bg-red-700 transition-colors disabled:opacity-50"
                       >
                         {loading ? 'Submitting...' : 'Submit'}
                       </button>
