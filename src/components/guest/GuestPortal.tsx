@@ -228,10 +228,17 @@ export default function GuestPortal({ hotelId, roomId }: GuestPortalProps) {
   };
 
   const handleWifiIssueSubmission = () => {
-    const wifiDetails = {
-      message: 'WiFi connection issue reported from room'
-    };
-    submitRequest('complaint', wifiDetails);
+    submitRequest('complaint', {
+      complaintName: 'WiFi Connection Issue',
+      description: 'Guest reported WiFi connectivity problems in their room',
+      category: 'Technical Support',
+      priority: 'medium'
+    });
+  };
+
+  const handleEmergencyCall = () => {
+    // Create a tel: link for mobile devices
+    window.location.href = 'tel:+919876543210';
   };
 
   const handlePhoneSubmit = (e: React.FormEvent) => {
@@ -681,7 +688,7 @@ export default function GuestPortal({ hotelId, roomId }: GuestPortalProps) {
               >
                 <ArrowLeft className="w-5 h-5 text-gray-600" />
               </button>
-              <h1 className="text-xl font-semibold text-gray-900">Housekeeping Services</h1>
+              <h1 className="text-xl font-semibold text-gray-900">Room Service Menu</h1>
               <div className="w-10 h-10"></div>
             </div>
           </div>

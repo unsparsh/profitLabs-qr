@@ -184,6 +184,108 @@ const authenticateToken = (req, res, next) => {
   });
 };
 
+// AI Review Assistant Routes
+app.post('/api/generate-reply', authenticateToken, async (req, res) => {
+  try {
+    const { reviewText, rating, tone = 'professional' } = req.body;
+    
+    // Mock AI generation for now - replace with actual OpenAI API call
+    const aiResponses = {
+      5: "Your kind words about our service truly make our day. We're delighted that we exceeded your expectations and provided you with a memorable experience.",
+      4: "We're pleased you enjoyed your stay with us. Thank you for highlighting the positive aspects of your experience. We'll continue working to make every aspect perfect.",
+      3: "We appreciate your balanced feedback and are glad you found some aspects of your stay satisfactory. We'll use your insights to improve our services.",
+      2: "We deeply regret that your experience didn't meet our usual standards. Your feedback is invaluable and we're taking immediate steps to address these issues.",
+      1: "We are truly sorry that we failed to provide the quality experience you deserved. This is not reflective of our standards and we take full responsibility."
+    };
+    
+    const baseReply = aiResponses[rating] || "Thank you for your feedback. We value all guest experiences and continuously strive to improve our services.";
+    
+    // Customize based on tone
+    let finalReply = baseReply;
+    if (tone === 'friendly') {
+      finalReply = baseReply.replace('We appreciate', 'We really appreciate').replace('Thank you', 'Thank you so much');
+    } else if (tone === 'apologetic') {
+      finalReply = `We sincerely apologize for any inconvenience. ${baseReply}`;
+    }
+    
+    res.json({ aiReply: finalReply });
+  } catch (error) {
+    console.error('AI reply generation error:', error);
+    res.status(500).json({ message: 'Failed to generate AI reply' });
+  }
+});
+
+app.get('/api/reviews/:hotelId', authenticateToken, async (req, res) => {
+  try {
+    // Mock Google Business reviews - replace with actual Google Business API
+    const mockReviews = [
+      {
+        _id: '1',
+        reviewId: 'google_123',
+        customerName: 'John Smith',
+        rating: 5,
+        reviewText: 'Amazing stay! The staff was incredibly helpful and the room was spotless. Will definitely come back!',
+        date: '2024-01-15',
+        replied: false
+      },
+      {
+        _id: '2',
+        reviewId: 'google_124',
+        customerName: 'Sarah Johnson',
+        rating: 4,
+        reviewText: 'Great hotel with excellent service. The breakfast was delicious. Only minor issue was the WiFi speed.',
+        date: '2024-01-14',
+        replied: false
+      }
+    ];
+    
+    res.json(mockReviews);
+  } catch (error) {
+    console.error('Reviews fetch error:', error);
+    res.status(500).json({ message: 'Failed to fetch reviews' });
+  }
+});
+
+app.post('/api/send-reply/:hotelId', authenticateToken, async (req, res) => {
+  try {
+    const { reviewId, replyText } = req.body;
+    
+    // Mock sending to Google Business - replace with actual Google Business API
+    console.log(`Sending reply to Google Business for review ${reviewId}: ${replyText}`);
+    
+    res.json({ success: true, message: 'Reply sent to Google successfully' });
+  } catch (error) {
+    console.error('Send reply error:', error);
+    res.status(500).json({ message: 'Failed to send reply to Google' });
+  }
+});
+
+// Template CRUD operations
+app.get('/api/templates/:hotelId', authenticateToken, async (req, res) => {
+  try {
+    // Mock templates - in production, store in database
+    const mockTemplates = [
+      {
+        _id: '1',
+        name: 'Positive Review Response',
+        content: 'Thank you so much for your wonderful review, {customerName}! We\'re thrilled to hear about your positive experience. {ai_content} We look forward to welcoming you back soon!',
+        tone: 'friendly'
+      },
+      {
+        _id: '2',
+        name: 'Negative Review Apology',
+        content: 'Dear {customerName}, we sincerely apologize for the issues you experienced during your stay. {ai_content} We would love the opportunity to make this right. Please contact us directly.',
+        tone: 'apologetic'
+      }
+    ];
+    
+    res.json(mockTemplates);
+  } catch (error) {
+    console.error('Templates fetch error:', error);
+    res.status(500).json({ message: 'Failed to fetch templates' });
+  }
+});
+
 // Socket.IO connection handling
 io.on('connection', (socket) => {
   console.log('User connected:', socket.id);
