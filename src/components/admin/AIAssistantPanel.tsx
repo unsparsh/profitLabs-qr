@@ -380,7 +380,6 @@ export const AIAssistantPanel: React.FC<AIAssistantPanelProps> = ({ hotelId }) =
                 <p>✅ Works without OpenAI API key</p>
                 <p>✅ Smart template-based responses</p>
                 <p>✅ Upgrade to GPT-4 for advanced AI</p>
-              </p>
             </div>
           </div>
         </div>
