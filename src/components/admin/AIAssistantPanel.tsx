@@ -729,46 +729,48 @@ export const AIAssistantPanel: React.FC<AIAssistantPanelProps> = ({ hotelId }) =
             </div>
           )}
 
-      {templates.length > 0 ? (
-  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-    {templates.map((template) => (
-      <div key={template._id} className="bg-white rounded-lg shadow-sm p-6">
-        <div className="flex items-start justify-between mb-3">
-          <h4 className="font-semibold text-gray-900">{template.name}</h4>
-          <div className="flex gap-1">
-            <button
-              onClick={() => setEditingTemplate(template)}
-              className="p-1 text-blue-600 hover:bg-blue-50 rounded"
-            >
-              <Edit3 className="h-4 w-4" />
-            </button>
-            <button
-              onClick={() => handleDeleteTemplate(template._id)}
-              className="p-1 text-red-600 hover:bg-red-50 rounded"
-            >
-              <Trash2 className="h-4 w-4" />
-            </button>
-          </div>
+          {/* Templates List */}
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {templates.map((template) => (
+              <div key={template._id} className="bg-white rounded-lg shadow-sm p-6">
+                <div className="flex items-start justify-between mb-3">
+                  <h4 className="font-semibold text-gray-900">{template.name}</h4>
+                  <div className="flex gap-1">
+                    <button
+                      onClick={() => setEditingTemplate(template)}
+                      className="p-1 text-blue-600 hover:bg-blue-50 rounded"
+                    >
+                      <Edit3 className="h-4 w-4" />
+                    </button>
+                    <button
+                      onClick={() => handleDeleteTemplate(template._id)}
+                      className="p-1 text-red-600 hover:bg-red-50 rounded"
+                    >
+                      <Trash2 className="h-4 w-4" />
+                    </button>
+                  </div>
+                </div>
+                <span className={`inline-block px-2 py-1 rounded-full text-xs font-medium mb-3 ${
+                  template.tone === 'professional' ? 'bg-blue-100 text-blue-800' :
+                  template.tone === 'friendly' ? 'bg-green-100 text-green-800' :
+                  'bg-red-100 text-red-800'
+                }`}>
+                  {template.tone}
+                </span>
+                <p className="text-sm text-gray-600 line-clamp-3">{template.content}</p>
+              </div>
+            ))}
+
+          {templates.length === 0 && (
+            <div className="text-center py-12">
+              <FileText className="h-12 w-12 text-gray-400 mx-auto mb-4" />
+              <p className="text-gray-500">No templates created yet</p>
+              <p className="text-sm text-gray-400">Add your first template to get started</p>
+            </div>
+          )}
         </div>
-        <span
-          className={`inline-block px-2 py-1 rounded-full text-xs font-medium mb-3 ${
-            template.tone === 'professional'
-              ? 'bg-blue-100 text-blue-800'
-              : template.tone === 'friendly'
-              ? 'bg-green-100 text-green-800'
-              : 'bg-red-100 text-red-800'
-          }`}
-        >
-          {template.tone}
-        </span>
-        <p className="text-sm text-gray-600 line-clamp-3">{template.content}</p>
-      </div>
-    ))}
-  </div>
-) : (
-  <div className="text-center py-12">
-    <FileText className="h-12 w-12 text-gray-400 mx-auto mb-4" />
-    <p className="text-gray-500">No templates created yet</p>
-    <p className="text-sm text-gray-400">Add your first template to get started</p>
-  </div>
-)}
+      )}
+    </div>
+        
+  );
+};
