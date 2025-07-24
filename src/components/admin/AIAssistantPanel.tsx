@@ -387,349 +387,157 @@ export const AIAssistantPanel: React.FC<AIAssistantPanelProps> = ({ hotelId }) =
     );
   }
 
-  return (
-    <div className="space-y-6">
-      {/* Header with Google Account Info */}
-      <div className="flex items-center justify-between">
-        <div className="flex items-center gap-3">
-          <Bot className="h-8 w-8 text-purple-600" />
-          <div>
-            <h2 className="text-2xl font-bold text-gray-900">AI Review Assistant</h2>
-            <p className="text-gray-600">Manage Google reviews with AI-powered responses</p>
-          </div>
-        </div>
-        
-        <div className="flex items-center gap-3 bg-white rounded-lg p-3 shadow-sm">
-          <img 
-            src={googleAccount.picture} 
-            alt={googleAccount.name}
-            className="w-8 h-8 rounded-full"
-          />
-          <div className="text-sm">
-            <p className="font-medium text-gray-900">{googleAccount.businessName}</p>
-            <p className="text-gray-500">{googleAccount.email}</p>
-          </div>
+ return (
+  <div className="space-y-6">
+    {/* Header with Google Account Info */}
+    <div className="flex items-center justify-between">
+      <div className="flex items-center gap-3">
+        <Bot className="h-8 w-8 text-purple-600" />
+        <div>
+          <h2 className="text-2xl font-bold text-gray-900">AI Review Assistant</h2>
+          <p className="text-gray-600">Manage Google reviews with AI-powered responses</p>
         </div>
       </div>
-
-      {/* Tabs */}
-      <div className="border-b border-gray-200">
-        <nav className="-mb-px flex space-x-8">
-          <button
-            onClick={() => setActiveTab('reviews')}
-            className={`py-2 px-1 border-b-2 font-medium text-sm ${
-              activeTab === 'reviews'
-                ? 'border-purple-500 text-purple-600'
-                : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
-            }`}
-          >
-            <MessageSquare className="h-4 w-4 inline mr-2" />
-            Reply to Reviews ({reviews.length})
-          </button>
-          <button
-            onClick={() => setActiveTab('templates')}
-            className={`py-2 px-1 border-b-2 font-medium text-sm ${
-              activeTab === 'templates'
-                ? 'border-purple-500 text-purple-600'
-                : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
-            }`}
-          >
-            <FileText className="h-4 w-4 inline mr-2" />
-            Manage Templates ({templates.length})
-          </button>
-        </nav>
-      </div>
-
-      {/* Reviews Tab */}
-      {activeTab === 'reviews' && (
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-          {/* Reviews List */}
-          <div className="bg-white rounded-lg shadow-sm">
-            <div className="p-6 border-b border-gray-200 flex items-center justify-between">
-              <h3 className="text-lg font-medium text-gray-900">Google My Business Reviews</h3>
-              <button
-                onClick={fetchGoogleReviews}
-                disabled={isLoading}
-                className="text-sm text-purple-600 hover:text-purple-700 font-medium"
-              >
-                {isLoading ? 'Refreshing...' : 'Refresh'}
-              </button>
-            </div>
-            <div className="divide-y divide-gray-200 max-h-96 overflow-y-auto">
-              {isLoading ? (
-                <div className="p-8 text-center">
-                  <Loader className="h-8 w-8 animate-spin text-purple-600 mx-auto mb-2" />
-                  <p className="text-gray-500">Loading reviews...</p>
-                </div>
-              ) : reviews.length === 0 ? (
-                <div className="p-8 text-center">
-                  <MessageSquare className="h-12 w-12 text-gray-400 mx-auto mb-4" />
-                  <p className="text-gray-500">No reviews found</p>
-                </div>
-              ) : (
-                reviews.map((review) => (
-                  <div
-                    key={review.reviewId}
-                    onClick={() => setSelectedReview(review)}
-                    className={`p-4 cursor-pointer hover:bg-gray-50 transition-colors ${
-                      selectedReview?.reviewId === review.reviewId ? 'bg-purple-50 border-l-4 border-purple-500' : ''
-                    }`}
-                  >
-                    <div className="flex items-start justify-between mb-2">
-                      <div className="flex items-center space-x-2">
-                        {review.reviewer.profilePhotoUrl ? (
-                          <img 
-                            src={review.reviewer.profilePhotoUrl} 
-                            alt={review.reviewer.displayName}
-                            className="w-6 h-6 rounded-full"
-                          />
-                        ) : (
-                          <User className="h-4 w-4 text-gray-400" />
-                        )}
-                        <span className="font-medium text-gray-900">{review.reviewer.displayName}</span>
-                        {review.reviewReply && (
-                          <span className="px-2 py-1 bg-green-100 text-green-800 text-xs rounded-full">
-                            Replied
-                          </span>
-                        )}
-                      </div>
-                      <div className="flex items-center space-x-1">
-                        {getRatingStars(review.starRating)}
-                      </div>
-                    </div>
-                    <p className="text-sm text-gray-600 line-clamp-2 mb-2">{review.comment}</p>
-                    <div className="flex items-center justify-between">
-                      <span className="text-xs text-gray-500 flex items-center">
-                        <Calendar className="h-3 w-3 mr-1" />
-                        {formatDate(review.createTime)}
-                      </span>
-                      <span className={`px-2 py-1 rounded-full text-xs font-medium ${getRatingColor(review.starRating)}`}>
-                        {getNumericRating(review.starRating)}/5
-                      </span>
-                    </div>
-                  </div>
-                ))
-              )}
-            </div>
-          </div>
-
-          {/* Reply Interface */}
-          <div className="bg-white rounded-lg shadow-sm">
-            <div className="p-6 border-b border-gray-200">
-              <h3 className="text-lg font-medium text-gray-900">AI Reply Assistant</h3>
-              <p className="text-sm text-gray-500 mt-1">Powered by OpenAI GPT-4</p>
-            </div>
-            <div className="p-6 space-y-4">
-              {selectedReview ? (
-                <>
-                  {/* Selected Review */}
-                  <div className="bg-gray-50 rounded-lg p-4">
-                    <div className="flex items-center justify-between mb-2">
-                      <span className="font-medium text-gray-900">{selectedReview.reviewer.displayName}</span>
-                      <div className="flex items-center space-x-1">
-                        {getRatingStars(selectedReview.starRating)}
-                      </div>
-                    </div>
-                    <p className="text-sm text-gray-600">{selectedReview.comment}</p>
-                    <p className="text-xs text-gray-500 mt-2">{formatDate(selectedReview.createTime)}</p>
-                  </div>
-
-                  {/* Template Selection */}
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
-                      Select Template (Optional)
-                    </label>
-                    <select
-                      value={selectedTemplate}
-                      onChange={(e) => handleTemplateSelect(e.target.value)}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
-                    >
-                      <option value="">No template</option>
-                      {templates.map((template) => (
-                        <option key={template._id} value={template._id}>
-                          {template.name} ({template.tone})
-                        </option>
-                      ))}
-                    </select>
-                  </div>
-
-                  {/* Generate AI Reply */}
-                  <button
-                    onClick={() => generateAIReply(selectedReview, templates.find(t => t._id === selectedTemplate)?.tone)}
-                    disabled={isGenerating || !!selectedReview.reviewReply}
-                    className="w-full bg-purple-600 text-white py-2 px-4 rounded-lg font-medium hover:bg-purple-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors flex items-center justify-center gap-2"
-                  >
-                    {isGenerating ? (
-                      <>
-                        <Loader className="h-4 w-4 animate-spin" />
-                        Generating AI Reply...
-                      </>
-                    ) : selectedReview.reviewReply ? (
-                      'Already Replied'
-                    ) : (
-                      <>
-                        <Bot className="h-4 w-4" />
-                        Generate AI Reply with GPT-4
-                      </>
-                    )}
-                  </button>
-
-                  {/* Final Reply Editor */}
-                  {finalReply && (
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-2">
-                        Final Reply (Edit as needed)
-                      </label>
-                      <textarea
-                        value={finalReply}
-                        onChange={(e) => setFinalReply(e.target.value)}
-                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
-                        rows={4}
-                        placeholder="Your reply will appear here..."
-                      />
-                    </div>
-                  )}
-
-                  {/* Send Reply */}
-                  {finalReply && !selectedReview.reviewReply && (
-                    <button
-                      onClick={sendReplyToGoogle}
-                      disabled={isSending}
-                      className="w-full bg-green-600 text-white py-2 px-4 rounded-lg font-medium hover:bg-green-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors flex items-center justify-center gap-2"
-                    >
-                      {isSending ? (
-                        <>
-                          <Loader className="h-4 w-4 animate-spin" />
-                          Sending Reply...
-                        </>
-                      ) : (
-                        <>
-                          <Send className="h-4 w-4" />
-                          Send Reply to Google My Business
-                        </>
-                      )}
-                    </button>
-                  )}
-
-                  {/* Existing Reply */}
-                  {selectedReview.reviewReply && (
-                    <div className="bg-green-50 rounded-lg p-4">
-                      <h4 className="font-medium text-green-800 mb-2">Your Reply:</h4>
-                      <p className="text-sm text-green-700">{selectedReview.reviewReply.comment}</p>
-                      <p className="text-xs text-green-600 mt-2">
-                        Replied on {formatDate(selectedReview.reviewReply.updateTime)}
-                      </p>
-                    </div>
-                  )}
-                </>
-              ) : (
-                <div className="text-center py-8">
-                  <MessageSquare className="h-12 w-12 text-gray-400 mx-auto mb-4" />
-                  <p className="text-gray-500">Select a review to start generating a reply</p>
-                </div>
-              )}
-            </div>
-          </div>
+      <div className="flex items-center gap-3 bg-white rounded-lg p-3 shadow-sm">
+        <img src={googleAccount.picture} alt={googleAccount.name} className="w-8 h-8 rounded-full" />
+        <div className="text-sm">
+          <p className="font-medium text-gray-900">{googleAccount.businessName}</p>
+          <p className="text-gray-500">{googleAccount.email}</p>
         </div>
-      )}
+      </div>
+    </div>
 
-      {/* Templates Tab */}
-      {activeTab === 'templates' && (
-        <div className="space-y-6">
-          {/* Add Template Button */}
-          <div className="flex justify-end">
-            <button
-              onClick={() => setIsAddingTemplate(true)}
-              className="bg-purple-600 text-white px-4 py-2 rounded-lg font-medium hover:bg-purple-700 transition-colors flex items-center gap-2"
+    {/* Tabs */}
+    <div className="border-b border-gray-200">
+      <nav className="-mb-px flex space-x-8">
+        <button
+          onClick={() => setActiveTab('reviews')}
+          className={`py-2 px-1 border-b-2 font-medium text-sm ${
+            activeTab === 'reviews'
+              ? 'border-purple-500 text-purple-600'
+              : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+          }`}
+        >
+          <MessageSquare className="h-4 w-4 inline mr-2" />
+          Reply to Reviews ({reviews.length})
+        </button>
+        <button
+          onClick={() => setActiveTab('templates')}
+          className={`py-2 px-1 border-b-2 font-medium text-sm ${
+            activeTab === 'templates'
+              ? 'border-purple-500 text-purple-600'
+              : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+          }`}
+        >
+          <FileText className="h-4 w-4 inline mr-2" />
+          Manage Templates ({templates.length})
+        </button>
+      </nav>
+    </div>
+
+    {/* Reviews Tab */}
+    {activeTab === 'reviews' && (
+      <YourReviewsTabComponentHere />
+    )}
+
+    {/* Templates Tab */}
+    {activeTab === 'templates' && (
+      <div className="space-y-6">
+        {/* Add Template Button */}
+        <div className="flex justify-end">
+          <button
+            onClick={() => setIsAddingTemplate(true)}
+            className="bg-purple-600 text-white px-4 py-2 rounded-lg font-medium hover:bg-purple-700 transition-colors flex items-center gap-2"
+          >
+            <Plus className="h-4 w-4" />
+            Add Template
+          </button>
+        </div>
+
+        {/* Add/Edit Form */}
+        {(isAddingTemplate || editingTemplate) && (
+          <div className="bg-white rounded-lg shadow-sm p-6">
+            <h3 className="text-lg font-medium text-gray-900 mb-4">
+              {editingTemplate ? 'Edit Template' : 'Add New Template'}
+            </h3>
+            <form
+              onSubmit={editingTemplate ? handleEditTemplate : handleAddTemplate}
+              className="space-y-4"
             >
-              <Plus className="h-4 w-4" />
-              Add Template
-            </button>
-          </div>
-
-          {/* Add/Edit Template Form */}
-          {(isAddingTemplate || editingTemplate) && (
-            <div className="bg-white rounded-lg shadow-sm p-6">
-              <h3 className="text-lg font-medium text-gray-900 mb-4">
-                {editingTemplate ? 'Edit Template' : 'Add New Template'}
-              </h3>
-              <form onSubmit={editingTemplate ? handleEditTemplate : handleAddTemplate} className="space-y-4">
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Template Name *
-                  </label>
-                  <input
-                    type="text"
-                    value={editingTemplate ? editingTemplate.name : newTemplate.name}
-                    onChange={(e) => editingTemplate 
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">Template Name *</label>
+                <input
+                  type="text"
+                  value={editingTemplate ? editingTemplate.name : newTemplate.name}
+                  onChange={(e) =>
+                    editingTemplate
                       ? setEditingTemplate({ ...editingTemplate, name: e.target.value })
                       : setNewTemplate({ ...newTemplate, name: e.target.value })
-                    }
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
-                    placeholder="e.g., Positive Review Response"
-                    required
-                  />
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Tone *
-                  </label>
-                  <select
-                    value={editingTemplate ? editingTemplate.tone : newTemplate.tone}
-                    onChange={(e) => editingTemplate 
+                  }
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+                  placeholder="e.g., Positive Review Response"
+                  required
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">Tone *</label>
+                <select
+                  value={editingTemplate ? editingTemplate.tone : newTemplate.tone}
+                  onChange={(e) =>
+                    editingTemplate
                       ? setEditingTemplate({ ...editingTemplate, tone: e.target.value as any })
                       : setNewTemplate({ ...newTemplate, tone: e.target.value as any })
-                    }
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
-                    required
-                  >
-                    <option value="professional">Professional</option>
-                    <option value="friendly">Friendly</option>
-                    <option value="apologetic">Apologetic</option>
-                  </select>
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Template Content *
-                  </label>
-                  <textarea
-                    value={editingTemplate ? editingTemplate.content : newTemplate.content}
-                    onChange={(e) => editingTemplate 
+                  }
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+                  required
+                >
+                  <option value="professional">Professional</option>
+                  <option value="friendly">Friendly</option>
+                  <option value="apologetic">Apologetic</option>
+                </select>
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">Template Content *</label>
+                <textarea
+                  value={editingTemplate ? editingTemplate.content : newTemplate.content}
+                  onChange={(e) =>
+                    editingTemplate
                       ? setEditingTemplate({ ...editingTemplate, content: e.target.value })
                       : setNewTemplate({ ...newTemplate, content: e.target.value })
-                    }
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
-                    rows={4}
-                    placeholder="Use {customerName} and {ai_content} as placeholders..."
-                    required
-                  />
-                  <p className="text-xs text-gray-500 mt-1">
-                    Use placeholders: {'{customerName}'} for customer name, {'{ai_content}'} for AI-generated content
-                  </p>
-                </div>
-                <div className="flex gap-3">
-                  <button
-                    type="button"
-                    onClick={() => {
-                      setIsAddingTemplate(false);
-                      setEditingTemplate(null);
-                    }}
-                    className="px-4 py-2 text-gray-700 bg-gray-200 rounded-lg hover:bg-gray-300 transition-colors"
-                  >
-                    Cancel
-                  </button>
-                  <button
-                    type="submit"
-                    className="px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors"
-                  >
-                    {editingTemplate ? 'Update Template' : 'Add Template'}
-                  </button>
-                </div>
-              </form>
-            </div>
-          )}
+                  }
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+                  rows={4}
+                  placeholder="Use {customerName} and {ai_content} as placeholders..."
+                  required
+                />
+                <p className="text-xs text-gray-500 mt-1">
+                  Use placeholders: {'{customerName}'} for customer name, {'{ai_content}'} for AI-generated content
+                </p>
+              </div>
+              <div className="flex gap-3">
+                <button
+                  type="button"
+                  onClick={() => {
+                    setIsAddingTemplate(false);
+                    setEditingTemplate(null);
+                  }}
+                  className="px-4 py-2 text-gray-700 bg-gray-200 rounded-lg hover:bg-gray-300 transition-colors"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  className="px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors"
+                >
+                  {editingTemplate ? 'Update Template' : 'Add Template'}
+                </button>
+              </div>
+            </form>
+          </div>
+        )}
 
-          {/* Templates List */}
+        {/* Templates List */}
+        {templates.length > 0 ? (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             {templates.map((template) => (
               <div key={template._id} className="bg-white rounded-lg shadow-sm p-6">
@@ -750,27 +558,29 @@ export const AIAssistantPanel: React.FC<AIAssistantPanelProps> = ({ hotelId }) =
                     </button>
                   </div>
                 </div>
-                <span className={`inline-block px-2 py-1 rounded-full text-xs font-medium mb-3 ${
-                  template.tone === 'professional' ? 'bg-blue-100 text-blue-800' :
-                  template.tone === 'friendly' ? 'bg-green-100 text-green-800' :
-                  'bg-red-100 text-red-800'
-                }`}>
+                <span
+                  className={`inline-block px-2 py-1 rounded-full text-xs font-medium mb-3 ${
+                    template.tone === 'professional'
+                      ? 'bg-blue-100 text-blue-800'
+                      : template.tone === 'friendly'
+                      ? 'bg-green-100 text-green-800'
+                      : 'bg-red-100 text-red-800'
+                  }`}
+                >
                   {template.tone}
                 </span>
                 <p className="text-sm text-gray-600 line-clamp-3">{template.content}</p>
               </div>
             ))}
-
-          {templates.length === 0 && (
-            <div className="text-center py-12">
-              <FileText className="h-12 w-12 text-gray-400 mx-auto mb-4" />
-              <p className="text-gray-500">No templates created yet</p>
-              <p className="text-sm text-gray-400">Add your first template to get started</p>
-            </div>
-          )}
-        </div>
-      )}
-    </div>
-        
-  );
-};
+          </div>
+        ) : (
+          <div className="text-center py-12">
+            <FileText className="h-12 w-12 text-gray-400 mx-auto mb-4" />
+            <p className="text-gray-500">No templates created yet</p>
+            <p className="text-sm text-gray-400">Add your first template to get started</p>
+          </div>
+        )}
+      </div>
+    )}
+  </div>
+);
