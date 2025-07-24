@@ -760,7 +760,6 @@ export const AIAssistantPanel: React.FC<AIAssistantPanelProps> = ({ hotelId }) =
                 <p className="text-sm text-gray-600 line-clamp-3">{template.content}</p>
               </div>
             ))}
-          </div>
 
           {templates.length === 0 && (
             <div className="text-center py-12">
