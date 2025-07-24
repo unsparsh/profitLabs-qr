@@ -380,7 +380,9 @@ export const AIAssistantPanel: React.FC<AIAssistantPanelProps> = ({ hotelId }) =
                 <p>✅ Works without OpenAI API key</p>
                 <p>✅ Smart template-based responses</p>
                 <p>✅ Upgrade to GPT-4 for advanced AI</p>
+              </div>
             </div>
+          </div>
           </div>
         </div>
       </div>
@@ -437,7 +439,162 @@ export const AIAssistantPanel: React.FC<AIAssistantPanelProps> = ({ hotelId }) =
 
     {/* Reviews Tab */}
     {activeTab === 'reviews' && (
-      <YourReviewsTabComponentHere />
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        {/* Reviews List */}
+        <div className="space-y-4">
+          <h3 className="text-lg font-semibold text-gray-900">Recent Reviews</h3>
+          {isLoading ? (
+            <div className="flex items-center justify-center py-8">
+              <Loader className="h-6 w-6 animate-spin text-purple-600" />
+              <span className="ml-2 text-gray-600">Loading reviews...</span>
+            </div>
+          ) : reviews.length > 0 ? (
+            <div className="space-y-4">
+              {reviews.map((review) => (
+                <div
+                  key={review.reviewId}
+                  className={`bg-white rounded-lg shadow-sm p-4 border-2 cursor-pointer transition-all ${
+                    selectedReview?.reviewId === review.reviewId
+                      ? 'border-purple-500 bg-purple-50'
+                      : 'border-gray-200 hover:border-gray-300'
+                  }`}
+                  onClick={() => setSelectedReview(review)}
+                >
+                  <div className="flex items-start justify-between mb-2">
+                    <div className="flex items-center gap-2">
+                      <User className="h-4 w-4 text-gray-400" />
+                      <span className="font-medium text-gray-900">{review.reviewer.displayName}</span>
+                    </div>
+                    <div className="flex items-center gap-1">
+                      {getRatingStars(review.starRating)}
+                    </div>
+                  </div>
+                  <p className="text-sm text-gray-600 mb-2 line-clamp-2">{review.comment}</p>
+                  <div className="flex items-center justify-between">
+                    <span className="text-xs text-gray-500">
+                      <Calendar className="h-3 w-3 inline mr-1" />
+                      {formatDate(review.createTime)}
+                    </span>
+                    {review.reviewReply ? (
+                      <span className="text-xs text-green-600 bg-green-100 px-2 py-1 rounded-full">
+                        Replied
+                      </span>
+                    ) : (
+                      <span className="text-xs text-orange-600 bg-orange-100 px-2 py-1 rounded-full">
+                        Needs Reply
+                      </span>
+                    )}
+                  </div>
+                </div>
+              ))}
+            </div>
+          ) : (
+            <div className="text-center py-8">
+              <MessageSquare className="h-12 w-12 text-gray-400 mx-auto mb-4" />
+              <p className="text-gray-500">No reviews found</p>
+              <p className="text-sm text-gray-400">Reviews will appear here once available</p>
+            </div>
+          )}
+        </div>
+
+        {/* Reply Panel */}
+        <div className="space-y-4">
+          <h3 className="text-lg font-semibold text-gray-900">Generate Reply</h3>
+          
+          {selectedReview ? (
+            <div className="space-y-4">
+              {/* Selected Review Display */}
+              <div className="bg-gray-50 rounded-lg p-4">
+                <div className="flex items-center gap-2 mb-2">
+                  <span className="font-medium text-gray-900">{selectedReview.reviewer.displayName}</span>
+                  <div className="flex items-center gap-1">
+                    {getRatingStars(selectedReview.starRating)}
+                  </div>
+                </div>
+                <p className="text-sm text-gray-600">{selectedReview.comment}</p>
+              </div>
+
+              {/* Template Selection */}
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Select Template (Optional)
+                </label>
+                <select
+                  value={selectedTemplate}
+                  onChange={(e) => handleTemplateSelect(e.target.value)}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+                >
+                  <option value="">No template</option>
+                  {templates.map((template) => (
+                    <option key={template._id} value={template._id}>
+                      {template.name} ({template.tone})
+                    </option>
+                  ))}
+                </select>
+              </div>
+
+              {/* Generate AI Reply */}
+              <div className="flex gap-2">
+                <button
+                  onClick={() => generateAIReply(selectedReview, 'professional')}
+                  disabled={isGenerating}
+                  className="flex-1 bg-purple-600 text-white px-4 py-2 rounded-lg font-medium hover:bg-purple-700 transition-colors disabled:opacity-50 flex items-center justify-center gap-2"
+                >
+                  {isGenerating ? (
+                    <>
+                      <Loader className="h-4 w-4 animate-spin" />
+                      Generating...
+                    </>
+                  ) : (
+                    <>
+                      <Bot className="h-4 w-4" />
+                      Generate AI Reply
+                    </>
+                  )}
+                </button>
+              </div>
+
+              {/* Final Reply Editor */}
+              {finalReply && (
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Final Reply
+                  </label>
+                  <textarea
+                    value={finalReply}
+                    onChange={(e) => setFinalReply(e.target.value)}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+                    rows={4}
+                    placeholder="Edit your reply before sending..."
+                  />
+                  <button
+                    onClick={sendReplyToGoogle}
+                    disabled={isSending || !finalReply.trim()}
+                    className="mt-2 w-full bg-green-600 text-white px-4 py-2 rounded-lg font-medium hover:bg-green-700 transition-colors disabled:opacity-50 flex items-center justify-center gap-2"
+                  >
+                    {isSending ? (
+                      <>
+                        <Loader className="h-4 w-4 animate-spin" />
+                        Sending...
+                      </>
+                    ) : (
+                      <>
+                        <Send className="h-4 w-4" />
+                        Send Reply to Google
+                      </>
+                    )}
+                  </button>
+                </div>
+              )}
+            </div>
+          ) : (
+            <div className="text-center py-8">
+              <MessageSquare className="h-12 w-12 text-gray-400 mx-auto mb-4" />
+              <p className="text-gray-500">Select a review to generate a reply</p>
+            </div>
+          )}
+        </div>
+      </div>
     )}
 
     {/* Templates Tab */}
