@@ -154,6 +154,14 @@ export const AIAssistantPanel: React.FC<AIAssistantPanelProps> = ({ hotelId }) =
       
       setAiReply(response.aiReply);
       
+      // Show different success message based on AI source
+      if (response.source === 'openai') {
+        toast.success('AI reply generated with GPT-4!');
+      } else if (response.source === 'template') {
+        toast.success('Smart reply generated with built-in AI!');
+      } else {
+        toast.success('Fallback reply generated (OpenAI unavailable)');
+      }
       // If template is selected, merge with AI content
       if (selectedTemplate) {
         const template = templates.find(t => t._id === selectedTemplate);
@@ -167,7 +175,6 @@ export const AIAssistantPanel: React.FC<AIAssistantPanelProps> = ({ hotelId }) =
         setFinalReply(response.aiReply);
       }
       
-      toast.success('AI reply generated successfully!');
     } catch (error) {
       toast.error('Failed to generate AI reply');
     } finally {
@@ -366,8 +373,13 @@ export const AIAssistantPanel: React.FC<AIAssistantPanelProps> = ({ hotelId }) =
 
             <div className="mt-6 p-4 bg-blue-50 rounded-lg">
               <p className="text-sm text-blue-800">
-                <strong>Powered by OpenAI GPT-4</strong><br/>
-                Generate professional, SEO-optimized replies to customer reviews automatically.
+                <strong>AI-Powered Review Assistant</strong><br/>
+                Generate professional, SEO-optimized replies using advanced AI or smart templates.
+              </p>
+              <div className="mt-2 text-xs text-blue-600">
+                <p>✅ Works without OpenAI API key</p>
+                <p>✅ Smart template-based responses</p>
+                <p>✅ Upgrade to GPT-4 for advanced AI</p>
               </p>
             </div>
           </div>

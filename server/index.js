@@ -53,12 +53,15 @@ const openai = new OpenAI({
 const oauth2Client = new google.auth.OAuth2(
   process.env.GOOGLE_CLIENT_ID,
   process.env.GOOGLE_CLIENT_SECRET,
-  `${process.env.CLIENT_URL}/auth/google/callback`
+  `${process.env.CLIENT_URL || 'http://localhost:5173'}/auth/google/callback`
 );
 // MongoDB connection
-mongoose.connect(process.env.MONGODB_URI || 'mongodb://localhost:27017/profitlabs', {
-  useNewUrlParser: true,
-  useUnifiedTopology: true,
+let openai = null;
+if (process.env.OPENAI_API_KEY) {
+  openai = new OpenAI({
+    apiKey: process.env.OPENAI_API_KEY,
+  });
+}
 });
 
 // Schemas
@@ -398,6 +401,13 @@ app.post('/api/generate-reply', authenticateToken, async (req, res) => {
   try {
     const { reviewText, rating, customerName, tone = 'professional' } = req.body;
     
+    // Check if OpenAI is available
+    if (!openai) {
+      // Use built-in AI templates as fallback
+      const fallbackReply = generateFallbackReply(reviewText, rating, customerName, tone);
+      return res.json({ aiReply: fallbackReply, source: 'template' });
+    }
+    
     // Construct prompt for GPT-4
     const toneInstructions = {
       professional: 'Write a professional and courteous reply',
@@ -439,13 +449,38 @@ Reply:`;
     
     const aiReply = completion.choices[0].message.content.trim();
     
-    res.json({ aiReply });
+    res.json({ aiReply, source: 'openai' });
   } catch (error) {
     console.error('AI reply generation error:', error);
-    res.status(500).json({ message: 'Failed to generate AI reply' });
+    // Fallback to template-based reply
+    const fallbackReply = generateFallbackReply(req.body.reviewText, req.body.rating, req.body.customerName, req.body.tone);
+    res.json({ aiReply: fallbackReply, source: 'template_fallback' });
   }
 });
 
+// Fallback AI reply generation using templates
+function generateFallbackReply(reviewText, rating, customerName, tone) {
+  const templates = {
+    professional: {
+      positive: `Dear ${customerName}, thank you for your wonderful review! We're delighted to hear about your positive experience. We look forward to welcoming you back soon.`,
+      neutral: `Dear ${customerName}, thank you for taking the time to share your feedback. We appreciate your comments and will use them to improve our services.`,
+      negative: `Dear ${customerName}, thank you for your feedback. We sincerely apologize for not meeting your expectations. Please contact us directly so we can make this right.`
+    },
+    friendly: {
+      positive: `Hi ${customerName}! 🌟 We're so happy you enjoyed your stay with us! Your kind words made our day. Can't wait to see you again!`,
+      neutral: `Hi ${customerName}! Thanks for sharing your thoughts with us. We really value your feedback and hope to serve you better next time!`,
+      negative: `Hi ${customerName}, we're really sorry to hear about your experience. This isn't the standard we aim for. Let's chat and make things right!`
+    },
+    apologetic: {
+      positive: `Dear ${customerName}, we're truly grateful for your kind review. It means the world to us that you had a great experience. Thank you for choosing us!`,
+      neutral: `Dear ${customerName}, we appreciate you taking the time to review us. Your feedback helps us grow and improve our services.`,
+      negative: `Dear ${customerName}, we deeply apologize for the issues you experienced. This is not acceptable, and we want to make it right. Please contact us directly.`
+    }
+  };
+  
+  const category = rating >= 4 ? 'positive' : rating >= 3 ? 'neutral' : 'negative';
+  return templates[tone]?.[category] || templates.professional[category];
+}
 app.post('/api/send-reply/:hotelId', authenticateToken, async (req, res) => {
   try {
     const { hotelId } = req.params;
