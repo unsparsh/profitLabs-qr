@@ -365,7 +365,7 @@ export default function GuestPortal({ hotelId, roomId }: GuestPortalProps) {
                 <div className="w-12 h-12 bg-gray-100 rounded-lg flex items-center justify-center mx-auto mb-4 group-hover:bg-orange-100 transition-colors">
                   <UtensilsCrossed className="w-6 h-6 text-gray-600 group-hover:text-orange-600" />
                 </div>
-                <h3 className="font-semibold text-gray-900 mb-2">Room Service</h3>
+                <h3 className="font-semibold text-gray-900 mb-2">Food Menu</h3>
                 <p className="text-sm text-gray-600 mb-4">Order food to your room</p>
                 <span className="inline-block bg-yellow-100 text-yellow-800 text-xs font-medium px-3 py-1 rounded-full">
                   Available
