@@ -117,6 +117,71 @@ return (
   <AuthProvider>
     <Router>
       <Routes>
+        {/* Authentication Routes */}
+        <Route 
+          path="/auth" 
+          element={
+            user && hotel ? (
+              <Navigate to="/admin" replace />
+            ) : (
+              <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-purple-50 flex items-center justify-center px-4">
+                <div className="w-full max-w-md">
+                  <Toaster position="top-right" />
+                  {authMode === 'login' ? (
+                    <LoginForm 
+                      onSuccess={handleAuthSuccess}
+                      onSwitchToRegister={() => setAuthMode('register')}
+                    />
+                  ) : (
+                    <RegisterForm 
+                      onSuccess={handleAuthSuccess}
+                      onSwitchToLogin={() => setAuthMode('login')}
+                    />
+                  )}
+                </div>
+              </div>
+            )
+          } 
+        />
+        
+        {/* Admin Dashboard */}
+        <Route 
+          path="/admin" 
+          element={
+            user && hotel ? (
+              <AdminDashboard 
+                user={user} 
+                hotel={hotel} 
+                onLogout={handleLogout} 
+              />
+            ) : (
+              <Navigate to="/auth" replace />
+            )
+          } 
+        />
+        
+        {/* Guest Portal */}
+        <Route path="/guest/:hotelId/:roomId" element={<GuestPortalWrapper />} />
+        
+        {/* Google OAuth Callback */}
+        <Route path="/auth/google/callback" element={<GoogleCallback />} />
+        
+        {/* Pricing Page */}
+        <Route path="/pricing" element={<PricingPage />} />
+        
+        {/* Root redirect */}
+        <Route 
+          path="/" 
+          element={
+            user && hotel ? (
+              <Navigate to="/admin" replace />
+            ) : (
+              <Navigate to="/auth" replace />
+            )
+          } 
+        />
+        
+        {/* 404 Page */}
         <Route
           path="*"
           element={
@@ -184,6 +249,7 @@ return (
           }
         />
       </Routes>
+      <Toaster position="top-right" />
     </Router>
   </AuthProvider>
 );
