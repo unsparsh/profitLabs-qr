@@ -7,6 +7,7 @@ const NotFound: React.FC = () => {
       <p className="md:text-xl text-gray-400 max-w-lg text-center">
         Jai Shree Mahakal
       </p>
+      <hr>
       <h1 className="text-4xl md:text-5xl font-bold bg-gradient-to-r from-white to-gray-500 bg-clip-text text-transparent">
         404 Not Found
       </h1>
