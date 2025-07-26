@@ -682,15 +682,15 @@ app.post('/api/guest/:hotelId/:roomId/request', async (req, res) => {
 
 // Socket.IO connection handling
 io.on('connection', (socket) => {
-  console.log('User connected:', socket.id);
+  // console.log('User connected:', socket.id);
 
   socket.on('joinHotel', (hotelId) => {
     socket.join(hotelId);
-    console.log(`User joined hotel room: ${hotelId}`);
+    // console.log(`User joined hotel room: ${hotelId}`);
   });
 
   socket.on('disconnect', () => {
-    console.log('User disconnected:', socket.id);
+    // console.log('User disconnected:', socket.id);
   });
 });
 
@@ -954,7 +954,7 @@ app.post('/api/hotels/:hotelId/rooms', authenticateToken, async (req, res) => {
     });
 
     await room.save();
-    console.log("✅ Room created successfully");
+    // console.log("✅ Room created successfully");
 
     res.json(room);
   } catch (error) {
@@ -1061,10 +1061,10 @@ app.put('/api/hotels/:hotelId/requests/:requestId', authenticateToken, async (re
 app.get('/api/guest/:hotelId/food-menu', async (req, res) => {
   try {
     const { hotelId } = req.params;
-    console.log('Fetching food menu for hotel:', hotelId);
+    // console.log('Fetching food menu for hotel:', hotelId);
     
     if (!mongoose.Types.ObjectId.isValid(hotelId)) {
-      console.log('Invalid hotelId:', hotelId);
+      // console.log('Invalid hotelId:', hotelId);
       return res.status(400).json({ message: 'Invalid hotelId' });
     }
     
@@ -1073,7 +1073,7 @@ app.get('/api/guest/:hotelId/food-menu', async (req, res) => {
       isAvailable: true 
     });
     
-    console.log('Found food items:', foodItems.length);
+    // console.log('Found food items:', foodItems.length);
     res.json(foodItems);
   } catch (error) {
     console.error('Guest food menu error:', error.stack || error);
@@ -1125,15 +1125,15 @@ app.post('/api/guest/:hotelId/:roomId/request', async (req, res) => {
 
   try {
     // ✅ Find the actual room using UUID
-    console.log('Looking for room:', {
-      hotelId: new mongoose.Types.ObjectId(hotelId),
-      uuid: roomId
-    });
+    // console.log('Looking for room:', {
+    //   hotelId: new mongoose.Types.ObjectId(hotelId),
+    //   uuid: roomId
+    // });
     const room = await Room.findOne({
       hotelId: new mongoose.Types.ObjectId(hotelId),
       uuid: roomId
     });
-    console.log('Room found:', room);
+    // console.log('Room found:', room);
 
     if (!room) {
       return res.status(404).json({ message: 'Room not found' });
@@ -1186,7 +1186,7 @@ app.post('/api/guest/:hotelId/:roomId/request', async (req, res) => {
     await request.save();
     
     // ✅ Emit real-time notification to admin dashboard
-    console.log('🔔 Emitting newRequest to hotel room:', hotelId);
+    // console.log('🔔 Emitting newRequest to hotel room:', hotelId);
     io.to(hotelId).emit('newRequest', request);
 
     res.status(201).json({ message: 'Request submitted successfully', request });
