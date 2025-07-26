@@ -1,4 +1,5 @@
 import React from "react";
+import { Link } from "react-router-dom"; // Import Link from react-router-dom
 
 const NotFound: React.FC = () => {
   return (
@@ -10,18 +11,19 @@ const NotFound: React.FC = () => {
         The page you are looking for might have been removed, had its name changed, or is temporarily unavailable.
       </p>
       <div className="flex items-center gap-4 mt-6">
-        <a
-          href="/"
+        {/* Use Link for internal routing */}
+        <Link
+          to="/"
           className="bg-gray-800 hover:bg-black px-7 py-2.5 text-white rounded-md active:scale-95 transition-all"
         >
           Return Home
-        </a>
-        <a
-          href="/contact"
+        </Link>
+        <Link
+          to="/contact"
           className="border border-gray-300 px-7 py-2.5 text-gray-800 rounded-md active:scale-95 transition-all"
         >
           Contact Support
-        </a>
+        </Link>
       </div>
     </div>
   );
