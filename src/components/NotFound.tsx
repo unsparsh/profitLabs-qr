@@ -1,13 +1,14 @@
-// import React from "react";
+import React from "react";
 import { Link } from "react-router-dom";
 
 const NotFound: React.FC = () => {
   return (
     <div className="flex flex-col items-center justify-center text-sm max-md:px-4 py-20 bg-white min-h-screen">
-      <p classname="md:text-xl text-gray-500 max-w-lg text-center">
-      Jai Shree Mahakal
+      <p className="md:text-xl text-gray-500 max-w-lg text-center mb-2">
+        Jai Shree Mahakal
       </p>
-      <h1 className="text-5xl md:text-7xl font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-indigo-600 via-purple-600 to-pink-500 drop-shadow-md">
+
+      <h1 className="text-6xl md:text-8xl font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-indigo-600 via-purple-600 to-pink-500 drop-shadow-2xl">
         404 Not Found
       </h1>
 
