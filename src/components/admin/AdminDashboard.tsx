@@ -122,7 +122,6 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ user, hotel, onL
     { id: 'rooms', label: 'Rooms', icon: QrCode, hasNotification: false },
     { id: 'analytics', label: 'Analytics', icon: BarChart3, hasNotification: false },
     { id: 'ai-assistant', label: 'AI Assistant', icon: Users, hasNotification: false },
-    { id: 'test-credentials', label: 'Test API', icon: Settings, hasNotification: false },
     { id: 'food-menu', label: 'Food Menu', icon: Users, hasNotification: false },
     { id: 'room-service-menu', label: 'Room Service', icon: Settings, hasNotification: false },
     { id: 'complaint-menu', label: 'Complaints', icon: Users, hasNotification: false },
@@ -224,11 +223,6 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ user, hotel, onL
             )}
             {activeTab === 'ai-assistant' && (
               <AIAssistantPanel
-                hotelId={hotel._id}
-              />
-            )}
-            {activeTab === 'test-credentials' && (
-              <CredentialTestPanel
                 hotelId={hotel._id}
               />
             )}
