@@ -7,6 +7,7 @@ import { AdminDashboard } from './components/admin/AdminDashboard';
 import GuestPortal from './components/guest/GuestPortal';
 import  PricingPage  from './components/auth/PricingPage';
 import GoogleCallback from './components/auth/GoogleCallback';
+import { AuthProvider } from './contexts/AuthContext';
 import { apiClient } from './utils/api';
 import NotFound from "./components/NotFound";
 
@@ -113,63 +114,65 @@ function App() {
   }
 
   return (
-    <Router>
-      <div className="min-h-screen bg-gray-50">
-        <Toaster position="top-right" />
-        <Routes>
-          {/* Guest Portal */}
-          <Route path="/guest/:hotelId/:roomId" element={<GuestPortalWrapper />} />
-
-          {/* Admin Portal */}
-          <Route
-            path="/admin"
-            element={
-              user && hotel ? (
-                <AdminDashboard user={user} hotel={hotel} onLogout={handleLogout} />
-              ) : (
-                <Navigate to="/auth" replace />
-              )
-            }
-          />
-
-          {/* Pricing Page */}
-          <Route path="/pricing" element={<PricingPage />} />
-
-          {/* Google OAuth Callback */}
-          <Route path="/auth/google/callback" element={<GoogleCallback />} />
-
-          {/* Auth */}
-          <Route
-            path="/auth"
-            element={
-              user ? (
-                <Navigate to="/admin" replace />
-              ) : (
-                <div className="min-h-screen bg-gray-50 flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8">
-                  {authMode === 'login' ? (
-                    <LoginForm
-                      onSuccess={handleAuthSuccess}
-                      onSwitchToRegister={() => setAuthMode('register')}
-                    />
-                  ) : (
-                    <RegisterForm
-                      onSuccess={handleAuthSuccess}
-                      onSwitchToLogin={() => setAuthMode('login')}
-                    />
-                  )}
+    <AuthProvider>
+            {/* Not Found - 404 Page */}
+            <Route path="*" element={
+              <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-purple-50 flex items-center justify-center px-4">
+                <div className="text-center">
+                  <div className="relative mb-8">
+                    <div className="w-32 h-32 mx-auto bg-gradient-to-br from-blue-500 to-purple-600 rounded-full flex items-center justify-center shadow-2xl">
+                      <svg className="w-16 h-16 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                      </svg>
+                    </div>
+                    <div className="absolute -top-4 -right-4 w-8 h-8 bg-yellow-400 rounded-full animate-pulse"></div>
+                    <div className="absolute -bottom-4 -left-4 w-6 h-6 bg-pink-400 rounded-full animate-pulse delay-300"></div>
+                  </div>
+                  
+                  <h1 className="text-8xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-blue-600 to-purple-600 mb-4">
+                    404
+                  </h1>
+                  
+                  <h2 className="text-3xl font-bold text-gray-800 mb-4">
+                    Page Not Found
+                  </h2>
+                  
+                  <p className="text-gray-600 mb-8 max-w-md mx-auto">
+                    The page you're looking for doesn't exist or has been moved to a different location.
+                  </p>
+                  
+                  <div className="flex flex-col sm:flex-row gap-4 justify-center">
+                    <button
+                      onClick={() => window.history.back()}
+                      className="px-8 py-3 bg-gradient-to-r from-gray-600 to-gray-700 text-white rounded-lg font-semibold hover:from-gray-700 hover:to-gray-800 transform hover:scale-105 transition-all duration-200 shadow-lg"
+                    >
+                      Go Back
+                    </button>
+                    
+                    <a
+                      href="/"
+                      className="px-8 py-3 bg-gradient-to-r from-blue-600 to-purple-600 text-white rounded-lg font-semibold hover:from-blue-700 hover:to-purple-700 transform hover:scale-105 transition-all duration-200 shadow-lg"
+                    >
+                      Go Home
+                    </a>
+                  </div>
+                  
+                  <div className="mt-12 p-6 bg-white/80 backdrop-blur-sm rounded-2xl shadow-xl max-w-md mx-auto">
+                    <h3 className="text-lg font-semibold text-gray-800 mb-2">Need Help?</h3>
+                    <p className="text-gray-600 text-sm">
+                      Contact our support team at{' '}
+                      <a href="mailto:support@profitlabs.com" className="text-blue-600 hover:underline">
+                        support@profitlabs.com
+                      </a>
+                    </p>
+                  </div>
                 </div>
-              )
-            }
-          />
-
-          {/* Default Route */}
-          <Route path="/" element={<Navigate to="/auth" replace />} />
-
-          {/* Not Found - 404 Page */}
-          <Route path="*" element={<NotFound />} />
-        </Routes>
-      </div>
-    </Router>
+              </div>
+            } />
+          </Routes>
+        </div>
+      </Router>
+    </AuthProvider>
   );
 }
 

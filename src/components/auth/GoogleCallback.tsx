@@ -1,7 +1,8 @@
 import React, { useState, useEffect } from 'react';
-import { useNavigate, useSearchParams } from 'react-router-dom';
+import { useNavigate, useSearchParams, useLocation } from 'react-router-dom';
 import { Loader, Star, User, Calendar, MessageSquare, CheckCircle, XCircle } from 'lucide-react';
-import axios from 'axios';
+import { useAuth } from '../../contexts/AuthContext';
+import { apiClient } from '../../utils/api';
 import toast from 'react-hot-toast';
 
 interface Review {
@@ -24,8 +25,11 @@ const GoogleCallback: React.FC = () => {
   const [loading, setLoading] = useState(true);
   const [reviews, setReviews] = useState<Review[]>([]);
   const [error, setError] = useState<string | null>(null);
+  const [hotelId, setHotelId] = useState<string | null>(null);
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
+  const location = useLocation();
+  const { checkAuthStatus } = useAuth();
 
   useEffect(() => {
     handleCallback();
@@ -39,6 +43,11 @@ const GoogleCallback: React.FC = () => {
       const code = searchParams.get('code');
       const state = searchParams.get('state');
       const error = searchParams.get('error');
+      
+      // State contains the hotelId
+      if (state) {
+        setHotelId(state);
+      }
 
       if (error) {
         throw new Error(`OAuth error: ${error}`);
@@ -49,41 +58,48 @@ const GoogleCallback: React.FC = () => {
       }
 
       // Send callback data to backend
-      await axios.post('/api/google-auth/callback', {
+      await apiClient.request('/google-auth/callback', {
+        method: 'POST',
+        body: JSON.stringify({
         code,
         state
-      }, {
-        withCredentials: true,
-        headers: {
-          'Content-Type': 'application/json'
-        }
+        })
       });
+
+      // Update auth status in context
+      if (state) {
+        await checkAuthStatus(state);
+      }
 
       // Fetch Google reviews
-      const reviewsResponse = await axios.get(`/api/google/reviews`, {
-        withCredentials: true,
-        headers: {
-          'Authorization': `Bearer ${localStorage.getItem('authToken')}`,
-          'Content-Type': 'application/json'
-        }
-      });
+      const reviewsResponse = await apiClient.request(`/google-reviews/${state}`, {
+        method: 'GET'
+      }) as { reviews: Review[] };
 
-      setReviews(reviewsResponse.data.reviews || []);
+      setReviews(reviewsResponse.reviews || []);
       toast.success('Google account connected successfully!');
       
-      // Redirect to admin dashboard after 3 seconds
+      // Get the return URL from localStorage or default to admin
+      const returnUrl = localStorage.getItem('authReturnUrl') || '/admin';
+      localStorage.removeItem('authReturnUrl');
+      
+      // Redirect after 3 seconds
       setTimeout(() => {
-        navigate('/admin');
+        navigate(returnUrl);
       }, 3000);
 
     } catch (err: any) {
       console.error('Google OAuth callback error:', err);
-      setError(err.response?.data?.message || err.message || 'Failed to connect Google account');
+      setError(err.message || 'Failed to connect Google account');
       toast.error('Failed to connect Google account');
       
-      // Redirect to admin dashboard after 5 seconds even on error
+      // Get the return URL from localStorage or default to admin
+      const returnUrl = localStorage.getItem('authReturnUrl') || '/admin';
+      localStorage.removeItem('authReturnUrl');
+      
+      // Redirect after 5 seconds even on error
       setTimeout(() => {
-        navigate('/admin');
+        navigate(returnUrl);
       }, 5000);
     } finally {
       setLoading(false);
@@ -273,10 +289,14 @@ const GoogleCallback: React.FC = () => {
         {/* Navigation */}
         <div className="text-center mt-8">
           <button
-            onClick={() => navigate('/admin')}
+            onClick={() => {
+              const returnUrl = localStorage.getItem('authReturnUrl') || '/admin';
+              localStorage.removeItem('authReturnUrl');
+              navigate(returnUrl);
+            }}
             className="bg-blue-600 text-white py-3 px-8 rounded-lg font-semibold hover:bg-blue-700 transition-colors"
           >
-            Go to Dashboard
+            Continue
           </button>
         </div>
       </div>

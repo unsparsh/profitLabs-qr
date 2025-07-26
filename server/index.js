@@ -285,7 +285,7 @@ app.post('/api/google-auth/callback', async (req, res) => {
     const businessAccount = businessAccounts.data.accounts?.[0];
     
     // Save or update Google auth
-    await GoogleAuth.findOneAndUpdate(
+    const googleAuth = await GoogleAuth.findOneAndUpdate(
       { hotelId, googleAccountId: userInfo.data.id },
       {
         hotelId,
@@ -302,7 +302,16 @@ app.post('/api/google-auth/callback', async (req, res) => {
       { upsert: true, new: true }
     );
     
-    res.json({ success: true });
+    res.json({ 
+      success: true,
+      account: {
+        name: googleAuth.name,
+        email: googleAuth.email,
+        picture: googleAuth.picture,
+        businessName: googleAuth.businessName,
+        businessId: googleAuth.businessId
+      }
+    });
   } catch (error) {
     console.error('Google auth callback error:', error);
     res.status(500).json({ message: 'Authentication failed' });

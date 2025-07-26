@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Bot, MessageSquare, FileText, Send, Loader, Star, Calendar, User, Edit3, Plus, Trash2, LogIn } from 'lucide-react';
+import { useAuth } from '../../contexts/AuthContext';
 import { apiClient } from '../../utils/api';
 import toast from 'react-hot-toast';
 
@@ -40,7 +41,6 @@ interface AIAssistantPanelProps {
 
 export const AIAssistantPanel: React.FC<AIAssistantPanelProps> = ({ hotelId }) => {
   const [activeTab, setActiveTab] = useState<'reviews' | 'templates'>('reviews');
-  const [googleAccount, setGoogleAccount] = useState<GoogleAccount | null>(null);
   const [reviews, setReviews] = useState<Review[]>([]);
   const [templates, setTemplates] = useState<Template[]>([]);
   const [selectedReview, setSelectedReview] = useState<Review | null>(null);
@@ -49,7 +49,6 @@ export const AIAssistantPanel: React.FC<AIAssistantPanelProps> = ({ hotelId }) =
   const [finalReply, setFinalReply] = useState<string>('');
   const [isGenerating, setIsGenerating] = useState(false);
   const [isSending, setIsSending] = useState(false);
-  const [isLoading, setIsLoading] = useState(false);
   const [isAddingTemplate, setIsAddingTemplate] = useState(false);
   const [editingTemplate, setEditingTemplate] = useState<Template | null>(null);
   const [newTemplate, setNewTemplate] = useState({
@@ -57,82 +56,39 @@ export const AIAssistantPanel: React.FC<AIAssistantPanelProps> = ({ hotelId }) =
     content: '',
     tone: 'professional' as const
   });
+  
+  const { isAuthenticated, googleAccount, isLoading, signInWithGoogle, checkAuthStatus } = useAuth();
 
   useEffect(() => {
-    checkGoogleAuth();
+    checkAuthStatus(hotelId);
     fetchTemplates();
   }, [hotelId]);
 
   useEffect(() => {
-    if (googleAccount) {
+    if (isAuthenticated && googleAccount) {
       fetchGoogleReviews();
     }
-  }, [googleAccount]);
-
-  const checkGoogleAuth = async () => {
-    try {
-      const authStatus = await apiClient.request(`/google-auth/status/${hotelId}`, {
-        method: 'GET'
-      }) as { authenticated: boolean; account?: GoogleAccount };
-      if (authStatus.authenticated) {
-        setGoogleAccount(authStatus.account ?? null);
-      }
-    } catch (error) {
-      console.log('Not authenticated with Google');
-    }
-  };
+  }, [isAuthenticated, googleAccount]);
 
   const handleGoogleSignIn = async () => {
-    let popup: Window | null = null;
-
     try {
-      setIsLoading(true);
-
-      // Get Google OAuth URL from backend
-      const authUrl = await apiClient.request(`/google-auth/url/${hotelId}`, {
-        method: 'GET',
-      }) as { url: string };
-
-      // Open Google OAuth in popup
-      popup = window.open(
-        authUrl.url,
-        'google-auth',
-        'width=500,height=600,scrollbars=yes,resizable=yes'
-      );
-
-      if (!popup) {
-        throw new Error('Popup blocked or not allowed by browser');
-      }
-
-      // Poll every 1s to check if popup closed
-      const checkClosed = setInterval(() => {
-        if (popup?.closed) {
-          clearInterval(checkClosed);
-          checkGoogleAuth(); // Callback to re-fetch auth status
-        }
-      }, 1000);
-
+      await signInWithGoogle(hotelId);
     } catch (error: any) {
       console.error(error);
       toast.error('Failed to initiate Google sign-in');
-    } finally {
-      setIsLoading(false);
     }
   };
 
   const fetchGoogleReviews = async () => {
-    if (!googleAccount) return;
+    if (!isAuthenticated || !googleAccount) return;
     
     try {
-      setIsLoading(true);
       const reviewsData = await apiClient.request(`/google-reviews/${hotelId}`, {
         method: 'GET'
       });
       setReviews((reviewsData as { reviews: Review[] }).reviews || []);
     } catch (error) {
       toast.error('Failed to fetch Google reviews');
-    } finally {
-      setIsLoading(false);
     }
   };
 
@@ -330,7 +286,7 @@ export const AIAssistantPanel: React.FC<AIAssistantPanelProps> = ({ hotelId }) =
   };
 
   // If not authenticated with Google, show sign-in screen
-  if (!googleAccount) {
+  if (!isAuthenticated || !googleAccount) {
     return (
       <div className="space-y-6">
         {/* Header */}
