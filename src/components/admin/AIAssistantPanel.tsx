@@ -408,10 +408,10 @@ export const AIAssistantPanel: React.FC<AIAssistantPanelProps> = ({ hotelId }) =
         </div>
       </div>
       <div className="flex items-center gap-3 bg-white rounded-lg p-3 shadow-sm">
-        <img src={googleAccount.picture} alt={googleAccount.name} className="w-8 h-8 rounded-full" />
+        <img src={googleAccount?.picture} alt={googleAccount?.name} className="w-8 h-8 rounded-full" />
         <div className="text-sm">
-          <p className="font-medium text-gray-900">{googleAccount.businessName}</p>
-          <p className="text-gray-500">{googleAccount.email}</p>
+          <p className="font-medium text-gray-900">{googleAccount?.businessName}</p>
+          <p className="text-gray-500">{googleAccount?.email}</p>
         </div>
       </div>
     </div>
@@ -465,6 +465,7 @@ export const AIAssistantPanel: React.FC<AIAssistantPanelProps> = ({ hotelId }) =
 
         {/* Add/Edit Form */}
         {(isAddingTemplate || editingTemplate) && (
+          <>
           <div className="bg-white rounded-lg shadow-sm p-6">
             <h3 className="text-lg font-medium text-gray-900 mb-4">
               {editingTemplate ? 'Edit Template' : 'Add New Template'}
@@ -543,15 +544,16 @@ export const AIAssistantPanel: React.FC<AIAssistantPanelProps> = ({ hotelId }) =
               </div>
             </form>
           </div>
-        </div>
+        {/* </div> */}
         <div className="flex items-center gap-3 bg-white rounded-lg p-3 shadow-sm">
-          <img src={googleAccount.picture} alt={googleAccount.name} className="w-8 h-8 rounded-full" />
+          <img src={googleAccount?.picture} alt={googleAccount?.name} className="w-8 h-8 rounded-full" />
           <div className="text-sm">
-            <p className="font-medium text-gray-900">{googleAccount.businessName}</p>
-            <p className="text-gray-500">{googleAccount.email}</p>
+            <p className="font-medium text-gray-900">{googleAccount?.businessName}</p>
+            <p className="text-gray-500">{googleAccount?.email}</p>
           </div>
         </div>
-      </div>
+      {/* </div> */}
+      
 
       {/* Tabs */}
       <div className="border-b border-gray-200">
@@ -754,144 +756,9 @@ export const AIAssistantPanel: React.FC<AIAssistantPanelProps> = ({ hotelId }) =
               Add Template
             </button>
           </div>
-<<<<<<< HEAD
         )}
       </div>
     )}
   </div>
 
 )};
-=======
-
-          {/* Add/Edit Form */}
-          {(isAddingTemplate || editingTemplate) && (
-            <div className="bg-white rounded-lg shadow-sm p-6">
-              <h3 className="text-lg font-medium text-gray-900 mb-4">
-                {editingTemplate ? 'Edit Template' : 'Add New Template'}
-              </h3>
-              <form
-                onSubmit={editingTemplate ? handleEditTemplate : handleAddTemplate}
-                className="space-y-4"
-              >
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">Template Name *</label>
-                  <input
-                    type="text"
-                    value={editingTemplate ? editingTemplate.name : newTemplate.name}
-                    onChange={(e) =>
-                      editingTemplate
-                        ? setEditingTemplate({ ...editingTemplate, name: e.target.value })
-                        : setNewTemplate({ ...newTemplate, name: e.target.value })
-                    }
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
-                    placeholder="e.g., Positive Review Response"
-                    required
-                  />
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">Tone *</label>
-                  <select
-                    value={editingTemplate ? editingTemplate.tone : newTemplate.tone}
-                    onChange={(e) =>
-                      editingTemplate
-                        ? setEditingTemplate({ ...editingTemplate, tone: e.target.value as any })
-                        : setNewTemplate({ ...newTemplate, tone: e.target.value as any })
-                    }
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
-                    required
-                  >
-                    <option value="professional">Professional</option>
-                    <option value="friendly">Friendly</option>
-                    <option value="apologetic">Apologetic</option>
-                  </select>
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">Template Content *</label>
-                  <textarea
-                    value={editingTemplate ? editingTemplate.content : newTemplate.content}
-                    onChange={(e) =>
-                      editingTemplate
-                        ? setEditingTemplate({ ...editingTemplate, content: e.target.value })
-                        : setNewTemplate({ ...newTemplate, content: e.target.value })
-                    }
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
-                    rows={4}
-                    placeholder="Use {customerName} and {ai_content} as placeholders..."
-                    required
-                  />
-                  <p className="text-xs text-gray-500 mt-1">
-                    Use placeholders: {'{customerName}'} for customer name, {'{ai_content}'} for AI-generated content
-                  </p>
-                </div>
-                <div className="flex gap-3">
-                  <button
-                    type="button"
-                    onClick={() => {
-                      setIsAddingTemplate(false);
-                      setEditingTemplate(null);
-                    }}
-                    className="px-4 py-2 text-gray-700 bg-gray-200 rounded-lg hover:bg-gray-300 transition-colors"
-                  >
-                    Cancel
-                  </button>
-                  <button
-                    type="submit"
-                    className="px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors"
-                  >
-                    {editingTemplate ? 'Update Template' : 'Add Template'}
-                  </button>
-                </div>
-              </form>
-            </div>
-          )}
-
-          {/* Templates List */}
-          {templates.length > 0 ? (
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-              {templates.map((template) => (
-                <div key={template._id} className="bg-white rounded-lg shadow-sm p-6">
-                  <div className="flex items-start justify-between mb-3">
-                    <h4 className="font-semibold text-gray-900">{template.name}</h4>
-                    <div className="flex gap-1">
-                      <button
-                        onClick={() => setEditingTemplate(template)}
-                        className="p-1 text-blue-600 hover:bg-blue-50 rounded"
-                      >
-                        <Edit3 className="h-4 w-4" />
-                      </button>
-                      <button
-                        onClick={() => handleDeleteTemplate(template._id)}
-                        className="p-1 text-red-600 hover:bg-red-50 rounded"
-                      >
-                        <Trash2 className="h-4 w-4" />
-                      </button>
-                    </div>
-                  </div>
-                  <span
-                    className={`inline-block px-2 py-1 rounded-full text-xs font-medium mb-3 ${
-                      template.tone === 'professional'
-                        ? 'bg-blue-100 text-blue-800'
-                        : template.tone === 'friendly'
-                        ? 'bg-green-100 text-green-800'
-                        : 'bg-red-100 text-red-800'
-                    }`}
-                  >
-                    {template.tone}
-                  </span>
-                  <p className="text-sm text-gray-600 line-clamp-3">{template.content}</p>
-                </div>
-              ))}
-            </div>
-          ) : (
-            <div className="text-center py-12">
-              <FileText className="h-12 w-12 text-gray-400 mx-auto mb-4" />
-              <p className="text-gray-500">No templates created yet</p>
-              <p className="text-sm text-gray-400">Add your first template to get started</p>
-            </div>
-          )}
-        </div>
-      )}
-    </div>
-  );
-};
->>>>>>> 6a2644c599fca7b5d5bb827921a0764e6b3239de
