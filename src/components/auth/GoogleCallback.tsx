@@ -57,14 +57,18 @@ const GoogleCallback: React.FC = () => {
         throw new Error('Missing authorization code or state parameter');
       }
 
+      console.log('Processing OAuth callback:', { code: !!code, state });
+
       // Send callback data to backend
-      await apiClient.request('/google-auth/callback', {
+      const callbackResponse = await apiClient.request('/google-auth/callback', {
         method: 'POST',
         body: JSON.stringify({
-        code,
-        state
+          code,
+          state
         })
-      });
+      }) as { success: boolean; account: any };
+
+      console.log('Callback response:', callbackResponse);
 
       // Update auth status in context
       if (state) {
@@ -72,11 +76,16 @@ const GoogleCallback: React.FC = () => {
       }
 
       // Fetch Google reviews
-      const reviewsResponse = await apiClient.request(`/google-reviews/${state}`, {
-        method: 'GET'
-      }) as { reviews: Review[] };
+      try {
+        const reviewsResponse = await apiClient.request(`/google-reviews/${state}`, {
+          method: 'GET'
+        }) as { reviews: Review[] };
+        setReviews(reviewsResponse.reviews || []);
+      } catch (reviewsError) {
+        console.warn('Failed to fetch reviews (non-critical):', reviewsError);
+        setReviews([]);
+      }
 
-      setReviews(reviewsResponse.reviews || []);
       toast.success('Google account connected successfully!');
       
       // Get the return URL from localStorage or default to admin
@@ -90,7 +99,8 @@ const GoogleCallback: React.FC = () => {
 
     } catch (err: any) {
       console.error('Google OAuth callback error:', err);
-      setError(err.message || 'Failed to connect Google account');
+      const errorMessage = err.message || 'Failed to connect Google account';
+      setError(errorMessage);
       toast.error('Failed to connect Google account');
       
       // Get the return URL from localStorage or default to admin
