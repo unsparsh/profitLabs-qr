@@ -1366,4 +1366,7 @@ app.delete('/api/hotels/:hotelId/complaint-menu/:itemId', authenticateToken, asy
 const PORT = process.env.PORT || 3001;
 server.listen(PORT, () => {
   console.log(`Server running on port ${PORT}`);
+  console.log(`Environment: ${process.env.NODE_ENV || 'development'}`);
+  console.log(`MongoDB URI: ${process.env.MONGODB_URI ? 'Connected' : 'Using default localhost'}`);
+  console.log(`JWT Secret: ${process.env.JWT_SECRET ? 'Set' : 'Using default'}`);
 });
