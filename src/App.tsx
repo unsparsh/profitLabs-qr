@@ -98,6 +98,7 @@ function App() {
   };
 
   if (isLoading) {
+    //Loading Animation
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
         <div className="text-center">
@@ -158,7 +159,7 @@ function App() {
           {/* Default Route */}
           <Route path="/" element={<Navigate to="/auth" replace />} />
 
-          {/* Not Found */}
+          {/* Not Found - 404 Page */}
           <Route path="*" element={<div className="p-8 text-center text-red-500">404 | Page Not Found</div>} />
         </Routes>
       </div>

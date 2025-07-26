@@ -40,17 +40,17 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ user, hotel, onL
 
   useEffect(() => {
     const token = localStorage.getItem('authToken') ?? undefined;
-    console.log('🔌 Connecting to Socket.IO with hotel ID:', hotel._id);
+    // console.log('🔌 Connecting to Socket.IO with hotel ID:', hotel._id);
     const socket = socketManager.connect(token);
 
     socket.on('connect', () => {
-      console.log('✅ Socket.IO connected successfully');
+      // console.log('✅ Socket.IO connected successfully');
       socketManager.joinHotelRoom(hotel._id);
-      console.log('🏨 Joined hotel room:', hotel._id);
+      // console.log('🏨 Joined hotel room:', hotel._id);
     });
 
     socket.on('newRequest', (request) => {
-      console.log('🔔 Received new request via Socket.IO:', request);
+      // console.log('🔔 Received new request via Socket.IO:', request);
       setRequests(prev => [request, ...prev]);
       setUnreadCount(prev => prev + 1);
 
@@ -68,7 +68,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ user, hotel, onL
     });
 
     socket.on('requestUpdated', (updatedRequest) => {
-      console.log('🔄 Request updated via Socket.IO:', updatedRequest);
+      // console.log('🔄 Request updated via Socket.IO:', updatedRequest);
       setRequests(prev =>
         prev.map(req => req._id === updatedRequest._id ? updatedRequest : req)
       );
