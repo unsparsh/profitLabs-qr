@@ -282,15 +282,32 @@ app.post('/api/google-auth/callback', async (req, res) => {
       return res.status(400).json({ message: 'No hotel ID provided' });
     }
     
+    // Check if Google OAuth is properly configured
+    if (!process.env.GOOGLE_CLIENT_ID || !process.env.GOOGLE_CLIENT_SECRET) {
+      console.error('Google OAuth credentials not configured');
+      return res.status(500).json({ 
+        message: 'Google OAuth not configured on server',
+        error: 'Missing GOOGLE_CLIENT_ID or GOOGLE_CLIENT_SECRET environment variables'
+      });
+    }
+    
+    console.log('Google OAuth config check passed');
+    
     // Exchange code for tokens
     let tokens;
     try {
+      console.log('Attempting token exchange with Google...');
       const tokenResponse = await oauth2Client.getToken(code);
       tokens = tokenResponse.tokens;
       console.log('Tokens received successfully');
     } catch (tokenError) {
-      console.error('Token exchange error:', tokenError);
-      return res.status(400).json({ message: 'Failed to exchange authorization code for tokens' });
+      console.error('Token exchange error:', tokenError.message);
+      console.error('Token exchange full error:', tokenError);
+      return res.status(400).json({ 
+        message: 'Failed to exchange authorization code for tokens',
+        error: tokenError.message,
+        details: process.env.NODE_ENV === 'development' ? tokenError.stack : undefined
+      });
     }
     
     oauth2Client.setCredentials(tokens);
@@ -298,18 +315,25 @@ app.post('/api/google-auth/callback', async (req, res) => {
     // Get user info
     let userInfo;
     try {
+      console.log('Fetching user info from Google...');
       const oauth2 = google.oauth2({ version: 'v2', auth: oauth2Client });
       const userInfoResponse = await oauth2.userinfo.get();
       userInfo = userInfoResponse.data;
       console.log('User info retrieved:', userInfo.email);
     } catch (userInfoError) {
-      console.error('User info retrieval error:', userInfoError);
-      return res.status(400).json({ message: 'Failed to retrieve user information' });
+      console.error('User info retrieval error:', userInfoError.message);
+      console.error('User info full error:', userInfoError);
+      return res.status(400).json({ 
+        message: 'Failed to retrieve user information',
+        error: userInfoError.message,
+        details: process.env.NODE_ENV === 'development' ? userInfoError.stack : undefined
+      });
     }
     
     // Get business info
     let businessAccount = null;
     try {
+      console.log('Attempting to fetch business info...');
       const mybusiness = google.mybusinessbusinessinformation({ version: 'v1', auth: oauth2Client });
       const businessAccounts = await mybusiness.accounts.list();
       businessAccount = businessAccounts.data.accounts?.[0];
@@ -322,6 +346,7 @@ app.post('/api/google-auth/callback', async (req, res) => {
     // Save or update Google auth
     let googleAuth;
     try {
+      console.log('Saving Google auth to database...');
       googleAuth = await GoogleAuth.findOneAndUpdate(
         { hotelId, googleAccountId: userInfo.id },
         {
@@ -340,8 +365,13 @@ app.post('/api/google-auth/callback', async (req, res) => {
       );
       console.log('Google auth saved successfully for hotel:', hotelId);
     } catch (dbError) {
-      console.error('Database save error:', dbError);
-      return res.status(500).json({ message: 'Failed to save authentication data' });
+      console.error('Database save error:', dbError.message);
+      console.error('Database full error:', dbError);
+      return res.status(500).json({ 
+        message: 'Failed to save authentication data',
+        error: dbError.message,
+        details: process.env.NODE_ENV === 'development' ? dbError.stack : undefined
+      });
     }
     
     res.json({ 
@@ -355,10 +385,12 @@ app.post('/api/google-auth/callback', async (req, res) => {
       }
     });
   } catch (error) {
-    console.error('Google auth callback error:', error);
+    console.error('Google auth callback error:', error.message);
+    console.error('Google auth callback full error:', error);
     res.status(500).json({ 
       message: 'Authentication failed', 
-      error: process.env.NODE_ENV === 'development' ? error.message : 'Internal server error'
+      error: error.message,
+      details: process.env.NODE_ENV === 'development' ? error.stack : 'Internal server error'
     });
   }
 });

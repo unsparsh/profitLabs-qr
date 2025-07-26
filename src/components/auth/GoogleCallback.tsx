@@ -99,7 +99,24 @@ const GoogleCallback: React.FC = () => {
 
     } catch (err: any) {
       console.error('Google OAuth callback error:', err);
-      const errorMessage = err.message || 'Failed to connect Google account';
+      let errorMessage = 'Failed to connect Google account';
+      
+      // Extract more specific error information
+      if (err.message) {
+        errorMessage = err.message;
+      }
+      
+      // If there's additional error details from the server
+      if (err.response?.data?.error) {
+        errorMessage = `${errorMessage}: ${err.response.data.error}`;
+      }
+      
+      console.error('Detailed error info:', {
+        message: err.message,
+        response: err.response?.data,
+        status: err.response?.status
+      });
+      
       setError(errorMessage);
       toast.error('Failed to connect Google account');
       
