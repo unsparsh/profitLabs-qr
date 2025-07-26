@@ -5,6 +5,7 @@ import { LoginForm } from './components/auth/LoginForm';
 import { RegisterForm } from './components/auth/RegisterForm';
 import { AdminDashboard } from './components/admin/AdminDashboard';
 import GuestPortal from './components/guest/GuestPortal';
+import { PricingPage } from './components/auth/PricingPage';
 import { apiClient } from './utils/api';
 
 type User = any;
