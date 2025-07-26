@@ -340,7 +340,6 @@ export const AIAssistantPanel: React.FC<AIAssistantPanelProps> = ({ hotelId }) =
           <div>
             <h2 className="text-2xl font-bold text-gray-900">AI Review Assistant</h2>
             <p className="text-gray-600">Connect with Google My Business to manage reviews</p>
-          </div>
         </div>
 
         {/* Google Sign-In Card */}
@@ -389,12 +388,7 @@ export const AIAssistantPanel: React.FC<AIAssistantPanelProps> = ({ hotelId }) =
                 <p>✅ Works without OpenAI API key</p>
                 <p>✅ Smart template-based responses</p>
                 <p>✅ Upgrade to GPT-4 for advanced AI</p>
-<<<<<<< HEAD
             </div> */}
-=======
-              </div>
-            </div>
->>>>>>> 6a2644c599fca7b5d5bb827921a0764e6b3239de
           </div>
         </div>
       </div>
@@ -402,7 +396,6 @@ export const AIAssistantPanel: React.FC<AIAssistantPanelProps> = ({ hotelId }) =
     );
   }
 
-<<<<<<< HEAD
  return (
   <div className="space-y-6">
     {/* Header with Google Account Info */}
@@ -549,17 +542,6 @@ export const AIAssistantPanel: React.FC<AIAssistantPanelProps> = ({ hotelId }) =
                 </button>
               </div>
             </form>
-=======
-  return (
-    <div className="space-y-6">
-      {/* Header with Google Account Info */}
-      <div className="flex items-center justify-between">
-        <div className="flex items-center gap-3">
-          <Bot className="h-8 w-8 text-purple-600" />
-          <div>
-            <h2 className="text-2xl font-bold text-gray-900">AI Review Assistant</h2>
-            <p className="text-gray-600">Manage Google reviews with AI-powered responses</p>
->>>>>>> 6a2644c599fca7b5d5bb827921a0764e6b3239de
           </div>
         </div>
         <div className="flex items-center gap-3 bg-white rounded-lg p-3 shadow-sm">
