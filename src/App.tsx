@@ -8,6 +8,8 @@ import GuestPortal from './components/guest/GuestPortal';
 import  PricingPage  from './components/auth/PricingPage';
 import GoogleCallback from './components/auth/GoogleCallback';
 import { apiClient } from './utils/api';
+import NotFound from "./components/NotFound";
+
 
 type User = any;
 type Hotel = any;
@@ -164,7 +166,7 @@ function App() {
           <Route path="/" element={<Navigate to="/auth" replace />} />
 
           {/* Not Found - 404 Page */}
-          <Route path="*" element={<div className="p-8 text-center text-red-500">404 | Page Not Found</div>} />
+          <Route path="*" element={<NotFound />} />
         </Routes>
       </div>
     </Router>
