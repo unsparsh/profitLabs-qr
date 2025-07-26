@@ -709,6 +709,7 @@ export const AIAssistantPanel: React.FC<AIAssistantPanelProps> = ({ hotelId }) =
                         type="button"
                         onClick={() => setEditingTemplate(template)}
                         className="p-1 text-blue-600 hover:bg-blue-50 rounded"
+                        aria-label="Edit template"
                       >
                         <Edit3 className="h-4 w-4" />
                       </button>
@@ -716,6 +717,7 @@ export const AIAssistantPanel: React.FC<AIAssistantPanelProps> = ({ hotelId }) =
                         type="button"
                         onClick={() => handleDeleteTemplate(template._id)}
                         className="p-1 text-red-600 hover:bg-red-50 rounded"
+                        aria-label="Delete template"
                       >
                         <Trash2 className="h-4 w-4" />
                       </button>
