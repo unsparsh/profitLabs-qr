@@ -6,6 +6,7 @@ import { RegisterForm } from './components/auth/RegisterForm';
 import { AdminDashboard } from './components/admin/AdminDashboard';
 import GuestPortal from './components/guest/GuestPortal';
 import  PricingPage  from './components/auth/PricingPage';
+import GoogleCallback from './components/auth/GoogleCallback';
 import { apiClient } from './utils/api';
 
 type User = any;
@@ -131,6 +132,9 @@ function App() {
 
           {/* Pricing Page */}
           <Route path="/pricing" element={<PricingPage />} />
+
+          {/* Google OAuth Callback */}
+          <Route path="/auth/google/callback" element={<GoogleCallback />} />
 
           {/* Auth */}
           <Route
