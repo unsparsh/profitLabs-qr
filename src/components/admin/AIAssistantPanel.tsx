@@ -73,9 +73,9 @@ export const AIAssistantPanel: React.FC<AIAssistantPanelProps> = ({ hotelId }) =
     try {
       const authStatus = await apiClient.request(`/google-auth/status/${hotelId}`, {
         method: 'GET'
-      });
+      }) as { authenticated: boolean; account?: GoogleAccount };
       if (authStatus.authenticated) {
-        setGoogleAccount(authStatus.account);
+        setGoogleAccount(authStatus.account ?? null);
       }
     } catch (error) {
       console.log('Not authenticated with Google');
@@ -83,34 +83,43 @@ export const AIAssistantPanel: React.FC<AIAssistantPanelProps> = ({ hotelId }) =
   };
 
   const handleGoogleSignIn = async () => {
-    try {
-      setIsLoading(true);
-      // Get Google OAuth URL from backend
-      const authUrl = await apiClient.request(`/google-auth/url/${hotelId}`, {
-        method: 'GET'
-      });
-      
-      // Open Google OAuth in popup
-      const popup = window.open(
-        authUrl.url,
-        'google-auth',
-        'width=500,height=600,scrollbars=yes,resizable=yes'
-      );
+  let popup: Window | null = null;
 
-      // Listen for auth completion
-      const checkClosed = setInterval(() => {
-        if (popup?.closed) {
-          clearInterval(checkClosed);
-          checkGoogleAuth(); // Recheck auth status
-        }
-      }, 1000);
+  try {
+    setIsLoading(true);
 
-    } catch (error) {
-      toast.error('Failed to initiate Google sign-in');
-    } finally {
-      setIsLoading(false);
+    // Get Google OAuth URL from backend
+    const authUrl = await apiClient.request(`/google-auth/url/${hotelId}`, {
+      method: 'GET',
+    }) as { url: string };
+
+    // Open Google OAuth in popup
+    popup = window.open(
+      authUrl.url,
+      'google-auth',
+      'width=500,height=600,scrollbars=yes,resizable=yes'
+    );
+
+    if (!popup) {
+      throw new Error('Popup blocked or not allowed by browser');
     }
-  };
+
+    // Poll every 1s to check if popup closed
+    const checkClosed = setInterval(() => {
+      if (popup?.closed) {
+        clearInterval(checkClosed);
+        checkGoogleAuth(); // Callback to re-fetch auth status
+      }
+    }, 1000);
+
+  } catch (error: any) {
+    console.error(error);
+    toast.error('Failed to initiate Google sign-in');
+  } finally {
+    setIsLoading(false);
+  }
+};
+
 
   const fetchGoogleReviews = async () => {
     if (!googleAccount) return;
@@ -120,7 +129,7 @@ export const AIAssistantPanel: React.FC<AIAssistantPanelProps> = ({ hotelId }) =
       const reviewsData = await apiClient.request(`/google-reviews/${hotelId}`, {
         method: 'GET'
       });
-      setReviews(reviewsData.reviews || []);
+      setReviews((reviewsData as { reviews: Review[] }).reviews || []);
     } catch (error) {
       toast.error('Failed to fetch Google reviews');
     } finally {
@@ -133,7 +142,7 @@ export const AIAssistantPanel: React.FC<AIAssistantPanelProps> = ({ hotelId }) =
       const templatesData = await apiClient.request(`/templates/${hotelId}`, {
         method: 'GET'
       });
-      setTemplates(templatesData);
+      setTemplates(Array.isArray(templatesData) ? templatesData as Template[] : []);
     } catch (error) {
       console.error('Failed to fetch templates');
     }
@@ -150,10 +159,10 @@ export const AIAssistantPanel: React.FC<AIAssistantPanelProps> = ({ hotelId }) =
           customerName: review.reviewer.displayName,
           tone: tone
         })
-      });
-      
+      }) as { aiReply: string; source?: string };
+
       setAiReply(response.aiReply);
-      
+
       // Show different success message based on AI source
       if (response.source === 'openai') {
         toast.success('AI reply generated with GPT-4!');
@@ -248,7 +257,7 @@ export const AIAssistantPanel: React.FC<AIAssistantPanelProps> = ({ hotelId }) =
       const template = await apiClient.request(`/templates/${hotelId}`, {
         method: 'POST',
         body: JSON.stringify(newTemplate)
-      });
+      }) as Template;
       setTemplates(prev => [...prev, template]);
       setNewTemplate({ name: '', content: '', tone: 'professional' });
       setIsAddingTemplate(false);
@@ -268,7 +277,7 @@ export const AIAssistantPanel: React.FC<AIAssistantPanelProps> = ({ hotelId }) =
         body: JSON.stringify(editingTemplate)
       });
       setTemplates(prev => prev.map(t => 
-        t._id === editingTemplate._id ? updatedTemplate : t
+        t._id === editingTemplate._id ? (updatedTemplate as Template) : t
       ));
       setEditingTemplate(null);
       toast.success('Template updated successfully');
@@ -376,14 +385,15 @@ export const AIAssistantPanel: React.FC<AIAssistantPanelProps> = ({ hotelId }) =
                 <strong>AI-Powered Review Assistant</strong><br/>
                 Generate professional, SEO-optimized replies using advanced AI or smart templates.
               </p>
-              <div className="mt-2 text-xs text-blue-600">
+              {/* <div className="mt-2 text-xs text-blue-600">
                 <p>✅ Works without OpenAI API key</p>
                 <p>✅ Smart template-based responses</p>
                 <p>✅ Upgrade to GPT-4 for advanced AI</p>
-            </div>
+            </div> */}
           </div>
         </div>
       </div>
+    </div>
     );
   }
 
@@ -437,7 +447,7 @@ export const AIAssistantPanel: React.FC<AIAssistantPanelProps> = ({ hotelId }) =
 
     {/* Reviews Tab */}
     {activeTab === 'reviews' && (
-      <YourReviewsTabComponentHere />
+      <></>
     )}
 
     {/* Templates Tab */}
@@ -583,4 +593,5 @@ export const AIAssistantPanel: React.FC<AIAssistantPanelProps> = ({ hotelId }) =
       </div>
     )}
   </div>
-);
+
+)};

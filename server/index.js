@@ -18,10 +18,21 @@ const OpenAI = require('openai');
   app.use(bodyParser.json());
   app.use(express.static('public'));
 
-  app.use(cors({
-  origin: process.env.CLIENT_URL || "http://localhost:5173",
-  methods: ["GET", "POST", "PUT", "DELETE"],
-  credentials: true
+  const allowedOrigins = [
+  'http://localhost:5173',
+  'https://profitlabs-qr-frontend.onrender.com'
+];
+
+app.use(cors({
+  origin: function (origin, callback) {
+    // Allow requests with no origin (like mobile apps or curl)
+    if (!origin || allowedOrigins.includes(origin)) {
+      callback(null, true);
+    } else {
+      callback(new Error('Not allowed by CORS'));
+    }
+  },
+  credentials: true,
 }));
 
   const io = socketIo(server, {
@@ -29,12 +40,10 @@ const OpenAI = require('openai');
       origin: process.env.CLIENT_URL || "http://localhost:5173",
       methods: ["GET", "POST", "PUT", "DELETE"],
       credentials: true
-    }
-  });
+      }
+    });
 
 // Middleware
-app.use(cors());
-app.options('*', cors());
 app.use(express.json());
 
 //Adding RazorPay Payment Gateway
@@ -44,25 +53,18 @@ const razorpay = new Razorpay({
   key_secret: process.env.RAZORPAY_KEY_SECRET,
 });
 
-// Initialize OpenAI
-const openai = new OpenAI({
-  apiKey: process.env.OPENAI_API_KEY,
-});
-
 // Google OAuth2 client
 const oauth2Client = new google.auth.OAuth2(
   process.env.GOOGLE_CLIENT_ID,
   process.env.GOOGLE_CLIENT_SECRET,
   `${process.env.CLIENT_URL || 'http://localhost:5173'}/auth/google/callback`
 );
-// MongoDB connection
 let openai = null;
 if (process.env.OPENAI_API_KEY) {
   openai = new OpenAI({
     apiKey: process.env.OPENAI_API_KEY,
   });
 }
-});
 
 // Schemas
 const hotelSchema = new mongoose.Schema({
@@ -217,7 +219,7 @@ const authenticateToken = (req, res, next) => {
     return res.status(401).json({ message: 'Access token required' });
   }
 
-  jwt.verify(token, process.env.JWT_SECRET || 'your-secret-key', (err, user) => {
+  jwt.verify(token, process.env.JWT_SECRET || 'humari-secret-key', (err, user) => {
     if (err) {
       return res.status(403).json({ message: 'Invalid token' });
     }
