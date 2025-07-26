@@ -389,7 +389,12 @@ export const AIAssistantPanel: React.FC<AIAssistantPanelProps> = ({ hotelId }) =
                 <p>✅ Works without OpenAI API key</p>
                 <p>✅ Smart template-based responses</p>
                 <p>✅ Upgrade to GPT-4 for advanced AI</p>
+<<<<<<< HEAD
             </div> */}
+=======
+              </div>
+            </div>
+>>>>>>> 6a2644c599fca7b5d5bb827921a0764e6b3239de
           </div>
         </div>
       </div>
@@ -397,6 +402,7 @@ export const AIAssistantPanel: React.FC<AIAssistantPanelProps> = ({ hotelId }) =
     );
   }
 
+<<<<<<< HEAD
  return (
   <div className="space-y-6">
     {/* Header with Google Account Info */}
@@ -543,55 +549,367 @@ export const AIAssistantPanel: React.FC<AIAssistantPanelProps> = ({ hotelId }) =
                 </button>
               </div>
             </form>
+=======
+  return (
+    <div className="space-y-6">
+      {/* Header with Google Account Info */}
+      <div className="flex items-center justify-between">
+        <div className="flex items-center gap-3">
+          <Bot className="h-8 w-8 text-purple-600" />
+          <div>
+            <h2 className="text-2xl font-bold text-gray-900">AI Review Assistant</h2>
+            <p className="text-gray-600">Manage Google reviews with AI-powered responses</p>
+>>>>>>> 6a2644c599fca7b5d5bb827921a0764e6b3239de
           </div>
-        )}
+        </div>
+        <div className="flex items-center gap-3 bg-white rounded-lg p-3 shadow-sm">
+          <img src={googleAccount.picture} alt={googleAccount.name} className="w-8 h-8 rounded-full" />
+          <div className="text-sm">
+            <p className="font-medium text-gray-900">{googleAccount.businessName}</p>
+            <p className="text-gray-500">{googleAccount.email}</p>
+          </div>
+        </div>
+      </div>
 
-        {/* Templates List */}
-        {templates.length > 0 ? (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {templates.map((template) => (
-              <div key={template._id} className="bg-white rounded-lg shadow-sm p-6">
-                <div className="flex items-start justify-between mb-3">
-                  <h4 className="font-semibold text-gray-900">{template.name}</h4>
-                  <div className="flex gap-1">
+      {/* Tabs */}
+      <div className="border-b border-gray-200">
+        <nav className="-mb-px flex space-x-8">
+          <button
+            onClick={() => setActiveTab('reviews')}
+            className={`py-2 px-1 border-b-2 font-medium text-sm ${
+              activeTab === 'reviews'
+                ? 'border-purple-500 text-purple-600'
+                : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+            }`}
+          >
+            <MessageSquare className="h-4 w-4 inline mr-2" />
+            Reply to Reviews ({reviews.length})
+          </button>
+          <button
+            onClick={() => setActiveTab('templates')}
+            className={`py-2 px-1 border-b-2 font-medium text-sm ${
+              activeTab === 'templates'
+                ? 'border-purple-500 text-purple-600'
+                : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+            }`}
+          >
+            <FileText className="h-4 w-4 inline mr-2" />
+            Manage Templates ({templates.length})
+          </button>
+        </nav>
+      </div>
+
+      {/* Reviews Tab */}
+      {activeTab === 'reviews' && (
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          {/* Reviews List */}
+          <div className="space-y-4">
+            <h3 className="text-lg font-semibold text-gray-900">Recent Reviews</h3>
+            {isLoading ? (
+              <div className="flex items-center justify-center py-8">
+                <Loader className="h-6 w-6 animate-spin text-purple-600" />
+                <span className="ml-2 text-gray-600">Loading reviews...</span>
+              </div>
+            ) : reviews.length > 0 ? (
+              <div className="space-y-4">
+                {reviews.map((review) => (
+                  <div
+                    key={review.reviewId}
+                    className={`bg-white rounded-lg shadow-sm p-4 border-2 cursor-pointer transition-all ${
+                      selectedReview?.reviewId === review.reviewId
+                        ? 'border-purple-500 bg-purple-50'
+                        : 'border-gray-200 hover:border-gray-300'
+                    }`}
+                    onClick={() => setSelectedReview(review)}
+                  >
+                    <div className="flex items-start justify-between mb-2">
+                      <div className="flex items-center gap-2">
+                        <User className="h-4 w-4 text-gray-400" />
+                        <span className="font-medium text-gray-900">{review.reviewer.displayName}</span>
+                      </div>
+                      <div className="flex items-center gap-1">
+                        {getRatingStars(review.starRating)}
+                      </div>
+                    </div>
+                    <p className="text-sm text-gray-600 mb-2 line-clamp-2">{review.comment}</p>
+                    <div className="flex items-center justify-between">
+                      <span className="text-xs text-gray-500">
+                        <Calendar className="h-3 w-3 inline mr-1" />
+                        {formatDate(review.createTime)}
+                      </span>
+                      {review.reviewReply ? (
+                        <span className="text-xs text-green-600 bg-green-100 px-2 py-1 rounded-full">
+                          Replied
+                        </span>
+                      ) : (
+                        <span className="text-xs text-orange-600 bg-orange-100 px-2 py-1 rounded-full">
+                          Needs Reply
+                        </span>
+                      )}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <div className="text-center py-8">
+                <MessageSquare className="h-12 w-12 text-gray-400 mx-auto mb-4" />
+                <p className="text-gray-500">No reviews found</p>
+                <p className="text-sm text-gray-400">Reviews will appear here once available</p>
+              </div>
+            )}
+          </div>
+
+          {/* Reply Panel */}
+          <div className="space-y-4">
+            <h3 className="text-lg font-semibold text-gray-900">Generate Reply</h3>
+            
+            {selectedReview ? (
+              <div className="space-y-4">
+                {/* Selected Review Display */}
+                <div className="bg-gray-50 rounded-lg p-4">
+                  <div className="flex items-center gap-2 mb-2">
+                    <span className="font-medium text-gray-900">{selectedReview.reviewer.displayName}</span>
+                    <div className="flex items-center gap-1">
+                      {getRatingStars(selectedReview.starRating)}
+                    </div>
+                  </div>
+                  <p className="text-sm text-gray-600">{selectedReview.comment}</p>
+                </div>
+
+                {/* Template Selection */}
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Select Template (Optional)
+                  </label>
+                  <select
+                    value={selectedTemplate}
+                    onChange={(e) => handleTemplateSelect(e.target.value)}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+                  >
+                    <option value="">No template</option>
+                    {templates.map((template) => (
+                      <option key={template._id} value={template._id}>
+                        {template.name} ({template.tone})
+                      </option>
+                    ))}
+                  </select>
+                </div>
+
+                {/* Generate AI Reply */}
+                <div className="flex gap-2">
+                  <button
+                    onClick={() => generateAIReply(selectedReview, 'professional')}
+                    disabled={isGenerating}
+                    className="flex-1 bg-purple-600 text-white px-4 py-2 rounded-lg font-medium hover:bg-purple-700 transition-colors disabled:opacity-50 flex items-center justify-center gap-2"
+                  >
+                    {isGenerating ? (
+                      <>
+                        <Loader className="h-4 w-4 animate-spin" />
+                        Generating...
+                      </>
+                    ) : (
+                      <>
+                        <Bot className="h-4 w-4" />
+                        Generate AI Reply
+                      </>
+                    )}
+                  </button>
+                </div>
+
+                {/* Final Reply Editor */}
+                {finalReply && (
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      Final Reply
+                    </label>
+                    <textarea
+                      value={finalReply}
+                      onChange={(e) => setFinalReply(e.target.value)}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+                      rows={4}
+                      placeholder="Edit your reply before sending..."
+                    />
                     <button
-                      onClick={() => setEditingTemplate(template)}
-                      className="p-1 text-blue-600 hover:bg-blue-50 rounded"
+                      onClick={sendReplyToGoogle}
+                      disabled={isSending || !finalReply.trim()}
+                      className="mt-2 w-full bg-green-600 text-white px-4 py-2 rounded-lg font-medium hover:bg-green-700 transition-colors disabled:opacity-50 flex items-center justify-center gap-2"
                     >
-                      <Edit3 className="h-4 w-4" />
-                    </button>
-                    <button
-                      onClick={() => handleDeleteTemplate(template._id)}
-                      className="p-1 text-red-600 hover:bg-red-50 rounded"
-                    >
-                      <Trash2 className="h-4 w-4" />
+                      {isSending ? (
+                        <>
+                          <Loader className="h-4 w-4 animate-spin" />
+                          Sending...
+                        </>
+                      ) : (
+                        <>
+                          <Send className="h-4 w-4" />
+                          Send Reply to Google
+                        </>
+                      )}
                     </button>
                   </div>
-                </div>
-                <span
-                  className={`inline-block px-2 py-1 rounded-full text-xs font-medium mb-3 ${
-                    template.tone === 'professional'
-                      ? 'bg-blue-100 text-blue-800'
-                      : template.tone === 'friendly'
-                      ? 'bg-green-100 text-green-800'
-                      : 'bg-red-100 text-red-800'
-                  }`}
-                >
-                  {template.tone}
-                </span>
-                <p className="text-sm text-gray-600 line-clamp-3">{template.content}</p>
+                )}
               </div>
-            ))}
+            ) : (
+              <div className="text-center py-8">
+                <MessageSquare className="h-12 w-12 text-gray-400 mx-auto mb-4" />
+                <p className="text-gray-500">Select a review to generate a reply</p>
+              </div>
+            )}
           </div>
-        ) : (
-          <div className="text-center py-12">
-            <FileText className="h-12 w-12 text-gray-400 mx-auto mb-4" />
-            <p className="text-gray-500">No templates created yet</p>
-            <p className="text-sm text-gray-400">Add your first template to get started</p>
+        </div>
+      )}
+
+      {/* Templates Tab */}
+      {activeTab === 'templates' && (
+        <div className="space-y-6">
+          {/* Add Template Button */}
+          <div className="flex justify-end">
+            <button
+              onClick={() => setIsAddingTemplate(true)}
+              className="bg-purple-600 text-white px-4 py-2 rounded-lg font-medium hover:bg-purple-700 transition-colors flex items-center gap-2"
+            >
+              <Plus className="h-4 w-4" />
+              Add Template
+            </button>
           </div>
+<<<<<<< HEAD
         )}
       </div>
     )}
   </div>
 
 )};
+=======
+
+          {/* Add/Edit Form */}
+          {(isAddingTemplate || editingTemplate) && (
+            <div className="bg-white rounded-lg shadow-sm p-6">
+              <h3 className="text-lg font-medium text-gray-900 mb-4">
+                {editingTemplate ? 'Edit Template' : 'Add New Template'}
+              </h3>
+              <form
+                onSubmit={editingTemplate ? handleEditTemplate : handleAddTemplate}
+                className="space-y-4"
+              >
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">Template Name *</label>
+                  <input
+                    type="text"
+                    value={editingTemplate ? editingTemplate.name : newTemplate.name}
+                    onChange={(e) =>
+                      editingTemplate
+                        ? setEditingTemplate({ ...editingTemplate, name: e.target.value })
+                        : setNewTemplate({ ...newTemplate, name: e.target.value })
+                    }
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+                    placeholder="e.g., Positive Review Response"
+                    required
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">Tone *</label>
+                  <select
+                    value={editingTemplate ? editingTemplate.tone : newTemplate.tone}
+                    onChange={(e) =>
+                      editingTemplate
+                        ? setEditingTemplate({ ...editingTemplate, tone: e.target.value as any })
+                        : setNewTemplate({ ...newTemplate, tone: e.target.value as any })
+                    }
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+                    required
+                  >
+                    <option value="professional">Professional</option>
+                    <option value="friendly">Friendly</option>
+                    <option value="apologetic">Apologetic</option>
+                  </select>
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">Template Content *</label>
+                  <textarea
+                    value={editingTemplate ? editingTemplate.content : newTemplate.content}
+                    onChange={(e) =>
+                      editingTemplate
+                        ? setEditingTemplate({ ...editingTemplate, content: e.target.value })
+                        : setNewTemplate({ ...newTemplate, content: e.target.value })
+                    }
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+                    rows={4}
+                    placeholder="Use {customerName} and {ai_content} as placeholders..."
+                    required
+                  />
+                  <p className="text-xs text-gray-500 mt-1">
+                    Use placeholders: {'{customerName}'} for customer name, {'{ai_content}'} for AI-generated content
+                  </p>
+                </div>
+                <div className="flex gap-3">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setIsAddingTemplate(false);
+                      setEditingTemplate(null);
+                    }}
+                    className="px-4 py-2 text-gray-700 bg-gray-200 rounded-lg hover:bg-gray-300 transition-colors"
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    type="submit"
+                    className="px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors"
+                  >
+                    {editingTemplate ? 'Update Template' : 'Add Template'}
+                  </button>
+                </div>
+              </form>
+            </div>
+          )}
+
+          {/* Templates List */}
+          {templates.length > 0 ? (
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+              {templates.map((template) => (
+                <div key={template._id} className="bg-white rounded-lg shadow-sm p-6">
+                  <div className="flex items-start justify-between mb-3">
+                    <h4 className="font-semibold text-gray-900">{template.name}</h4>
+                    <div className="flex gap-1">
+                      <button
+                        onClick={() => setEditingTemplate(template)}
+                        className="p-1 text-blue-600 hover:bg-blue-50 rounded"
+                      >
+                        <Edit3 className="h-4 w-4" />
+                      </button>
+                      <button
+                        onClick={() => handleDeleteTemplate(template._id)}
+                        className="p-1 text-red-600 hover:bg-red-50 rounded"
+                      >
+                        <Trash2 className="h-4 w-4" />
+                      </button>
+                    </div>
+                  </div>
+                  <span
+                    className={`inline-block px-2 py-1 rounded-full text-xs font-medium mb-3 ${
+                      template.tone === 'professional'
+                        ? 'bg-blue-100 text-blue-800'
+                        : template.tone === 'friendly'
+                        ? 'bg-green-100 text-green-800'
+                        : 'bg-red-100 text-red-800'
+                    }`}
+                  >
+                    {template.tone}
+                  </span>
+                  <p className="text-sm text-gray-600 line-clamp-3">{template.content}</p>
+                </div>
+              ))}
+            </div>
+          ) : (
+            <div className="text-center py-12">
+              <FileText className="h-12 w-12 text-gray-400 mx-auto mb-4" />
+              <p className="text-gray-500">No templates created yet</p>
+              <p className="text-sm text-gray-400">Add your first template to get started</p>
+            </div>
+          )}
+        </div>
+      )}
+    </div>
+  );
+};
+>>>>>>> 6a2644c599fca7b5d5bb827921a0764e6b3239de
