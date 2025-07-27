@@ -98,14 +98,20 @@ export const AIAssistantPanel: React.FC<AIAssistantPanelProps> = ({ hotelId }) =
       
       if (response.error) {
         console.warn('Google reviews API warning:', response.error);
-        toast.error('Unable to fetch reviews from Google');
+        if (response.needsSetup) {
+          toast.error('Please set up your Google My Business profile first');
+        } else if (response.needsReconnect) {
+          toast.error('Google connection expired. Please reconnect your account.');
+        } else {
+          toast.error('Unable to fetch reviews from Google');
+        }
       }
       
       console.log(`✅ Fetched ${response.reviews.length} reviews from Google`);
       setReviews(response.reviews || []);
     } catch (error) {
       console.error('Failed to fetch Google reviews:', error);
-      toast.error('Failed to connect to Google My Business');
+      toast.error('Failed to connect to Google My Business. Please try reconnecting.');
     }
   };
 

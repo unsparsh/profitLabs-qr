@@ -334,8 +334,8 @@ app.post('/api/google-auth/callback', async (req, res) => {
     let businessAccount = null;
     try {
       console.log('Attempting to fetch business info...');
-      const mybusiness = google.mybusinessbusinessinformation({ version: 'v1', auth: oauth2Client });
-      const businessAccounts = await mybusiness.accounts.list();
+      const mybusinessAccounts = google.mybusinessaccountmanagement({ version: 'v1', auth: oauth2Client });
+      const businessAccounts = await mybusinessAccounts.accounts.list();
       businessAccount = businessAccounts.data.accounts?.[0];
       console.log('Business account retrieved:', businessAccount?.name || 'No business account');
     } catch (businessError) {
@@ -445,8 +445,10 @@ app.get('/api/google-reviews/:hotelId', authenticateToken, async (req, res) => {
     console.log('🔍 Fetching reviews for business:', googleAuth.businessName);
     
     try {
-      // First, get the business accounts
-      const mybusiness = google.mybusinessbusinessinformation({ version: 'v1', auth: oauth2Client });
+      // Use the correct Google My Business API v4.9
+      const mybusiness = google.mybusinessaccountmanagement({ version: 'v1', auth: oauth2Client });
+      
+      console.log('📋 Getting business accounts...');
       const accountsResponse = await mybusiness.accounts.list();
       
       if (!accountsResponse.data.accounts || accountsResponse.data.accounts.length === 0) {
@@ -457,8 +459,10 @@ app.get('/api/google-reviews/:hotelId', authenticateToken, async (req, res) => {
       const account = accountsResponse.data.accounts[0];
       console.log('✅ Found business account:', account.name);
       
-      // Get locations for this account
-      const locationsResponse = await mybusiness.accounts.locations.list({
+      // Get locations using the business information API
+      const businessInfo = google.mybusinessbusinessinformation({ version: 'v1', auth: oauth2Client });
+      console.log('📍 Getting business locations...');
+      const locationsResponse = await businessInfo.accounts.locations.list({
         parent: account.name
       });
       
@@ -470,8 +474,9 @@ app.get('/api/google-reviews/:hotelId', authenticateToken, async (req, res) => {
       const location = locationsResponse.data.locations[0];
       console.log('✅ Found location:', location.name);
       
-      // Now fetch reviews for this location
-      const reviewsResponse = await mybusiness.accounts.locations.reviews.list({
+      // Fetch reviews using the correct API
+      console.log('⭐ Fetching reviews for location...');
+      const reviewsResponse = await businessInfo.accounts.locations.reviews.list({
         parent: location.name
       });
       
@@ -480,12 +485,12 @@ app.get('/api/google-reviews/:hotelId', authenticateToken, async (req, res) => {
       
       // Transform reviews to match our expected format
       const transformedReviews = reviews.map(review => ({
-        reviewId: review.name?.split('/').pop() || Math.random().toString(),
+        reviewId: review.name?.split('/').pop() || `review_${Date.now()}_${Math.random()}`,
         reviewer: {
           displayName: review.reviewer?.displayName || 'Anonymous',
           profilePhotoUrl: review.reviewer?.profilePhotoUrl
         },
-        starRating: review.starRating || 'THREE',
+        starRating: review.starRating || 'STAR_RATING_UNSPECIFIED',
         comment: review.comment || '',
         createTime: review.createTime || new Date().toISOString(),
         updateTime: review.updateTime || new Date().toISOString(),
@@ -495,11 +500,17 @@ app.get('/api/google-reviews/:hotelId', authenticateToken, async (req, res) => {
         } : undefined
       }));
       
+      console.log('🔄 Transformed reviews:', transformedReviews.length);
       res.json({ reviews: transformedReviews });
       
     } catch (apiError) {
       console.error('❌ Google My Business API error:', apiError.message);
-      console.error('Full error:', apiError);
+      console.error('Full API error details:', {
+        message: apiError.message,
+        code: apiError.code,
+        status: apiError.status,
+        details: apiError.details
+      });
       
       // Check if it's an authentication error
       if (apiError.code === 401 || apiError.code === 403) {
@@ -509,10 +520,19 @@ app.get('/api/google-reviews/:hotelId', authenticateToken, async (req, res) => {
         });
       }
       
+      // Handle specific API errors
+      if (apiError.message && apiError.message.includes('not found')) {
+        return res.json({ 
+          reviews: [], 
+          error: 'No Google My Business profile found. Please ensure your account has a business profile.',
+          needsSetup: true
+        });
+      }
+      
       // For other API errors, return empty reviews with error info
       res.json({ 
         reviews: [], 
-        error: `Google My Business API error: ${apiError.message}`,
+        error: `Unable to fetch reviews: ${apiError.message}`,
         needsReconnect: apiError.code === 401 || apiError.code === 403
       });
     }
