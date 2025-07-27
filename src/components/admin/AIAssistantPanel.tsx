@@ -388,6 +388,7 @@ export const AIAssistantPanel: React.FC<AIAssistantPanelProps> = ({ hotelId }) =
   }
 
   return (
+    <>
     <div className="space-y-6">
       {/* Header with Google Account Info */}
       <div className="flex items-center justify-between">
@@ -398,25 +399,29 @@ export const AIAssistantPanel: React.FC<AIAssistantPanelProps> = ({ hotelId }) =
             <p className="text-gray-600">Manage Google reviews with AI-powered responses</p>
           </div>
         </div>
-        <div className="flex items-center gap-3 bg-white rounded-lg p-3 shadow-sm">
-          <img src={googleAccount?.picture} alt={googleAccount?.name} className="w-8 h-8 rounded-full" />
-          <div className="text-sm">
-            <p className="font-medium text-gray-900">{googleAccount?.businessName}</p>
-            <p className="text-gray-500">{googleAccount?.email}</p>
+        {googleAccount && (
+          <div className="flex items-center gap-3 bg-white rounded-lg p-3 shadow-sm">
+            <img
+              src={googleAccount.picture}
+              alt={googleAccount.name}
+              className="w-8 h-8 rounded-full"
+            />
+            <div className="text-sm">
+              <p className="font-medium text-gray-900">{googleAccount.businessName}</p>
+              <p className="text-gray-500">{googleAccount.email}</p>
+            </div>
+            <button
+              onClick={handleGoogleSignOut}
+              disabled={isLoading}
+              className="p-2 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors disabled:opacity-50"
+              title="Disconnect Google Account"
+            >
+              <LogOut className="h-4 w-4" />
+            </button>
           </div>
-          <button
-            onClick={handleGoogleSignOut}
-            disabled={isLoading}
-            className="p-2 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors disabled:opacity-50"
-            title="Disconnect Google Account"
-          >
-            <LogOut className="h-4 w-4" />
-          </button>
-        </div>
+        )}
       </div>
-          </div>
-        </div>
-      </div>
+    </div>
 
       {/* Tabs */}
       <div className="border-b border-gray-200">
@@ -754,6 +759,6 @@ export const AIAssistantPanel: React.FC<AIAssistantPanelProps> = ({ hotelId }) =
           )}
         </div>
       )}
-    </div>
+    </>
   );
 };
