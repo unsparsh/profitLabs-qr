@@ -83,12 +83,29 @@ export const AIAssistantPanel: React.FC<AIAssistantPanelProps> = ({ hotelId }) =
     if (!isAuthenticated || !googleAccount) return;
     
     try {
+      console.log('🔍 Fetching Google reviews...');
       const reviewsData = await apiClient.request(`/google-reviews/${hotelId}`, {
         method: 'GET'
       });
-      setReviews((reviewsData as { reviews: Review[] }).reviews || []);
+      
+      const response = reviewsData as { reviews: Review[]; error?: string; needsReconnect?: boolean };
+      
+      if (response.needsReconnect) {
+        toast.error('Google connection expired. Please reconnect your account.');
+        // Could trigger re-authentication here
+        return;
+      }
+      
+      if (response.error) {
+        console.warn('Google reviews API warning:', response.error);
+        toast.error('Unable to fetch reviews from Google');
+      }
+      
+      console.log(`✅ Fetched ${response.reviews.length} reviews from Google`);
+      setReviews(response.reviews || []);
     } catch (error) {
-      toast.error('Failed to fetch Google reviews');
+      console.error('Failed to fetch Google reviews:', error);
+      toast.error('Failed to connect to Google My Business');
     }
   };
 

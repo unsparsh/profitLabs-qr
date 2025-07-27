@@ -82,7 +82,7 @@ const GoogleCallback: React.FC = () => {
         }) as { reviews: Review[] };
         setReviews(reviewsResponse.reviews || []);
       } catch (reviewsError) {
-        console.warn('Failed to fetch reviews (non-critical):', reviewsError);
+        console.warn('Failed to fetch reviews:', reviewsError);
         setReviews([]);
       }
 

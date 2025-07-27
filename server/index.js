@@ -431,67 +431,93 @@ app.get('/api/google-reviews/:hotelId', authenticateToken, async (req, res) => {
       return res.status(401).json({ message: 'Google account not connected' });
     }
     
+    // Check if tokens are expired
+    if (googleAuth.expiresAt < new Date()) {
+      return res.status(401).json({ message: 'Google tokens expired, please reconnect' });
+    }
+    
     // Set up OAuth client with stored tokens
     oauth2Client.setCredentials({
       access_token: googleAuth.accessToken,
       refresh_token: googleAuth.refreshToken
     });
     
-    // Get reviews from Google My Business API
-    const mybusiness = google.mybusinessbusinessinformation({ version: 'v1', auth: oauth2Client });
+    console.log('🔍 Fetching reviews for business:', googleAuth.businessName);
     
     try {
-      // This is a simplified example - you'll need to implement proper location discovery
-      const reviews = await mybusiness.accounts.locations.reviews.list({
-        parent: `${googleAuth.businessId}/locations/-`
+      // First, get the business accounts
+      const mybusiness = google.mybusinessbusinessinformation({ version: 'v1', auth: oauth2Client });
+      const accountsResponse = await mybusiness.accounts.list();
+      
+      if (!accountsResponse.data.accounts || accountsResponse.data.accounts.length === 0) {
+        console.log('❌ No business accounts found');
+        return res.json({ reviews: [] });
+      }
+      
+      const account = accountsResponse.data.accounts[0];
+      console.log('✅ Found business account:', account.name);
+      
+      // Get locations for this account
+      const locationsResponse = await mybusiness.accounts.locations.list({
+        parent: account.name
       });
       
-      res.json({ reviews: reviews.data.reviews || [] });
-    } catch (apiError) {
-      console.error('Google My Business API error:', apiError);
-      // Return mock data for development
-      const mockReviews = [
-        {
-          reviewId: 'mock_review_1',
-          reviewer: {
-            displayName: 'John Smith',
-            profilePhotoUrl: 'https://via.placeholder.com/40'
-          },
-          starRating: 'FIVE',
-          comment: 'Amazing stay! The staff was incredibly helpful and the room was spotless. Will definitely come back!',
-          createTime: '2024-01-15T10:00:00Z',
-          updateTime: '2024-01-15T10:00:00Z'
-        },
-        {
-          reviewId: 'mock_review_2',
-          reviewer: {
-            displayName: 'Sarah Johnson'
-          },
-          starRating: 'FOUR',
-          comment: 'Great hotel with excellent service. The breakfast was delicious. Only minor issue was the WiFi speed.',
-          createTime: '2024-01-14T15:30:00Z',
-          updateTime: '2024-01-14T15:30:00Z'
-        },
-        {
-          reviewId: 'mock_review_3',
-          reviewer: {
-            displayName: 'Mike Wilson'
-          },
-          starRating: 'TWO',
-          comment: 'Room was not clean when we arrived. Had to wait 30 minutes for housekeeping. Not impressed.',
-          createTime: '2024-01-13T20:15:00Z',
-          updateTime: '2024-01-13T20:15:00Z',
-          reviewReply: {
-            comment: 'Thank you for your feedback. We sincerely apologize for the inconvenience...',
-            updateTime: '2024-01-14T09:00:00Z'
-          }
-        }
-      ];
+      if (!locationsResponse.data.locations || locationsResponse.data.locations.length === 0) {
+        console.log('❌ No locations found for account');
+        return res.json({ reviews: [] });
+      }
       
-      res.json({ reviews: mockReviews });
+      const location = locationsResponse.data.locations[0];
+      console.log('✅ Found location:', location.name);
+      
+      // Now fetch reviews for this location
+      const reviewsResponse = await mybusiness.accounts.locations.reviews.list({
+        parent: location.name
+      });
+      
+      const reviews = reviewsResponse.data.reviews || [];
+      console.log(`✅ Found ${reviews.length} reviews`);
+      
+      // Transform reviews to match our expected format
+      const transformedReviews = reviews.map(review => ({
+        reviewId: review.name?.split('/').pop() || Math.random().toString(),
+        reviewer: {
+          displayName: review.reviewer?.displayName || 'Anonymous',
+          profilePhotoUrl: review.reviewer?.profilePhotoUrl
+        },
+        starRating: review.starRating || 'THREE',
+        comment: review.comment || '',
+        createTime: review.createTime || new Date().toISOString(),
+        updateTime: review.updateTime || new Date().toISOString(),
+        reviewReply: review.reviewReply ? {
+          comment: review.reviewReply.comment || '',
+          updateTime: review.reviewReply.updateTime || new Date().toISOString()
+        } : undefined
+      }));
+      
+      res.json({ reviews: transformedReviews });
+      
+    } catch (apiError) {
+      console.error('❌ Google My Business API error:', apiError.message);
+      console.error('Full error:', apiError);
+      
+      // Check if it's an authentication error
+      if (apiError.code === 401 || apiError.code === 403) {
+        return res.status(401).json({ 
+          message: 'Google API authentication failed. Please reconnect your Google account.',
+          error: apiError.message 
+        });
+      }
+      
+      // For other API errors, return empty reviews with error info
+      res.json({ 
+        reviews: [], 
+        error: `Google My Business API error: ${apiError.message}`,
+        needsReconnect: apiError.code === 401 || apiError.code === 403
+      });
     }
   } catch (error) {
-    console.error('Reviews fetch error:', error);
+    console.error('❌ Reviews fetch error:', error);
     res.status(500).json({ message: 'Failed to fetch reviews' });
   }
 });
