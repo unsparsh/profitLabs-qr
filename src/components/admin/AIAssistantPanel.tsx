@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Bot, MessageSquare, FileText, Send, Loader, Star, Calendar, User, Edit3, Plus, Trash2, LogIn } from 'lucide-react';
+import { Bot, MessageSquare, FileText, Send, Loader, Star, Calendar, User, Edit3, Plus, Trash2, LogIn, LogOut } from 'lucide-react';
 import { useAuth } from '../../contexts/AuthContext';
 import { apiClient } from '../../utils/api';
 import toast from 'react-hot-toast';
@@ -57,7 +57,24 @@ export const AIAssistantPanel: React.FC<AIAssistantPanelProps> = ({ hotelId }) =
     tone: 'professional' as const
   });
   
-  const { isAuthenticated, googleAccount, isLoading, signInWithGoogle, checkAuthStatus } = useAuth();
+  const { isAuthenticated, googleAccount, isLoading, signInWithGoogle, signOut, checkAuthStatus } = useAuth();
+
+  const handleGoogleSignOut = async () => {
+    if (!confirm('Are you sure you want to disconnect your Google account?')) return;
+    
+    try {
+      await apiClient.request(`/google-auth/disconnect/${hotelId}`, {
+        method: 'POST'
+      });
+      
+      signOut();
+      setReviews([]);
+      toast.success('Google account disconnected successfully');
+    } catch (error) {
+      console.error('Failed to disconnect Google account:', error);
+      toast.error('Failed to disconnect Google account');
+    }
+  };
 
   useEffect(() => {
     checkAuthStatus(hotelId);
@@ -386,6 +403,17 @@ export const AIAssistantPanel: React.FC<AIAssistantPanelProps> = ({ hotelId }) =
           <div className="text-sm">
             <p className="font-medium text-gray-900">{googleAccount?.businessName}</p>
             <p className="text-gray-500">{googleAccount?.email}</p>
+          </div>
+          <button
+            onClick={handleGoogleSignOut}
+            disabled={isLoading}
+            className="p-2 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors disabled:opacity-50"
+            title="Disconnect Google Account"
+          >
+            <LogOut className="h-4 w-4" />
+          </button>
+        </div>
+      </div>
           </div>
         </div>
       </div>

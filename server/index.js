@@ -426,15 +426,65 @@ app.get('/api/google-reviews/:hotelId', authenticateToken, async (req, res) => {
   try {
     const { hotelId } = req.params;
     
+    console.log('🔍 Fetching reviews for hotel:', hotelId);
+    
     const googleAuth = await GoogleAuth.findOne({ hotelId });
     if (!googleAuth) {
+      console.log('❌ No Google auth found for hotel:', hotelId);
       return res.status(401).json({ message: 'Google account not connected' });
     }
     
+    console.log('✅ Google auth found, checking token expiry...');
+    console.log('Token expires at:', googleAuth.expiresAt);
+    console.log('Current time:', new Date());
+    
     // Check if tokens are expired
-    if (googleAuth.expiresAt < new Date()) {
-      return res.status(401).json({ message: 'Google tokens expired, please reconnect' });
+    const isExpired = googleAuth.expiresAt < new Date();
+    console.log('Token expired?', isExpired);
+    
+    if (isExpired) {
+      console.log('🔄 Token expired, attempting refresh...');
+      
+      if (!googleAuth.refreshToken) {
+        console.log('❌ No refresh token available');
+        return res.status(401).json({ 
+          message: 'Google tokens expired and no refresh token available. Please reconnect your Google account.',
+          needsReconnect: true
+        });
+      }
+      
+      try {
+        // Set up OAuth client with refresh token
+        oauth2Client.setCredentials({
+          refresh_token: googleAuth.refreshToken
+        });
+        
+        // Refresh the access token
+        const { credentials } = await oauth2Client.refreshAccessToken();
+        console.log('✅ Token refreshed successfully');
+        
+        // Update the stored tokens
+        await GoogleAuth.findByIdAndUpdate(googleAuth._id, {
+          accessToken: credentials.access_token,
+          expiresAt: new Date(credentials.expiry_date || Date.now() + 3600000)
+        });
+        
+        console.log('✅ Database updated with new token');
+        
+        // Update local googleAuth object
+        googleAuth.accessToken = credentials.access_token;
+        googleAuth.expiresAt = new Date(credentials.expiry_date || Date.now() + 3600000);
+        
+      } catch (refreshError) {
+        console.error('❌ Token refresh failed:', refreshError);
+        return res.status(401).json({ 
+          message: 'Failed to refresh Google tokens. Please reconnect your Google account.',
+          needsReconnect: true
+        });
+      }
     }
+    
+    console.log('🔍 Fetching reviews with valid token...');
     
     // Set up OAuth client with stored tokens
     oauth2Client.setCredentials({
