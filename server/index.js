@@ -12,7 +12,6 @@ const bodyParser = require("body-parser");
 const crypto = require("crypto");
 const { google } = require("googleapis");
 const OpenAI = require("openai");
-import { google } from "googleapis";
 
 const app = express();
 const server = http.createServer(app);
