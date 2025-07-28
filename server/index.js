@@ -553,17 +553,142 @@ app.get(
 );
 
 // Google Reviews Routes
+// app.get("/api/google-reviews/:hotelId", authenticateToken, async (req, res) => {
+//   try {
+//     const { hotelId } = req.params;
+//     const googleAuth = await GoogleAuth.findOne({ hotelId });
+
+//     if (!googleAuth) {
+//       console.log("❌ No Google auth found for hotel:", hotelId);
+//       return res.status(401).json({
+//         message: "Google account not connected",
+//         needsReconnect: true,
+//       });
+//     }
+
+//     // --- Caching Logic ---
+//     const CACHE_DURATION_HOURS = 24;
+//     if (googleAuth.reviewsCache && googleAuth.cacheTimestamp) {
+//       const cacheAge = (new Date() - new Date(googleAuth.cacheTimestamp)) / (1000 * 60 * 60);
+//       if (cacheAge < CACHE_DURATION_HOURS) {
+//         console.log("✅ Serving reviews from cache.");
+//         return res.json({ reviews: googleAuth.reviewsCache });
+//       }
+//     }
+//     console.log("🔍 Cache stale or empty. Fetching fresh data from Google...");
+
+//     // --- Token Refresh Logic  ---
+//     const bufferTime = 5 * 60 * 1000;
+//     const isExpired = new Date(googleAuth.expiresAt).getTime() < (Date.now() + bufferTime);
+
+//     if (isExpired && googleAuth.refreshToken) {
+//         console.log("🔄 Token expired, attempting refresh...");
+//         try {
+//             const refreshClient = new google.auth.OAuth2(
+//                 process.env.GOOGLE_CLIENT_ID,
+//                 process.env.GOOGLE_CLIENT_SECRET
+//             );
+//             refreshClient.setCredentials({ refresh_token: googleAuth.refreshToken });
+//             const { credentials } = await refreshClient.refreshAccessToken();
+
+//             googleAuth.accessToken = credentials.access_token;
+//             googleAuth.expiresAt = new Date(credentials.expiry_date || Date.now() + 3600000);
+//             if(credentials.refresh_token) {
+//                 googleAuth.refreshToken = credentials.refresh_token;
+//             }
+//             await googleAuth.save();
+//             console.log("✅ Token refreshed and saved successfully");
+//         } catch (refreshError) {
+//             console.error("❌ Token refresh failed:", refreshError);
+//             return res.status(401).json({
+//                 message: "Google API authentication failed. Please reconnect your Google account.",
+//                 needsReconnect: true,
+//             });
+//         }
+//     } else if (isExpired) {
+//         // Handle case where token is expired and there's no refresh token
+//         return res.status(401).json({
+//             message: "Session expired. Please reconnect your Google account.",
+//             needsReconnect: true,
+//         });
+//     }
+
+//     // --- API Fetching Logic ---
+//     const authClient = new google.auth.OAuth2(process.env.GOOGLE_CLIENT_ID, process.env.GOOGLE_CLIENT_SECRET);
+//     authClient.setCredentials({ access_token: googleAuth.accessToken });
+
+//     try {
+//       let locationName = googleAuth.businessLocationId;
+      
+//       // ** Only fetch account/location if they are not cached **
+//       if (!locationName) {
+//         console.log("📋 Don't have a cached locationId. Fetching for the first time...");
+        
+//         // 1. Get Account
+//         const mybusinessAccounts = google.mybusinessaccountmanagement({ version: "v1", auth: authClient });
+//         const accountsResponse = await mybusinessAccounts.accounts.list();
+//         if (!accountsResponse.data.accounts || accountsResponse.data.accounts.length === 0) {
+//           return res.json({ reviews: [], message: "No Google My Business accounts found." });
+//         }
+//         const accountName = accountsResponse.data.accounts[0].name;
+//         console.log("✅ Found business account:", accountName);
+
+//         // 2. Get Location
+//         const businessInfo = google.mybusinessbusinessinformation({ version: 'v1', auth: authClient });
+//         const locationsResponse = await businessInfo.accounts.locations.list({ parent: accountName });
+//         if (!locationsResponse.data.locations || locationsResponse.data.locations.length === 0) {
+//           return res.json({ reviews: [], message: "No business locations found." });
+//         }
+//         locationName = locationsResponse.data.locations[0].name;
+//         console.log("✅ Found location:", locationName);
+
+//         // 3. Save IDs to the database for future use
+//         googleAuth.businessId = accountName; 
+//         googleAuth.businessLocationId = locationName;
+//         await googleAuth.save();
+//         console.log("💾 Saved account and location IDs to the database.");
+//       } else {
+//         console.log("✅ Using cached location ID:", locationName);
+//       }
+
+//       // ** ALWAYS execute review fetch after getting a locationName **
+//       console.log("⭐ Fetching reviews for location...");
+//       const mybusinessReviews = google.mybusinessreviews({ version: 'v1', auth: authClient });
+//       const reviewsResponse = await mybusinessReviews.accounts.locations.reviews.list({ parent: locationName });
+
+//       const reviews = reviewsResponse.data.reviews || [];
+//       console.log(`✅ Found ${reviews.length} reviews`);
+
+//       // Transform reviews and update cache
+//       const transformedReviews = reviews.map((review) => ({ /* your mapping logic */ }));
+//       googleAuth.reviewsCache = transformedReviews;
+//       googleAuth.cacheTimestamp = new Date();
+//       await googleAuth.save();
+//       console.log('💾 Successfully updated reviews cache.');
+      
+//       res.json({ reviews: transformedReviews });
+
+//     } catch (apiError) {
+//       console.error("❌ Google My Business API error:", apiError);
+//       // Your existing detailed error handling for apiError is good.
+//       res.status(apiError.code || 500).json({
+//         message: "Failed to fetch reviews from Google My Business",
+//         error: apiError.message,
+//       });
+//     }
+//   } catch (error) {
+//     console.error("❌ Top-level reviews fetch error:", error);
+//     res.status(500).json({ message: "Failed to fetch reviews", error: error.message });
+//   }
+// });
+
 app.get("/api/google-reviews/:hotelId", authenticateToken, async (req, res) => {
   try {
     const { hotelId } = req.params;
     const googleAuth = await GoogleAuth.findOne({ hotelId });
 
     if (!googleAuth) {
-      console.log("❌ No Google auth found for hotel:", hotelId);
-      return res.status(401).json({
-        message: "Google account not connected",
-        needsReconnect: true,
-      });
+      return res.status(401).json({ message: "Google account not connected", needsReconnect: true });
     }
 
     // --- Caching Logic ---
@@ -577,89 +702,67 @@ app.get("/api/google-reviews/:hotelId", authenticateToken, async (req, res) => {
     }
     console.log("🔍 Cache stale or empty. Fetching fresh data from Google...");
 
-    // --- Token Refresh Logic  ---
+    // --- Token Refresh Logic ---
     const bufferTime = 5 * 60 * 1000;
     const isExpired = new Date(googleAuth.expiresAt).getTime() < (Date.now() + bufferTime);
 
     if (isExpired && googleAuth.refreshToken) {
-        console.log("🔄 Token expired, attempting refresh...");
-        try {
-            const refreshClient = new google.auth.OAuth2(
-                process.env.GOOGLE_CLIENT_ID,
-                process.env.GOOGLE_CLIENT_SECRET
-            );
-            refreshClient.setCredentials({ refresh_token: googleAuth.refreshToken });
-            const { credentials } = await refreshClient.refreshAccessToken();
+      console.log("🔄 Token expired, attempting refresh...");
+      try {
+        const refreshClient = new google.auth.OAuth2(process.env.GOOGLE_CLIENT_ID, process.env.GOOGLE_CLIENT_SECRET);
+        refreshClient.setCredentials({ refresh_token: googleAuth.refreshToken });
+        const { credentials } = await refreshClient.refreshAccessToken();
 
-            googleAuth.accessToken = credentials.access_token;
-            googleAuth.expiresAt = new Date(credentials.expiry_date || Date.now() + 3600000);
-            if(credentials.refresh_token) {
-                googleAuth.refreshToken = credentials.refresh_token;
-            }
-            await googleAuth.save();
-            console.log("✅ Token refreshed and saved successfully");
-        } catch (refreshError) {
-            console.error("❌ Token refresh failed:", refreshError);
-            return res.status(401).json({
-                message: "Google API authentication failed. Please reconnect your Google account.",
-                needsReconnect: true,
-            });
+        googleAuth.accessToken = credentials.access_token;
+        googleAuth.expiresAt = new Date(credentials.expiry_date || Date.now() + 3600000);
+        if (credentials.refresh_token) {
+          googleAuth.refreshToken = credentials.refresh_token;
         }
-    } else if (isExpired) {
-        // Handle case where token is expired and there's no refresh token
-        return res.status(401).json({
-            message: "Session expired. Please reconnect your Google account.",
-            needsReconnect: true,
-        });
+        await googleAuth.save();
+        console.log("✅ Token refreshed and saved successfully");
+      } catch (refreshError) {
+        return res.status(401).json({ message: "Google API authentication failed. Please reconnect your Google account.", needsReconnect: true });
+      }
     }
 
-    // --- API Fetching Logic ---
     const authClient = new google.auth.OAuth2(process.env.GOOGLE_CLIENT_ID, process.env.GOOGLE_CLIENT_SECRET);
     authClient.setCredentials({ access_token: googleAuth.accessToken });
 
+    // --- API Fetching Logic ---
     try {
       let locationName = googleAuth.businessLocationId;
       
-      // ** Only fetch account/location if they are not cached **
       if (!locationName) {
-        console.log("📋 Don't have a cached locationId. Fetching for the first time...");
-        
-        // 1. Get Account
+        console.log("📋 First time setup: Fetching Account and Location IDs...");
         const mybusinessAccounts = google.mybusinessaccountmanagement({ version: "v1", auth: authClient });
         const accountsResponse = await mybusinessAccounts.accounts.list();
         if (!accountsResponse.data.accounts || accountsResponse.data.accounts.length === 0) {
           return res.json({ reviews: [], message: "No Google My Business accounts found." });
         }
         const accountName = accountsResponse.data.accounts[0].name;
-        console.log("✅ Found business account:", accountName);
 
-        // 2. Get Location
         const businessInfo = google.mybusinessbusinessinformation({ version: 'v1', auth: authClient });
         const locationsResponse = await businessInfo.accounts.locations.list({ parent: accountName });
         if (!locationsResponse.data.locations || locationsResponse.data.locations.length === 0) {
           return res.json({ reviews: [], message: "No business locations found." });
         }
         locationName = locationsResponse.data.locations[0].name;
-        console.log("✅ Found location:", locationName);
 
-        // 3. Save IDs to the database for future use
         googleAuth.businessId = accountName; 
         googleAuth.businessLocationId = locationName;
         await googleAuth.save();
-        console.log("💾 Saved account and location IDs to the database.");
+        console.log("💾 Saved account and location IDs to database for future use.");
       } else {
         console.log("✅ Using cached location ID:", locationName);
       }
 
-      // ** ALWAYS execute review fetch after getting a locationName **
-      console.log("⭐ Fetching reviews for location...");
+      console.log("⭐ Fetching reviews...");
       const mybusinessReviews = google.mybusinessreviews({ version: 'v1', auth: authClient });
       const reviewsResponse = await mybusinessReviews.accounts.locations.reviews.list({ parent: locationName });
 
       const reviews = reviewsResponse.data.reviews || [];
       console.log(`✅ Found ${reviews.length} reviews`);
 
-      // Transform reviews and update cache
       const transformedReviews = reviews.map((review) => ({ /* your mapping logic */ }));
       googleAuth.reviewsCache = transformedReviews;
       googleAuth.cacheTimestamp = new Date();
@@ -669,12 +772,11 @@ app.get("/api/google-reviews/:hotelId", authenticateToken, async (req, res) => {
       res.json({ reviews: transformedReviews });
 
     } catch (apiError) {
-      console.error("❌ Google My Business API error:", apiError);
-      // Your existing detailed error handling for apiError is good.
-      res.status(apiError.code || 500).json({
-        message: "Failed to fetch reviews from Google My Business",
-        error: apiError.message,
-      });
+      console.error("❌ Google My Business API error:", apiError.message);
+      if (apiError.code === 429) {
+          return res.status(429).json({ message: "Google API quota exceeded. Please wait and try again later." });
+      }
+      return res.status(apiError.code || 500).json({ message: "Failed to fetch reviews from Google My Business", error: apiError.message });
     }
   } catch (error) {
     console.error("❌ Top-level reviews fetch error:", error);
