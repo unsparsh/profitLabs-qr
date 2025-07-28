@@ -126,7 +126,7 @@ const fetchGoogleReviews = async () => {
       } else if (response.needsPermissions) {
         toast.error('Access denied. Please ensure your Google account has Google My Business access.');
       } else if (response.message) {
-        toast.info(response.message);
+        toast(response.message);
       } else if (response.error) {
         console.warn('Google reviews API warning:', response.error);
         toast.error(response.error);
