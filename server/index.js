@@ -422,6 +422,8 @@ app.get('/api/google-auth/status/:hotelId', authenticateToken, async (req, res) 
 });
 
 // Google Reviews Routes
+// Replace your existing Google Reviews route with this improved version
+
 app.get('/api/google-reviews/:hotelId', authenticateToken, async (req, res) => {
   try {
     const { hotelId } = req.params;
@@ -431,42 +433,47 @@ app.get('/api/google-reviews/:hotelId', authenticateToken, async (req, res) => {
     const googleAuth = await GoogleAuth.findOne({ hotelId });
     if (!googleAuth) {
       console.log('❌ No Google auth found for hotel:', hotelId);
-      return res.status(401).json({ message: 'Google account not connected' });
+      return res.status(401).json({ 
+        message: 'Google account not connected',
+        needsReconnect: true
+      });
     }
     
     console.log('✅ Google auth found, checking token expiry...');
     console.log('Token expires at:', googleAuth.expiresAt);
     console.log('Current time:', new Date());
     
-    // Check if tokens are expired
-    const isExpired = googleAuth.expiresAt < new Date();
-    console.log('Token expired?', isExpired);
+    // Check if tokens are expired (add 5 minute buffer)
+    const bufferTime = 5 * 60 * 1000; // 5 minutes in milliseconds
+    const isExpired = new Date(googleAuth.expiresAt).getTime() < (Date.now() + bufferTime);
+    console.log('Token expired (with buffer)?', isExpired);
     
-    if (isExpired) {
+    if (isExpired && googleAuth.refreshToken) {
       console.log('🔄 Token expired, attempting refresh...');
       
-      if (!googleAuth.refreshToken) {
-        console.log('❌ No refresh token available');
-        return res.status(401).json({ 
-          message: 'Google tokens expired and no refresh token available. Please reconnect your Google account.',
-          needsReconnect: true
-        });
-      }
-      
       try {
-        // Set up OAuth client with refresh token
-        oauth2Client.setCredentials({
+        // Create a new OAuth2 client instance for token refresh
+        const refreshClient = new google.auth.OAuth2(
+          process.env.GOOGLE_CLIENT_ID,
+          process.env.GOOGLE_CLIENT_SECRET,
+          `${process.env.CLIENT_URL || 'http://localhost:5173'}/auth/google/callback`
+        );
+        
+        // Set refresh token
+        refreshClient.setCredentials({
           refresh_token: googleAuth.refreshToken
         });
         
         // Refresh the access token
-        const { credentials } = await oauth2Client.refreshAccessToken();
+        const { credentials } = await refreshClient.refreshAccessToken();
         console.log('✅ Token refreshed successfully');
         
         // Update the stored tokens
         await GoogleAuth.findByIdAndUpdate(googleAuth._id, {
           accessToken: credentials.access_token,
-          expiresAt: new Date(credentials.expiry_date || Date.now() + 3600000)
+          expiresAt: new Date(credentials.expiry_date || Date.now() + 3600000),
+          // Only update refresh token if a new one is provided
+          ...(credentials.refresh_token && { refreshToken: credentials.refresh_token })
         });
         
         console.log('✅ Database updated with new token');
@@ -478,16 +485,28 @@ app.get('/api/google-reviews/:hotelId', authenticateToken, async (req, res) => {
       } catch (refreshError) {
         console.error('❌ Token refresh failed:', refreshError);
         return res.status(401).json({ 
-          message: 'Failed to refresh Google tokens. Please reconnect your Google account.',
+          message: 'Google API authentication failed. Please reconnect your Google account.',
           needsReconnect: true
         });
       }
+    } else if (isExpired && !googleAuth.refreshToken) {
+      console.log('❌ Token expired and no refresh token available');
+      return res.status(401).json({ 
+        message: 'Google API authentication failed. Please reconnect your Google account.',
+        needsReconnect: true
+      });
     }
     
     console.log('🔍 Fetching reviews with valid token...');
     
-    // Set up OAuth client with stored tokens
-    oauth2Client.setCredentials({
+    // Create OAuth2 client with current tokens
+    const authClient = new google.auth.OAuth2(
+      process.env.GOOGLE_CLIENT_ID,
+      process.env.GOOGLE_CLIENT_SECRET,
+      `${process.env.CLIENT_URL || 'http://localhost:5173'}/auth/google/callback`
+    );
+    
+    authClient.setCredentials({
       access_token: googleAuth.accessToken,
       refresh_token: googleAuth.refreshToken
     });
@@ -495,22 +514,32 @@ app.get('/api/google-reviews/:hotelId', authenticateToken, async (req, res) => {
     console.log('🔍 Fetching reviews for business:', googleAuth.businessName);
     
     try {
-      // Use the correct Google My Business API v4.9
-      const mybusiness = google.mybusinessaccountmanagement({ version: 'v1', auth: oauth2Client });
+      // Use the correct Google My Business API
+      const mybusinessAccounts = google.mybusinessaccountmanagement({ 
+        version: 'v1', 
+        auth: authClient 
+      });
       
       console.log('📋 Getting business accounts...');
-      const accountsResponse = await mybusiness.accounts.list();
+      const accountsResponse = await mybusinessAccounts.accounts.list();
       
       if (!accountsResponse.data.accounts || accountsResponse.data.accounts.length === 0) {
         console.log('❌ No business accounts found');
-        return res.json({ reviews: [] });
+        return res.json({ 
+          reviews: [],
+          message: 'No Google My Business accounts found. Please ensure your Google account has access to a business profile.'
+        });
       }
       
       const account = accountsResponse.data.accounts[0];
       console.log('✅ Found business account:', account.name);
       
-      // Get locations using the business information API
-      const businessInfo = google.mybusinessbusinessinformation({ version: 'v1', auth: oauth2Client });
+      // Get locations
+      const businessInfo = google.mybusinessbusinessinformation({ 
+        version: 'v1', 
+        auth: authClient 
+      });
+      
       console.log('📍 Getting business locations...');
       const locationsResponse = await businessInfo.accounts.locations.list({
         parent: account.name
@@ -518,13 +547,16 @@ app.get('/api/google-reviews/:hotelId', authenticateToken, async (req, res) => {
       
       if (!locationsResponse.data.locations || locationsResponse.data.locations.length === 0) {
         console.log('❌ No locations found for account');
-        return res.json({ reviews: [] });
+        return res.json({ 
+          reviews: [],
+          message: 'No business locations found. Please set up your Google My Business profile with a location.'
+        });
       }
       
       const location = locationsResponse.data.locations[0];
       console.log('✅ Found location:', location.name);
       
-      // Fetch reviews using the correct API
+      // Fetch reviews
       console.log('⭐ Fetching reviews for location...');
       const reviewsResponse = await businessInfo.accounts.locations.reviews.list({
         parent: location.name
@@ -540,7 +572,7 @@ app.get('/api/google-reviews/:hotelId', authenticateToken, async (req, res) => {
           displayName: review.reviewer?.displayName || 'Anonymous',
           profilePhotoUrl: review.reviewer?.profilePhotoUrl
         },
-        starRating: review.starRating || 'STAR_RATING_UNSPECIFIED',
+        starRating: review.starRating || 'THREE',
         comment: review.comment || '',
         createTime: review.createTime || new Date().toISOString(),
         updateTime: review.updateTime || new Date().toISOString(),
@@ -550,45 +582,75 @@ app.get('/api/google-reviews/:hotelId', authenticateToken, async (req, res) => {
         } : undefined
       }));
       
-      console.log('🔄 Transformed reviews:', transformedReviews.length);
+      console.log('🔄 Successfully transformed reviews:', transformedReviews.length);
       res.json({ reviews: transformedReviews });
       
     } catch (apiError) {
-      console.error('❌ Google My Business API error:', apiError.message);
-      console.error('Full API error details:', {
-        message: apiError.message,
-        code: apiError.code,
-        status: apiError.status,
-        details: apiError.details
-      });
+      console.error('❌ Google My Business API error:', apiError);
       
-      // Check if it's an authentication error
-      if (apiError.code === 401 || apiError.code === 403) {
+      // Handle specific error codes
+      if (apiError.code === 401) {
         return res.status(401).json({ 
           message: 'Google API authentication failed. Please reconnect your Google account.',
-          error: apiError.message 
+          needsReconnect: true
         });
-      }
-      
-      // Handle specific API errors
-      if (apiError.message && apiError.message.includes('not found')) {
+      } else if (apiError.code === 403) {
+        return res.status(403).json({ 
+          message: 'Access denied. Please ensure your Google account has access to Google My Business.',
+          needsPermissions: true
+        });
+      } else if (apiError.code === 404) {
         return res.json({ 
-          reviews: [], 
-          error: 'No Google My Business profile found. Please ensure your account has a business profile.',
+          reviews: [],
+          message: 'Google My Business profile not found. Please set up your business profile first.',
           needsSetup: true
         });
       }
       
-      // For other API errors, return empty reviews with error info
-      res.json({ 
-        reviews: [], 
-        error: `Unable to fetch reviews: ${apiError.message}`,
-        needsReconnect: apiError.code === 401 || apiError.code === 403
+      // For other API errors
+      res.status(500).json({ 
+        message: 'Failed to fetch reviews from Google My Business',
+        error: apiError.message,
+        details: process.env.NODE_ENV === 'development' ? apiError : undefined
       });
     }
   } catch (error) {
     console.error('❌ Reviews fetch error:', error);
-    res.status(500).json({ message: 'Failed to fetch reviews' });
+    res.status(500).json({ 
+      message: 'Failed to fetch reviews',
+      error: error.message 
+    });
+  }
+});
+
+// Add this route to your server/index.js after the existing Google auth routes
+
+app.post('/api/google-auth/disconnect/:hotelId', authenticateToken, async (req, res) => {
+  try {
+    const { hotelId } = req.params;
+    
+    console.log('Disconnecting Google account for hotel:', hotelId);
+    
+    // Find and delete the Google auth record
+    const googleAuth = await GoogleAuth.findOneAndDelete({ hotelId });
+    
+    if (!googleAuth) {
+      console.log('No Google auth found to disconnect for hotel:', hotelId);
+      return res.status(404).json({ message: 'No Google account connected for this hotel' });
+    }
+    
+    console.log('Google auth disconnected successfully for hotel:', hotelId);
+    
+    res.json({ 
+      success: true, 
+      message: 'Google account disconnected successfully' 
+    });
+  } catch (error) {
+    console.error('Google disconnect error:', error);
+    res.status(500).json({ 
+      message: 'Failed to disconnect Google account',
+      error: error.message 
+    });
   }
 });
 

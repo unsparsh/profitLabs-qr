@@ -96,7 +96,7 @@ export const AIAssistantPanel: React.FC<AIAssistantPanelProps> = ({ hotelId }) =
     }
   };
 
-  const fetchGoogleReviews = async () => {
+const fetchGoogleReviews = async () => {
     if (!isAuthenticated || !googleAccount) return;
     
     try {
@@ -105,30 +105,47 @@ export const AIAssistantPanel: React.FC<AIAssistantPanelProps> = ({ hotelId }) =
         method: 'GET'
       });
       
-      const response = reviewsData as { reviews: Review[]; error?: string; needsReconnect?: boolean };
+      const response = reviewsData as { 
+        reviews: Review[]; 
+        error?: string; 
+        message?: string;
+        needsReconnect?: boolean;
+        needsSetup?: boolean;
+        needsPermissions?: boolean;
+      };
       
+      // Handle different response scenarios
       if (response.needsReconnect) {
         toast.error('Google connection expired. Please reconnect your account.');
-        // Could trigger re-authentication here
+        signOut(); // Sign out to trigger re-authentication
         return;
       }
       
-      if (response.error) {
+      if (response.needsSetup) {
+        toast.error('Please set up your Google My Business profile first');
+      } else if (response.needsPermissions) {
+        toast.error('Access denied. Please ensure your Google account has Google My Business access.');
+      } else if (response.message) {
+        toast.info(response.message);
+      } else if (response.error) {
         console.warn('Google reviews API warning:', response.error);
-        if (response.needsSetup) {
-          toast.error('Please set up your Google My Business profile first');
-        } else if (response.needsReconnect) {
-          toast.error('Google connection expired. Please reconnect your account.');
-        } else {
-          toast.error('Unable to fetch reviews from Google');
-        }
+        toast.error(response.error);
       }
       
-      console.log(`✅ Fetched ${response.reviews.length} reviews from Google`);
+      console.log(`✅ Fetched ${response.reviews?.length || 0} reviews from Google`);
       setReviews(response.reviews || []);
-    } catch (error) {
+    } catch (error: any) {
       console.error('Failed to fetch Google reviews:', error);
-      toast.error('Failed to connect to Google My Business. Please try reconnecting.');
+      
+      // Handle specific error cases
+      if (error.message?.includes('401') || error.message?.includes('authentication')) {
+        toast.error('Google authentication failed. Please reconnect your account.');
+        signOut(); // Trigger re-authentication
+      } else if (error.message?.includes('403') || error.message?.includes('Access denied')) {
+        toast.error('Access denied. Please ensure your Google account has Google My Business access.');
+      } else {
+        toast.error('Failed to connect to Google My Business. Please try reconnecting.');
+      }
     }
   };
 

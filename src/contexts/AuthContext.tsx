@@ -1,5 +1,6 @@
-import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
+import React, { createContext, useContext, useState, useEffect, ReactNode , useCallback} from 'react';
 import { apiClient } from '../utils/api';
+import toast from 'react-hot-toast';
 
 interface GoogleAccount {
   name: string;
@@ -28,102 +29,111 @@ export const useAuth = () => {
   return context;
 };
 
-interface AuthProviderProps {
-  children: ReactNode;
-}
+// interface AuthProviderProps {
+//   children: ReactNode;
+// }
 
-export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
+export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [googleAccount, setGoogleAccount] = useState<GoogleAccount | null>(null);
   const [isLoading, setIsLoading] = useState(false);
 
-  const checkAuthStatus = async (hotelId: string) => {
+const checkAuthStatus = useCallback(async (hotelId: string) => {
+    if (!hotelId) return;
+    
+    setIsLoading(true);
     try {
-      setIsLoading(true);
-      const authStatus = await apiClient.request(`/google-auth/status/${hotelId}`, {
+      const response = await apiClient.request(`/google-auth/status/${hotelId}`, {
         method: 'GET'
       }) as { authenticated: boolean; account?: GoogleAccount };
       
-      if (authStatus.authenticated && authStatus.account) {
+      if (response.authenticated && response.account) {
         setIsAuthenticated(true);
-        setGoogleAccount(authStatus.account);
-        // Store in localStorage for persistence
-        localStorage.setItem('googleAuth', JSON.stringify({
-          isAuthenticated: true,
-          account: authStatus.account
-        }));
+        setGoogleAccount(response.account);
       } else {
         setIsAuthenticated(false);
         setGoogleAccount(null);
-        localStorage.removeItem('googleAuth');
       }
-    } catch (error) {
-      console.log('Not authenticated with Google');
+    } catch (error: any) {
+      console.error('Auth status check failed:', error);
       setIsAuthenticated(false);
       setGoogleAccount(null);
-      localStorage.removeItem('googleAuth');
+      
+      // Only show error toast for non-404 errors (404 means not connected)
+      if (!error.message?.includes('404') && !error.message?.includes('not connected')) {
+        toast.error('Failed to check Google authentication status');
+      }
     } finally {
       setIsLoading(false);
     }
-  };
+  }, []);
 
-  const signInWithGoogle = async (hotelId: string) => {
+ const signInWithGoogle = useCallback(async (hotelId: string) => {
+    if (!hotelId) {
+      throw new Error('Hotel ID is required');
+    }
+
+    setIsLoading(true);
     try {
-      setIsLoading(true);
+      console.log('Getting Google auth URL for hotel:', hotelId);
       
-      // Get Google OAuth URL from backend
-      const authUrl = await apiClient.request(`/google-auth/url/${hotelId}`, {
-        method: 'GET',
+      // Get Google OAuth URL
+      const response = await apiClient.request(`/google-auth/url/${hotelId}`, {
+        method: 'GET'
       }) as { url: string };
-
-      // Store the current location to return to after auth
-      localStorage.setItem('authReturnUrl', window.location.pathname);
       
-      // Redirect to Google OAuth in the same window
-      window.location.href = authUrl.url;
+      if (!response.url) {
+        throw new Error('Failed to get Google authentication URL');
+      }
+      
+      console.log('Redirecting to Google OAuth:', response.url);
+      
+      // Redirect to Google OAuth
+      window.location.href = response.url;
       
     } catch (error: any) {
-      console.error('Failed to initiate Google sign-in:', error);
+      console.error('Google sign-in error:', error);
       setIsLoading(false);
-      throw error;
-    }
-  };
-
-  const signOut = () => {
-    setIsAuthenticated(false);
-    setGoogleAccount(null);
-    localStorage.removeItem('googleAuth');
-  };
-
-  // Load auth state from localStorage on mount
-  useEffect(() => {
-    const storedAuth = localStorage.getItem('googleAuth');
-    if (storedAuth) {
-      try {
-        const authData = JSON.parse(storedAuth);
-        if (authData.isAuthenticated && authData.account) {
-          setIsAuthenticated(true);
-          setGoogleAccount(authData.account);
-        }
-      } catch (error) {
-        console.error('Failed to parse stored auth data:', error);
-        localStorage.removeItem('googleAuth');
+      
+      if (error.message?.includes('not configured')) {
+        toast.error('Google OAuth is not configured on the server');
+      } else {
+        toast.error(error.message || 'Failed to initiate Google sign-in');
       }
+      
+      throw error;
     }
   }, []);
 
-  const value: AuthContextType = {
+  const signOut = useCallback(() => {
+    setIsAuthenticated(false);
+    setGoogleAccount(null);
+  }, []);
+
+  // // Load auth state from localStorage on mount
+  // useEffect(() => {
+  //   const storedAuth = localStorage.getItem('googleAuth');
+  //   if (storedAuth) {
+  //     try {
+  //       const authData = JSON.parse(storedAuth);
+  //       if (authData.isAuthenticated && authData.account) {
+  //         setIsAuthenticated(true);
+  //         setGoogleAccount(authData.account);
+  //       }
+  //     } catch (error) {
+  //       console.error('Failed to parse stored auth data:', error);
+  //       localStorage.removeItem('googleAuth');
+  //     }
+  //   }
+  // }, []);
+
+ const value: AuthContextType = {
     isAuthenticated,
     googleAccount,
     isLoading,
     signInWithGoogle,
     signOut,
-    checkAuthStatus
+    checkAuthStatus,
   };
-
-  return (
-    <AuthContext.Provider value={value}>
-      {children}
-    </AuthContext.Provider>
-  );
+return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 };
