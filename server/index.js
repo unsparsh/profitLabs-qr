@@ -923,12 +923,18 @@ function generateFallbackReply(reviewText, rating, customerName, tone) {
     },
   };
 
-  const category =
+  const category = rating >= 4 ? "positive" : rating >= 3 ? "neutral" : "negative";
+  return templates[tone]?.[category] || templates.professional[category];
 }
+
+// Rate limiting setup
 const CACHE_DURATION = 15 * 60 * 1000; // 15 minutes
 const rateLimitMap = new Map();
 const RATE_LIMIT_WINDOW = 60 * 1000; // 1 minute
 const MAX_REQUESTS_PER_MINUTE = 10;
+const reviewsCache = new Map();
+
+// Rate limiting middleware
 
 // Rate limiting middleware
 const rateLimitMiddleware = (req, res, next) => {
@@ -959,15 +965,18 @@ const rateLimitMiddleware = (req, res, next) => {
   clientData.count++;
   next();
 };
-    rating >= 4 ? "positive" : rating >= 3 ? "neutral" : "negative";
-  return templates[tone]?.[category] || templates.professional[category];
-app.get('/api/google-reviews/:hotelId', authenticateToken, rateLimitMiddleware, async (req, res) => {
-}
-)
-app.post("/api/send-reply/:hotelId", authenticateToken, async (req, res) => {
+
+
+// Updated Google Reviews route with caching and rate limiting
+app.get("/api/google-reviews/:hotelId", authenticateToken, rateLimitMiddleware, async (req, res) => {
   try {
     const { hotelId } = req.params;
-    const { reviewId, replyText } = req.body;
+    const googleAuth = await GoogleAuth.findOne({ hotelId });
+
+    if (!googleAuth) {
+      return res.status(401).json({ message: "Google account not connected", needsReconnect: true });
+    }
+
     // Check cache first
     const cacheKey = `reviews_${hotelId}`;
     const cachedData = reviewsCache.get(cacheKey);
@@ -981,6 +990,110 @@ app.post("/api/send-reply/:hotelId", authenticateToken, async (req, res) => {
       });
     }
 
+    // --- Token Refresh Logic ---
+    const bufferTime = 5 * 60 * 1000;
+    const isExpired = new Date(googleAuth.expiresAt).getTime() < (Date.now() + bufferTime);
+
+    if (isExpired && googleAuth.refreshToken) {
+      console.log("🔄 Token expired, attempting refresh...");
+      try {
+        const refreshClient = new google.auth.OAuth2(process.env.GOOGLE_CLIENT_ID, process.env.GOOGLE_CLIENT_SECRET);
+        refreshClient.setCredentials({ refresh_token: googleAuth.refreshToken });
+        const { credentials } = await refreshClient.refreshAccessToken();
+
+        googleAuth.accessToken = credentials.access_token;
+        googleAuth.expiresAt = new Date(credentials.expiry_date || Date.now() + 3600000);
+        if (credentials.refresh_token) {
+          googleAuth.refreshToken = credentials.refresh_token;
+        }
+        await googleAuth.save();
+        console.log("✅ Token refreshed and saved successfully");
+      } catch (refreshError) {
+        return res.status(401).json({ message: "Google API authentication failed. Please reconnect your Google account.", needsReconnect: true });
+      }
+    }
+
+    const authClient = new google.auth.OAuth2(process.env.GOOGLE_CLIENT_ID, process.env.GOOGLE_CLIENT_SECRET);
+    authClient.setCredentials({ access_token: googleAuth.accessToken });
+
+    // --- API Fetching Logic ---
+    try {
+      let locationName = googleAuth.businessLocationId;
+      
+      if (!locationName) {
+        console.log("📋 First time setup: Fetching Account and Location IDs...");
+        const mybusinessAccounts = google.mybusinessaccountmanagement({ version: "v1", auth: authClient });
+        const accountsResponse = await mybusinessAccounts.accounts.list();
+        if (!accountsResponse.data.accounts || accountsResponse.data.accounts.length === 0) {
+          return res.json({ reviews: [], message: "No Google My Business accounts found." });
+        }
+        const accountName = accountsResponse.data.accounts[0].name;
+
+        const businessInfo = google.mybusinessbusinessinformation({ version: 'v1', auth: authClient });
+        const locationsResponse = await businessInfo.accounts.locations.list({ parent: accountName });
+        if (!locationsResponse.data.locations || locationsResponse.data.locations.length === 0) {
+          return res.json({ reviews: [], message: "No business locations found." });
+        }
+        locationName = locationsResponse.data.locations[0].name;
+
+        googleAuth.businessId = accountName; 
+        googleAuth.businessLocationId = locationName;
+        await googleAuth.save();
+        console.log("💾 Saved account and location IDs to database for future use.");
+      } else {
+        console.log("✅ Using cached location ID:", locationName);
+      }
+
+      console.log("⭐ Fetching reviews...");
+      const mybusinessReviews = google.mybusinessreviews({ version: 'v1', auth: authClient });
+      const reviewsResponse = await mybusinessReviews.accounts.locations.reviews.list({ parent: locationName });
+
+      const reviews = reviewsResponse.data.reviews || [];
+      console.log(`✅ Found ${reviews.length} reviews`);
+
+      const transformedReviews = reviews.map((review) => ({
+        reviewId: review.name?.split('/').pop() || '',
+        reviewer: {
+          displayName: review.reviewer?.displayName || 'Anonymous',
+          profilePhotoUrl: review.reviewer?.profilePhotoUrl || ''
+        },
+        starRating: review.starRating || 'THREE',
+        comment: review.comment || '',
+        createTime: review.createTime || new Date().toISOString(),
+        updateTime: review.updateTime || new Date().toISOString(),
+        reviewReply: review.reviewReply ? {
+          comment: review.reviewReply.comment,
+          updateTime: review.reviewReply.updateTime
+        } : undefined
+      }));
+
+      // Update cache
+      reviewsCache.set(cacheKey, {
+        reviews: transformedReviews,
+        timestamp: Date.now()
+      });
+      
+      console.log('💾 Successfully updated reviews cache.');
+      
+      res.json({ reviews: transformedReviews });
+
+    } catch (apiError) {
+      console.error("❌ Google My Business API error:", apiError.message);
+      if (apiError.code === 429) {
+          return res.status(429).json({ message: "Google API quota exceeded. Please wait and try again later." });
+      }
+      return res.status(apiError.code || 500).json({ message: "Failed to fetch reviews from Google My Business", error: apiError.message });
+    }
+  } catch (error) {
+    console.error("❌ Top-level reviews fetch error:", error);
+    res.status(500).json({ message: "Failed to fetch reviews", error: error.message });
+  }
+});
+
+app.post("/api/send-reply/:hotelId", authenticateToken, async (req, res) => {
+  try {
+    const { hotelId } = req.params;
+    const { reviewId, replyText } = req.body;
 
     const googleAuth = await GoogleAuth.findOne({ hotelId });
     if (!googleAuth) {
@@ -1021,6 +1134,7 @@ app.post("/api/send-reply/:hotelId", authenticateToken, async (req, res) => {
     res.status(500).json({ message: "Failed to send reply to Google" });
   }
 });
+
 
 // Template CRUD Routes
 app.get("/api/templates/:hotelId", authenticateToken, async (req, res) => {
