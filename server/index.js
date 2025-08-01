@@ -925,7 +925,7 @@ function generateFallbackReply(reviewText, rating, customerName, tone) {
 
   const category =
 }
-const CACHE_DURATION = 15 * 60 * 1000; // 15 minutes
+const CACHE_DURATION = 1y 5 * 60 * 1000; // 15 minutes
 const rateLimitMap = new Map();
 const RATE_LIMIT_WINDOW = 60 * 1000; // 1 minute
 const MAX_REQUESTS_PER_MINUTE = 10;
