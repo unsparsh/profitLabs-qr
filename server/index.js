@@ -924,6 +924,7 @@ function generateFallbackReply(reviewText, rating, customerName, tone) {
   };
 
   const category =
+}
 const CACHE_DURATION = 15 * 60 * 1000; // 15 minutes
 const rateLimitMap = new Map();
 const RATE_LIMIT_WINDOW = 60 * 1000; // 1 minute
@@ -961,6 +962,8 @@ const rateLimitMiddleware = (req, res, next) => {
     rating >= 4 ? "positive" : rating >= 3 ? "neutral" : "negative";
   return templates[tone]?.[category] || templates.professional[category];
 app.get('/api/google-reviews/:hotelId', authenticateToken, rateLimitMiddleware, async (req, res) => {
+}
+)
 app.post("/api/send-reply/:hotelId", authenticateToken, async (req, res) => {
   try {
     const { hotelId } = req.params;

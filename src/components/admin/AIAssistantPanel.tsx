@@ -474,6 +474,18 @@ const fetchGoogleReviews = async () => {
           {/* Reviews List */}
           <div className="space-y-4">
             <h3 className="text-lg font-semibold text-gray-900">Recent Reviews</h3>
+            <div className="flex items-center justify-between">
+              <p className="text-sm text-gray-600">
+                {reviews.length > 0 ? `${reviews.length} reviews loaded` : 'No reviews found'}
+              </p>
+              <button
+                onClick={fetchGoogleReviews}
+                disabled={isLoading}
+                className="text-sm text-blue-600 hover:text-blue-700 disabled:opacity-50"
+              >
+                {isLoading ? 'Refreshing...' : 'Refresh Reviews'}
+              </button>
+            </div>
             {isLoading ? (
               <div className="flex items-center justify-center py-8">
                 <Loader className="h-6 w-6 animate-spin text-purple-600" />
