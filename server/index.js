@@ -924,13 +924,60 @@ function generateFallbackReply(reviewText, rating, customerName, tone) {
   };
 
   const category =
+const CACHE_DURATION = 15 * 60 * 1000; // 15 minutes
+const rateLimitMap = new Map();
+const RATE_LIMIT_WINDOW = 60 * 1000; // 1 minute
+const MAX_REQUESTS_PER_MINUTE = 10;
+
+// Rate limiting middleware
+const rateLimitMiddleware = (req, res, next) => {
+  const clientId = req.ip || 'unknown';
+  const now = Date.now();
+  
+  if (!rateLimitMap.has(clientId)) {
+    rateLimitMap.set(clientId, { count: 1, resetTime: now + RATE_LIMIT_WINDOW });
+    return next();
+  }
+  
+  const clientData = rateLimitMap.get(clientId);
+  
+  if (now > clientData.resetTime) {
+    // Reset the rate limit window
+    rateLimitMap.set(clientId, { count: 1, resetTime: now + RATE_LIMIT_WINDOW });
+    return next();
+  }
+  
+  if (clientData.count >= MAX_REQUESTS_PER_MINUTE) {
+    return res.status(429).json({
+      error: 'Rate limit exceeded',
+      message: 'Too many requests. Please wait before trying again.',
+      retryAfter: Math.ceil((clientData.resetTime - now) / 1000)
+    });
+  }
+  
+  clientData.count++;
+  next();
+};
     rating >= 4 ? "positive" : rating >= 3 ? "neutral" : "negative";
   return templates[tone]?.[category] || templates.professional[category];
-}
+app.get('/api/google-reviews/:hotelId', authenticateToken, rateLimitMiddleware, async (req, res) => {
 app.post("/api/send-reply/:hotelId", authenticateToken, async (req, res) => {
   try {
     const { hotelId } = req.params;
     const { reviewId, replyText } = req.body;
+    // Check cache first
+    const cacheKey = `reviews_${hotelId}`;
+    const cachedData = reviewsCache.get(cacheKey);
+    
+    if (cachedData && (Date.now() - cachedData.timestamp) < CACHE_DURATION) {
+      console.log('✅ Returning cached reviews');
+      return res.json({ 
+        reviews: cachedData.reviews,
+        cached: true,
+        cacheAge: Math.floor((Date.now() - cachedData.timestamp) / 1000)
+      });
+    }
+
 
     const googleAuth = await GoogleAuth.findOne({ hotelId });
     if (!googleAuth) {
