@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Save, Bell, Mail, CreditCard, Users } from 'lucide-react';
+import { Save, Bell, CreditCard, Users, Phone } from 'lucide-react';
 import { apiClient } from '../../utils/api';
 import toast from 'react-hot-toast';
 
@@ -20,12 +20,16 @@ export const SettingsPanel: React.FC<SettingsPanelProps> = ({ hotel, onHotelUpda
     notifications: {
       sound: true,
       email: true,
-    }
+    },
+    emergencyContact: {
+      phone: '+91 9876543210',
+      description: 'Available 24/7 for any assistance',
+    },
   });
   const [isLoading, setIsLoading] = useState(false);
 
   const handleServiceToggle = (service: string) => {
-    setSettings(prev => ({
+    setSettings((prev: any) => ({
       ...prev,
       servicesEnabled: {
         ...prev.servicesEnabled,
@@ -35,11 +39,21 @@ export const SettingsPanel: React.FC<SettingsPanelProps> = ({ hotel, onHotelUpda
   };
 
   const handleNotificationToggle = (type: string) => {
-    setSettings(prev => ({
+    setSettings((prev: any) => ({
       ...prev,
       notifications: {
         ...prev.notifications,
         [type]: !prev.notifications[type]
+      }
+    }));
+  };
+
+  const handleEmergencyContactChange = (field: string, value: string) => {
+    setSettings((prev: any) => ({
+      ...prev,
+      emergencyContact: {
+        ...prev.emergencyContact,
+        [field]: value
       }
     }));
   };
@@ -172,6 +186,36 @@ export const SettingsPanel: React.FC<SettingsPanelProps> = ({ hotel, onHotelUpda
               </button>
             </div>
           ))}
+        </div>
+      </div>
+
+      {/* Emergency Contact Settings */}
+      <div className="bg-white rounded-lg shadow-sm p-4 sm:p-6">
+        <div className="flex items-center mb-4">
+          <Phone className="h-4 w-4 sm:h-5 sm:w-5 text-gray-400 mr-2" />
+          <h3 className="text-base sm:text-lg font-medium text-gray-900">Emergency Contact</h3>
+        </div>
+        <div className="space-y-4">
+          <div>
+            <label className="block text-xs sm:text-sm font-medium text-gray-700 mb-2">Phone Number</label>
+            <input
+              type="tel"
+              value={settings.emergencyContact?.phone || ''}
+              onChange={(e) => handleEmergencyContactChange('phone', e.target.value)}
+              placeholder="+91 9876543210"
+              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+            />
+          </div>
+          <div>
+            <label className="block text-xs sm:text-sm font-medium text-gray-700 mb-2">Description</label>
+            <input
+              type="text"
+              value={settings.emergencyContact?.description || ''}
+              onChange={(e) => handleEmergencyContactChange('description', e.target.value)}
+              placeholder="Available 24/7 for any assistance"
+              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+            />
+          </div>
         </div>
       </div>
 
