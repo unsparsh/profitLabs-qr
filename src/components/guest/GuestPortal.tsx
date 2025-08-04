@@ -171,6 +171,8 @@ export default function GuestPortal({ hotelId, roomId }: GuestPortalProps) {
         requestData.customMessageDetails = details;
       } else if (type === 'wifi-support' && details) {
         requestData.wifiSupportDetails = details;
+      } else if (type === 'security-alert' && details) {
+        requestData.securityAlertDetails = details;
       }
 
       await apiClient.submitGuestRequest(hotelId, roomId, requestData);
@@ -248,9 +250,11 @@ export default function GuestPortal({ hotelId, roomId }: GuestPortalProps) {
   };
 
   const handleSecurityAlert = () => {
-    const audio = new Audio('/sounds/alarm.mp3');
-    audio.play().catch(() => {
-      toast.error('Unable to play alarm sound');
+    submitRequest('security-alert', {
+      alertType: 'Security Emergency',
+      description: 'Guest has activated the security alert button',
+      category: 'Emergency',
+      priority: 'high'
     });
   };
 
