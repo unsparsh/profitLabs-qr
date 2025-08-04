@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Phone, UtensilsCrossed, Wrench, MessageSquare, ShoppingCart, X, Plus, Minus, ArrowLeft, Wifi, AlertCircle, Clock, Car, Shield, User, Home } from 'lucide-react';
+import { Phone, UtensilsCrossed, MessageSquare, ShoppingCart, X, Plus, Minus, ArrowLeft, Wifi, Clock, Car, Shield, User, Home } from 'lucide-react';
 import { toast } from 'react-hot-toast';
 import { apiClient } from '../../utils/api';
 
@@ -154,15 +154,26 @@ export default function GuestPortal({ hotelId, roomId }: GuestPortalProps) {
   const submitRequest = async (type: string, details: any) => {
     try {
       setLoading(true);
-      await apiClient.submitGuestRequest(hotelId, roomId, {
+      
+      const requestData: any = {
         type,
         guestPhone: phoneNumber.trim(),
-        orderDetails: type === 'order-food' ? details : undefined,
-        serviceDetails: type === 'room-service' ? details : undefined,
-        complaintDetails: type === 'complaint' ? details : undefined,
-        customMessageDetails: type === 'custom-message' ? details : undefined,
         priority: 'medium'
-      });
+      };
+
+      if (type === 'order-food' && details) {
+        requestData.orderDetails = details;
+      } else if (type === 'room-service' && details) {
+        requestData.serviceDetails = details;
+      } else if (type === 'complaint' && details) {
+        requestData.complaintDetails = details;
+      } else if (type === 'custom-message' && details) {
+        requestData.customMessageDetails = details;
+      } else if (type === 'wifi-support' && details) {
+        requestData.wifiSupportDetails = details;
+      }
+
+      await apiClient.submitGuestRequest(hotelId, roomId, requestData);
       
       toast.success('Request submitted successfully!');
       setStep('services');
@@ -228,17 +239,24 @@ export default function GuestPortal({ hotelId, roomId }: GuestPortalProps) {
   };
 
   const handleWifiIssueSubmission = () => {
-    submitRequest('complaint', {
-      complaintName: 'WiFi Connection Issue',
+    submitRequest('wifi-support', {
+      issueType: 'WiFi Connection Issue',
       description: 'Guest reported WiFi connectivity problems in their room',
       category: 'Technical Support',
       priority: 'medium'
     });
   };
 
+  const handleSecurityAlert = () => {
+    const audio = new Audio('/sounds/alarm.mp3');
+    audio.play().catch(() => {
+      toast.error('Unable to play alarm sound');
+    });
+  };
+
   const handleEmergencyCall = () => {
-    // Create a tel: link for mobile devices
-    window.location.href = 'tel:+919876543210';
+    const phone = hotelData?.settings?.emergencyContact?.phone || '+91 9876543210';
+    window.location.href = `tel:${phone}`;
   };
 
   const handlePhoneSubmit = (e: React.FormEvent) => {
@@ -444,6 +462,7 @@ export default function GuestPortal({ hotelId, roomId }: GuestPortalProps) {
 
               {/* Security */}
               <button
+                onClick={handleSecurityAlert}
                 className="bg-white border border-gray-200 rounded-xl p-6 text-center hover:shadow-md transition-all duration-200 group"
               >
                 <div className="w-12 h-12 bg-gray-100 rounded-lg flex items-center justify-center mx-auto mb-4 group-hover:bg-red-100 transition-colors">
@@ -465,11 +484,14 @@ export default function GuestPortal({ hotelId, roomId }: GuestPortalProps) {
                 <h3 className="text-xl font-bold text-red-600 mb-2">Emergency Contact</h3>
                 <p className="text-gray-600 mb-4">24/7 assistance available</p>
                 <div>
-                  <p className="font-semibold text-gray-900">Front Desk: +91 9876543210</p>
-                  <p className="text-sm text-gray-600">Available 24/7 for any assistance</p>
+                  <p className="font-semibold text-gray-900">Front Desk: {hotelData?.settings?.emergencyContact?.phone || '+91 9876543210'}</p>
+                  <p className="text-sm text-gray-600">{hotelData?.settings?.emergencyContact?.description || 'Available 24/7 for any assistance'}</p>
                 </div>
               </div>
-              <button className="bg-red-600 text-white px-6 py-3 rounded-xl font-semibold hover:bg-red-700 transition-colors flex items-center gap-2">
+              <button 
+                onClick={handleEmergencyCall}
+                className="bg-red-600 text-white px-6 py-3 rounded-xl font-semibold hover:bg-red-700 transition-colors flex items-center gap-2"
+              >
                 <Phone className="w-4 h-4" />
                 Call Now
               </button>

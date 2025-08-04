@@ -50,10 +50,10 @@ app.use(express.json());
 
 //Adding RazorPay Payment Gateway
 const Razorpay = require("razorpay");
-const razorpay = new Razorpay({
+const razorpay = process.env.RAZORPAY_KEY_ID ? new Razorpay({
   key_id: process.env.RAZORPAY_KEY_ID,
   key_secret: process.env.RAZORPAY_KEY_SECRET,
-});
+}) : null;
 
 // Google OAuth2 client
 const oauth2Client = new google.auth.OAuth2(
@@ -119,6 +119,10 @@ const hotelSchema = new mongoose.Schema(
         sound: { type: Boolean, default: true },
         email: { type: Boolean, default: true },
       },
+      emergencyContact: {
+        phone: { type: String, default: '+91 9876543210' },
+        description: { type: String, default: 'Available 24/7 for any assistance' },
+      },
     },
   },
   { timestamps: true }
@@ -177,6 +181,7 @@ const requestSchema = new mongoose.Schema(
         "room-service",
         "complaint",
         "custom-message",
+        "wifi-support",
       ],
       required: true,
     },
@@ -1868,6 +1873,16 @@ app.post("/api/guest/:hotelId/:roomId/request", async (req, res) => {
       requestData.customMessageDetails
     ) {
       message = requestData.customMessageDetails.message;
+    } else if (
+      requestData.type === "wifi-support" &&
+      requestData.wifiSupportDetails
+    ) {
+      const wifiSupport = requestData.wifiSupportDetails;
+      message = `WiFi Support Request: ${wifiSupport.issueType}\nCategory: ${
+        wifiSupport.category
+      }\nPriority: ${wifiSupport.priority}\nDescription: ${
+        wifiSupport.description || "N/A"
+      }`;
     } else {
       message = requestData.message || "No additional details provided";
     }
