@@ -182,6 +182,7 @@ const requestSchema = new mongoose.Schema(
         "complaint",
         "custom-message",
         "wifi-support",
+        "security-alert",
       ],
       required: true,
     },
@@ -1882,6 +1883,16 @@ app.post("/api/guest/:hotelId/:roomId/request", async (req, res) => {
         wifiSupport.category
       }\nPriority: ${wifiSupport.priority}\nDescription: ${
         wifiSupport.description || "N/A"
+      }`;
+    } else if (
+      requestData.type === "security-alert" &&
+      requestData.securityAlertDetails
+    ) {
+      const securityAlert = requestData.securityAlertDetails;
+      message = `🚨 SECURITY ALERT: ${securityAlert.alertType}\nCategory: ${
+        securityAlert.category
+      }\nPriority: ${securityAlert.priority}\nDescription: ${
+        securityAlert.description || "N/A"
       }`;
     } else {
       message = requestData.message || "No additional details provided";
