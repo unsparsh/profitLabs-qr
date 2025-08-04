@@ -419,8 +419,8 @@ export default function GuestPortal({ hotelId, roomId }: GuestPortalProps) {
                 <div className="w-12 h-12 bg-gray-100 rounded-lg flex items-center justify-center mx-auto mb-4 group-hover:bg-green-100 transition-colors">
                   <Car className="w-6 h-6 text-gray-600 group-hover:text-green-600" />
                 </div>
-                <h3 className="font-semibold text-gray-900 mb-2">Taxi Service</h3>
-                <p className="text-sm text-gray-600 mb-4">Book a ride</p>
+                <h3 className="font-semibold text-gray-900 mb-2">Complaints</h3>
+                <p className="text-sm text-gray-600 mb-4">Lodge Complaint to Reception</p>
                 <span className="inline-block bg-yellow-100 text-yellow-800 text-xs font-medium px-3 py-1 rounded-full">
                   Available
                 </span>
