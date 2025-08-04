@@ -7,6 +7,8 @@ import { AdminDashboard } from './components/admin/AdminDashboard';
 import GuestPortal from './components/guest/GuestPortal';
 import  PricingPage  from './components/auth/PricingPage';
 import GoogleCallback from './components/auth/GoogleCallback';
+import TermsAndConditions from './components/legal/TermsAndConditions';
+import PrivacyPolicy from './components/legal/PrivacyPolicy';
 import { AuthProvider } from './contexts/AuthContext';
 import { apiClient } from './utils/api';
 import NotFound from "./components/NotFound";
@@ -168,6 +170,10 @@ return (
         
         {/* Pricing Page */}
         <Route path="/pricing" element={<PricingPage />} />
+        
+        {/* Legal Pages */}
+        <Route path="/terms" element={<TermsAndConditions />} />
+        <Route path="/privacy" element={<PrivacyPolicy />} />
         
         {/* Root redirect */}
         <Route 
