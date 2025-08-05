@@ -780,9 +780,17 @@ app.get("/api/google-reviews/:hotelId", authenticateToken, async (req, res) => {
     } catch (apiError) {
       console.error("❌ Google My Business API error:", apiError.message);
       if (apiError.code === 429) {
-          return res.status(429).json({ message: "Google API quota exceeded. Please wait and try again later." });
+        return res.status(429).json({ 
+          error: 'Google API quota exceeded',
+          message: "Google API quota exceeded. Please wait and try again later.",
+          retryAfter: 300 // 5 minutes
+        });
       }
-      return res.status(apiError.code || 500).json({ message: "Failed to fetch reviews from Google My Business", error: apiError.message });
+      return res.status(apiError.code || 500).json({ 
+        error: 'Google API error',
+        message: "Failed to fetch reviews from Google My Business", 
+        details: apiError.message 
+      });
     }
   } catch (error) {
     console.error("❌ Top-level reviews fetch error:", error);
@@ -933,45 +941,106 @@ function generateFallbackReply(reviewText, rating, customerName, tone) {
   return templates[tone]?.[category] || templates.professional[category];
 }
 
-// Rate limiting setup
-const CACHE_DURATION = 15 * 60 * 1000; // 15 minutes
+// Rate limiting setup - Updated for better Google API quota management
+const CACHE_DURATION = 2 * 60 * 60 * 1000; // 2 hours (increased from 15 minutes)
 const rateLimitMap = new Map();
+const hotelRateLimitMap = new Map(); // Add per-hotel rate limiting
 const RATE_LIMIT_WINDOW = 60 * 1000; // 1 minute
-const MAX_REQUESTS_PER_MINUTE = 10;
+const MAX_REQUESTS_PER_MINUTE = 5; // Reduced from 10 to be more conservative
+const MAX_HOTEL_REQUESTS_PER_HOUR = 10; // Per-hotel limit
 const reviewsCache = new Map();
 
-// Rate limiting middleware
-
-// Rate limiting middleware
 const rateLimitMiddleware = (req, res, next) => {
   const clientId = req.ip || 'unknown';
+  const hotelId = req.params.hotelId;
   const now = Date.now();
   
+  // Check IP-based rate limiting
   if (!rateLimitMap.has(clientId)) {
     rateLimitMap.set(clientId, { count: 1, resetTime: now + RATE_LIMIT_WINDOW });
-    return next();
+  } else {
+    const clientData = rateLimitMap.get(clientId);
+    
+    if (now > clientData.resetTime) {
+      rateLimitMap.set(clientId, { count: 1, resetTime: now + RATE_LIMIT_WINDOW });
+    } else if (clientData.count >= MAX_REQUESTS_PER_MINUTE) {
+      return res.status(429).json({
+        error: 'Rate limit exceeded',
+        message: 'Too many requests from this IP. Please wait before trying again.',
+        retryAfter: Math.ceil((clientData.resetTime - now) / 1000)
+      });
+    } else {
+      clientData.count++;
+    }
   }
   
-  const clientData = rateLimitMap.get(clientId);
-  
-  if (now > clientData.resetTime) {
-    // Reset the rate limit window
-    rateLimitMap.set(clientId, { count: 1, resetTime: now + RATE_LIMIT_WINDOW });
-    return next();
+  // Check hotel-based rate limiting
+  if (hotelId) {
+    const hotelKey = `hotel_${hotelId}`;
+    const hourWindow = 60 * 60 * 1000; // 1 hour
+    
+    if (!hotelRateLimitMap.has(hotelKey)) {
+      hotelRateLimitMap.set(hotelKey, { count: 1, resetTime: now + hourWindow });
+    } else {
+      const hotelData = hotelRateLimitMap.get(hotelKey);
+      
+      if (now > hotelData.resetTime) {
+        hotelRateLimitMap.set(hotelKey, { count: 1, resetTime: now + hourWindow });
+      } else if (hotelData.count >= MAX_HOTEL_REQUESTS_PER_HOUR) {
+        return res.status(429).json({
+          error: 'Hotel rate limit exceeded',
+          message: 'Too many Google API requests for this hotel. Please wait before trying again.',
+          retryAfter: Math.ceil((hotelData.resetTime - now) / 1000)
+        });
+      } else {
+        hotelData.count++;
+      }
+    }
   }
   
-  if (clientData.count >= MAX_REQUESTS_PER_MINUTE) {
-    return res.status(429).json({
-      error: 'Rate limit exceeded',
-      message: 'Too many requests. Please wait before trying again.',
-      retryAfter: Math.ceil((clientData.resetTime - now) / 1000)
-    });
-  }
-  
-  clientData.count++;
   next();
 };
 
+
+const retryWithBackoff = async (fn, maxRetries = 3, baseDelay = 1000) => {
+  for (let attempt = 0; attempt < maxRetries; attempt++) {
+    try {
+      return await fn();
+    } catch (error) {
+      if (error.code === 429 && attempt < maxRetries - 1) {
+        const delay = baseDelay * Math.pow(2, attempt) + Math.random() * 1000;
+        console.log(`🔄 API quota exceeded, retrying in ${Math.round(delay)}ms (attempt ${attempt + 1}/${maxRetries})`);
+        await new Promise(resolve => setTimeout(resolve, delay));
+        continue;
+      }
+      throw error;
+    }
+  }
+};
+
+// Request queue to prevent simultaneous API calls
+const requestQueue = new Map();
+
+const queueGoogleApiRequest = async (hotelId, apiCall) => {
+  const queueKey = `google_api_${hotelId}`;
+  
+  if (requestQueue.has(queueKey)) {
+    console.log('⏳ Waiting for existing Google API request to complete...');
+    return await requestQueue.get(queueKey);
+  }
+  
+  // Create new request promise
+  const requestPromise = (async () => {
+    try {
+      return await retryWithBackoff(apiCall);
+    } finally {
+      requestQueue.delete(queueKey);
+    }
+  })();
+  
+  requestQueue.set(queueKey, requestPromise);
+  return await requestPromise;
+};
 
 // Updated Google Reviews route with caching and rate limiting
 app.get("/api/google-reviews/:hotelId", authenticateToken, rateLimitMiddleware, async (req, res) => {
@@ -1051,9 +1120,14 @@ app.get("/api/google-reviews/:hotelId", authenticateToken, rateLimitMiddleware, 
       }
 
       console.log("⭐ Fetching reviews...");
-      const mybusinessReviews = google.mybusinessreviews({ version: 'v1', auth: authClient });
-      const reviewsResponse = await mybusinessReviews.accounts.locations.reviews.list({ parent: locationName });
-
+      
+      const apiCall = async () => {
+        const mybusinessReviews = google.mybusinessreviews({ version: 'v1', auth: authClient });
+        return await mybusinessReviews.accounts.locations.reviews.list({ parent: locationName });
+      };
+      
+      const reviewsResponse = await queueGoogleApiRequest(hotelId, apiCall);
+      
       const reviews = reviewsResponse.data.reviews || [];
       console.log(`✅ Found ${reviews.length} reviews`);
 
@@ -1073,22 +1147,34 @@ app.get("/api/google-reviews/:hotelId", authenticateToken, rateLimitMiddleware, 
         } : undefined
       }));
 
-      // Update cache
+      // Update cache with longer duration
       reviewsCache.set(cacheKey, {
         reviews: transformedReviews,
         timestamp: Date.now()
       });
       
-      console.log('💾 Successfully updated reviews cache.');
+      console.log('💾 Successfully updated reviews cache with 2-hour duration.');
       
-      res.json({ reviews: transformedReviews });
+      res.json({ 
+        reviews: transformedReviews,
+        cached: false,
+        cacheAge: 0
+      });
 
     } catch (apiError) {
       console.error("❌ Google My Business API error:", apiError.message);
       if (apiError.code === 429) {
-          return res.status(429).json({ message: "Google API quota exceeded. Please wait and try again later." });
+        return res.status(429).json({ 
+          error: 'Google API quota exceeded',
+          message: "Google API quota exceeded. Please wait and try again later.",
+          retryAfter: 300 // 5 minutes
+        });
       }
-      return res.status(apiError.code || 500).json({ message: "Failed to fetch reviews from Google My Business", error: apiError.message });
+      return res.status(apiError.code || 500).json({ 
+        error: 'Google API error',
+        message: "Failed to fetch reviews from Google My Business", 
+        details: apiError.message 
+      });
     }
   } catch (error) {
     console.error("❌ Top-level reviews fetch error:", error);
@@ -1096,7 +1182,7 @@ app.get("/api/google-reviews/:hotelId", authenticateToken, rateLimitMiddleware, 
   }
 });
 
-app.post("/api/send-reply/:hotelId", authenticateToken, async (req, res) => {
+app.post("/api/send-reply/:hotelId", authenticateToken, rateLimitMiddleware, async (req, res) => {
   try {
     const { hotelId } = req.params;
     const { reviewId, replyText } = req.body;
@@ -1118,21 +1204,31 @@ app.post("/api/send-reply/:hotelId", authenticateToken, async (req, res) => {
     });
 
     try {
-      // Send reply to Google My Business
-      await mybusiness.accounts.locations.reviews.reply({
-        name: `${googleAuth.businessId}/locations/-/reviews/${reviewId}`,
-        requestBody: {
-          comment: replyText,
-        },
-      });
+      const apiCall = async () => {
+        return await mybusiness.accounts.locations.reviews.reply({
+          name: `${googleAuth.businessId}/locations/-/reviews/${reviewId}`,
+          requestBody: {
+            comment: replyText,
+          },
+        });
+      };
+
+      await queueGoogleApiRequest(hotelId, apiCall);
 
       res.json({ success: true, message: "Reply sent to Google successfully" });
     } catch (apiError) {
       console.error("Google My Business reply error:", apiError);
-      // Mock success for development
-      res.json({
-        success: true,
-        message: "Reply sent to Google successfully (mock)",
+      if (apiError.code === 429) {
+        return res.status(429).json({ 
+          error: 'Google API quota exceeded',
+          message: "Google API quota exceeded. Please wait and try again later.",
+          retryAfter: 300 // 5 minutes
+        });
+      }
+      res.status(apiError.code || 500).json({ 
+        success: false, 
+        message: "Failed to send reply to Google",
+        error: apiError.message 
       });
     }
   } catch (error) {

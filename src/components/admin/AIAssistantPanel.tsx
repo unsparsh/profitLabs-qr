@@ -51,6 +51,7 @@ export const AIAssistantPanel: React.FC<AIAssistantPanelProps> = ({ hotelId }) =
   const [isSending, setIsSending] = useState(false);
   const [isAddingTemplate, setIsAddingTemplate] = useState(false);
   const [editingTemplate, setEditingTemplate] = useState<Template | null>(null);
+  const [isLoadingReviews, setIsLoadingReviews] = useState(false);
   const [newTemplate, setNewTemplate] = useState({
     name: '',
     content: '',
@@ -97,8 +98,9 @@ export const AIAssistantPanel: React.FC<AIAssistantPanelProps> = ({ hotelId }) =
   };
 
 const fetchGoogleReviews = async () => {
-    if (!isAuthenticated || !googleAccount) return;
+    if (!isAuthenticated || !googleAccount || isLoading || isLoadingReviews) return;
     
+    setIsLoadingReviews(true);
     try {
       console.log('🔍 Fetching Google reviews...');
       const reviewsData = await apiClient.request(`/google-reviews/${hotelId}`, {
@@ -112,6 +114,8 @@ const fetchGoogleReviews = async () => {
         needsReconnect?: boolean;
         needsSetup?: boolean;
         needsPermissions?: boolean;
+        cached?: boolean;
+        cacheAge?: number;
       };
       
       // Handle different response scenarios
@@ -125,6 +129,8 @@ const fetchGoogleReviews = async () => {
         toast.error('Please set up your Google My Business profile first');
       } else if (response.needsPermissions) {
         toast.error('Access denied. Please ensure your Google account has Google My Business access.');
+      } else if (response.cached) {
+        toast.success(`Reviews loaded from cache (${Math.floor(response.cacheAge! / 60)} minutes old)`);
       } else if (response.message) {
         toast(response.message);
       } else if (response.error) {
@@ -138,7 +144,9 @@ const fetchGoogleReviews = async () => {
       console.error('Failed to fetch Google reviews:', error);
       
       // Handle specific error cases
-      if (error.message?.includes('401') || error.message?.includes('authentication')) {
+      if (error.message?.includes('429') || error.message?.includes('quota exceeded')) {
+        toast.error('Google API quota exceeded. Reviews will be cached for 2 hours to reduce API usage. Please try again later.');
+      } else if (error.message?.includes('401') || error.message?.includes('authentication')) {
         toast.error('Google authentication failed. Please reconnect your account.');
         signOut(); // Trigger re-authentication
       } else if (error.message?.includes('403') || error.message?.includes('Access denied')) {
@@ -146,6 +154,8 @@ const fetchGoogleReviews = async () => {
       } else {
         toast.error('Failed to connect to Google My Business. Please try reconnecting.');
       }
+    } finally {
+      setIsLoadingReviews(false);
     }
   };
 
@@ -238,8 +248,13 @@ const fetchGoogleReviews = async () => {
       setSelectedTemplate('');
       
       toast.success('Reply sent to Google successfully!');
-    } catch (error) {
-      toast.error('Failed to send reply to Google');
+    } catch (error: any) {
+      console.error('Failed to send reply:', error);
+      if (error.message?.includes('429') || error.message?.includes('quota exceeded')) {
+        toast.error('Google API quota exceeded. Please wait before sending another reply.');
+      } else {
+        toast.error('Failed to send reply to Google');
+      }
     } finally {
       setIsSending(false);
     }
