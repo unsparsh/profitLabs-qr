@@ -4,6 +4,7 @@ import { Loader, Star, User, Calendar, MessageSquare, CheckCircle, XCircle } fro
 import { useAuth } from '../../contexts/AuthContext';
 import { apiClient } from '../../utils/api';
 import toast from 'react-hot-toast';
+import { ThemeToggle } from '../ui/ThemeToggle';
 
 interface Review {
   reviewId: string;
@@ -158,16 +159,21 @@ const GoogleCallback: React.FC = () => {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-        <div className="bg-white rounded-2xl shadow-xl p-8 max-w-md w-full mx-4">
+      <div className="min-h-screen bg-gray-50 dark:bg-gray-900 flex items-center justify-center">
+        {/* Theme Toggle */}
+        <div className="absolute top-4 right-4">
+          <ThemeToggle />
+        </div>
+        
+        <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-xl p-8 max-w-md w-full mx-4">
           <div className="text-center">
             <div className="w-16 h-16 bg-blue-100 rounded-full flex items-center justify-center mx-auto mb-6">
               <Loader className="w-8 h-8 text-blue-600 animate-spin" />
             </div>
-            <h2 className="text-2xl font-bold text-gray-900 mb-3">
+            <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-3">
               Connecting Google Account
             </h2>
-            <p className="text-gray-600 mb-6">
+            <p className="text-gray-600 dark:text-gray-300 mb-6">
               Please wait while we set up your Google My Business integration...
             </p>
             <div className="flex items-center justify-center space-x-2">
@@ -183,16 +189,21 @@ const GoogleCallback: React.FC = () => {
 
   if (error) {
     return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-        <div className="bg-white rounded-2xl shadow-xl p-8 max-w-md w-full mx-4">
+      <div className="min-h-screen bg-gray-50 dark:bg-gray-900 flex items-center justify-center">
+        {/* Theme Toggle */}
+        <div className="absolute top-4 right-4">
+          <ThemeToggle />
+        </div>
+        
+        <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-xl p-8 max-w-md w-full mx-4">
           <div className="text-center">
             <div className="w-16 h-16 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-6">
               <XCircle className="w-8 h-8 text-red-600" />
             </div>
-            <h2 className="text-2xl font-bold text-gray-900 mb-3">
+            <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-3">
               Connection Failed
             </h2>
-            <p className="text-red-600 mb-6">
+            <p className="text-red-600 dark:text-red-400 mb-6">
               {error}
             </p>
             <button
@@ -208,22 +219,27 @@ const GoogleCallback: React.FC = () => {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 py-8">
+    <div className="min-h-screen bg-gray-50 dark:bg-gray-900 py-8">
+      {/* Theme Toggle */}
+      <div className="absolute top-4 right-4">
+        <ThemeToggle />
+      </div>
+      
       <div className="max-w-4xl mx-auto px-4">
         {/* Success Header */}
-        <div className="bg-white rounded-2xl shadow-xl p-8 mb-8">
+        <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-xl p-8 mb-8">
           <div className="text-center">
             <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-6">
               <CheckCircle className="w-8 h-8 text-green-600" />
             </div>
-            <h1 className="text-3xl font-bold text-gray-900 mb-3">
+            <h1 className="text-3xl font-bold text-gray-900 dark:text-white mb-3">
               Google Account Connected!
             </h1>
-            <p className="text-gray-600 mb-6">
+            <p className="text-gray-600 dark:text-gray-300 mb-6">
               Your Google My Business account has been successfully connected. You can now manage reviews with AI assistance.
             </p>
-            <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
-              <p className="text-sm text-blue-800">
+            <div className="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg p-4">
+              <p className="text-sm text-blue-800 dark:text-blue-300">
                 Redirecting to your dashboard in a few seconds...
               </p>
             </div>
@@ -231,16 +247,16 @@ const GoogleCallback: React.FC = () => {
         </div>
 
         {/* Reviews Section */}
-        <div className="bg-white rounded-2xl shadow-xl p-8">
+        <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-xl p-8">
           <div className="flex items-center gap-3 mb-6">
             <MessageSquare className="h-6 w-6 text-blue-600" />
-            <h2 className="text-2xl font-bold text-gray-900">Your Google Reviews</h2>
+            <h2 className="text-2xl font-bold text-gray-900 dark:text-white">Your Google Reviews</h2>
           </div>
 
           {reviews.length > 0 ? (
             <div className="space-y-6">
               {reviews.map((review) => (
-                <div key={review.reviewId} className="border border-gray-200 rounded-lg p-6 hover:shadow-md transition-shadow">
+                <div key={review.reviewId} className="border border-gray-200 dark:border-gray-700 rounded-lg p-6 hover:shadow-md transition-shadow">
                   <div className="flex items-start justify-between mb-4">
                     <div className="flex items-center gap-3">
                       {review.reviewer.profilePhotoUrl ? (
@@ -251,16 +267,16 @@ const GoogleCallback: React.FC = () => {
                         />
                       ) : (
                         <div className="w-10 h-10 bg-gray-200 rounded-full flex items-center justify-center">
-                          <User className="h-5 w-5 text-gray-500" />
+                          <User className="h-5 w-5 text-gray-500 dark:text-gray-400" />
                         </div>
                       )}
                       <div>
-                        <h3 className="font-semibold text-gray-900">{review.reviewer.displayName}</h3>
+                        <h3 className="font-semibold text-gray-900 dark:text-white">{review.reviewer.displayName}</h3>
                         <div className="flex items-center gap-2">
                           <div className="flex items-center gap-1">
                             {getRatingStars(review.starRating)}
                           </div>
-                          <span className="text-sm text-gray-500">
+                          <span className="text-sm text-gray-500 dark:text-gray-400">
                             <Calendar className="h-3 w-3 inline mr-1" />
                             {formatDate(review.createTime)}
                           </span>
@@ -278,20 +294,20 @@ const GoogleCallback: React.FC = () => {
                     )}
                   </div>
                   
-                  <p className="text-gray-700 mb-4">{review.comment}</p>
+                  <p className="text-gray-700 dark:text-gray-300 mb-4">{review.comment}</p>
                   
                   {review.reviewReply && (
-                    <div className="bg-blue-50 border-l-4 border-blue-400 p-4 mt-4">
+                    <div className="bg-blue-50 dark:bg-blue-900/20 border-l-4 border-blue-400 p-4 mt-4">
                       <div className="flex items-center gap-2 mb-2">
                         <div className="w-6 h-6 bg-blue-600 rounded-full flex items-center justify-center">
                           <span className="text-white text-xs font-bold">R</span>
                         </div>
-                        <span className="font-medium text-blue-900">Your Reply</span>
-                        <span className="text-xs text-blue-600">
+                        <span className="font-medium text-blue-900 dark:text-blue-300">Your Reply</span>
+                        <span className="text-xs text-blue-600 dark:text-blue-400">
                           {formatDate(review.reviewReply.updateTime)}
                         </span>
                       </div>
-                      <p className="text-blue-800">{review.reviewReply.comment}</p>
+                      <p className="text-blue-800 dark:text-blue-300">{review.reviewReply.comment}</p>
                     </div>
                   )}
                 </div>
@@ -299,13 +315,13 @@ const GoogleCallback: React.FC = () => {
             </div>
           ) : (
             <div className="text-center py-12">
-              <MessageSquare className="h-16 w-16 text-gray-400 mx-auto mb-4" />
-              <h3 className="text-xl font-semibold text-gray-900 mb-2">No Reviews Yet</h3>
-              <p className="text-gray-600 mb-6">
+              <MessageSquare className="h-16 w-16 text-gray-400 dark:text-gray-500 mx-auto mb-4" />
+              <h3 className="text-xl font-semibold text-gray-900 dark:text-white mb-2">No Reviews Yet</h3>
+              <p className="text-gray-600 dark:text-gray-300 mb-6">
                 Your Google My Business reviews will appear here once customers start leaving feedback.
               </p>
-              <div className="bg-gray-50 border border-gray-200 rounded-lg p-4">
-                <p className="text-sm text-gray-700">
+              <div className="bg-gray-50 dark:bg-gray-700 border border-gray-200 dark:border-gray-600 rounded-lg p-4">
+                <p className="text-sm text-gray-700 dark:text-gray-300">
                   <strong>Tip:</strong> Encourage your guests to leave reviews on Google to build your online reputation and get more bookings!
                 </p>
               </div>

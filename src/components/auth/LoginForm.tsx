@@ -5,6 +5,7 @@ import { z } from 'zod';
 import { LogIn, Mail, Lock } from 'lucide-react';
 import { apiClient } from '../../utils/api';
 import toast from 'react-hot-toast';
+import { ThemeToggle } from '../ui/ThemeToggle';
 
 const loginSchema = z.object({
   email: z.string().email('Invalid email address'),
@@ -45,26 +46,32 @@ export const LoginForm: React.FC<LoginFormProps> = ({ onSuccess, onSwitchToRegis
 
   return (
     <div className="w-full max-w-md mx-auto">
+      {/* Theme Toggle */}
+      <div className="flex justify-end mb-4">
+        <ThemeToggle />
+      </div>
+      
       <div className="bg-white rounded-2xl shadow-xl p-8">
+      <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-xl p-8">
         <div className="text-center mb-8">
           <div className="flex items-center justify-center mb-4">
             <LogIn className="h-12 w-12 text-blue-600" />
           </div>
-          <h2 className="text-3xl font-bold text-gray-900">Welcome Back</h2>
-          <p className="text-gray-600 mt-2">Sign in to your ProfitLabs account</p>
+          <h2 className="text-3xl font-bold text-gray-900 dark:text-white">Welcome Back</h2>
+          <p className="text-gray-600 dark:text-gray-300 mt-2">Sign in to your ProfitLabs account</p>
         </div>
 
         <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
           <div>
-            <label htmlFor="email" className="block text-sm font-medium text-gray-700 mb-2">
+            <label htmlFor="email" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
               Email Address
             </label>
             <div className="relative">
-              <Mail className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-5 w-5" />
+              <Mail className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 dark:text-gray-500 h-5 w-5" />
               <input
                 {...register('email')}
                 type="email"
-                className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-colors"
+                className="w-full pl-10 pr-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-colors bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
                 placeholder="Enter your email"
               />
             </div>
@@ -74,15 +81,15 @@ export const LoginForm: React.FC<LoginFormProps> = ({ onSuccess, onSwitchToRegis
           </div>
 
           <div>
-            <label htmlFor="password" className="block text-sm font-medium text-gray-700 mb-2">
+            <label htmlFor="password" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
               Password
             </label>
             <div className="relative">
-              <Lock className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-5 w-5" />
+              <Lock className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 dark:text-gray-500 h-5 w-5" />
               <input
                 {...register('password')}
                 type="password"
-                className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-colors"
+                className="w-full pl-10 pr-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-colors bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
                 placeholder="Enter your password"
               />
             </div>
@@ -101,7 +108,7 @@ export const LoginForm: React.FC<LoginFormProps> = ({ onSuccess, onSwitchToRegis
         </form>
 
         <div className="mt-6 text-center">
-          <p className="text-gray-600">
+          <p className="text-gray-600 dark:text-gray-300">
             Don't have an account?{' '}
             <button
               onClick={onSwitchToRegister}
@@ -113,7 +120,7 @@ export const LoginForm: React.FC<LoginFormProps> = ({ onSuccess, onSwitchToRegis
         </div>
         
         <div className="mt-4 text-center">
-          <p className="text-xs text-gray-500">
+          <p className="text-xs text-gray-500 dark:text-gray-400">
             By signing in, you agree to our{' '}
             <a href="/terms" className="text-blue-600 hover:text-blue-700 underline">Terms and Conditions</a>
             {' '}and{' '}

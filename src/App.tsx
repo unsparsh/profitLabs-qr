@@ -10,7 +10,9 @@ import GoogleCallback from './components/auth/GoogleCallback';
 import TermsAndConditions from './components/legal/TermsAndConditions';
 import PrivacyPolicy from './components/legal/PrivacyPolicy';
 import { AuthProvider } from './contexts/AuthContext';
+import { ThemeProvider } from './contexts/ThemeContext';
 import { apiClient } from './utils/api';
+import { ThemeToggle } from './components/ui/ThemeToggle';
 import NotFound from "./components/NotFound";
 
 
@@ -116,9 +118,10 @@ function App() {
   }
 
 return (
-  <AuthProvider>
-    <Router>
-      <Routes>
+  <ThemeProvider>
+    <AuthProvider>
+      <Router>
+        <Routes>
         {/* Authentication Routes */}
         <Route 
           path="/auth" 
@@ -126,7 +129,7 @@ return (
             user && hotel ? (
               <Navigate to="/admin" replace />
             ) : (
-              <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-purple-50 flex items-center justify-center px-4">
+              <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-purple-50 dark:from-gray-900 dark:via-gray-800 dark:to-gray-900 flex items-center justify-center px-4">
                 <div className="w-full max-w-md">
                   <Toaster position="top-right" />
                   {authMode === 'login' ? (
@@ -191,7 +194,12 @@ return (
         <Route
           path="*"
           element={
-            <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-purple-50 flex items-center justify-center px-4">
+            <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-purple-50 dark:from-gray-900 dark:via-gray-800 dark:to-gray-900 flex items-center justify-center px-4">
+              {/* Theme Toggle */}
+              <div className="absolute top-4 right-4">
+                <ThemeToggle />
+              </div>
+              
               <div className="text-center">
                 <div className="relative mb-8">
                   <div className="w-32 h-32 mx-auto bg-gradient-to-br from-blue-500 to-purple-600 rounded-full flex items-center justify-center shadow-2xl">
@@ -218,32 +226,33 @@ return (
                 </h1>
 
                 <h2 className="text-3xl font-bold text-gray-800 mb-4">
+                <h2 className="text-3xl font-bold text-gray-800 dark:text-gray-200 mb-4">
                   Page Not Found
                 </h2>
 
-                <p className="text-gray-600 mb-8 max-w-md mx-auto">
+                <p className="text-gray-600 dark:text-gray-400 mb-8 max-w-md mx-auto">
                   The page you're looking for doesn't exist or has been moved to a different location.
                 </p>
 
                 <div className="flex flex-col sm:flex-row gap-4 justify-center">
                   <button
                     onClick={() => window.history.back()}
-                    className="px-8 py-3 bg-gradient-to-r from-gray-600 to-gray-700 text-white rounded-lg font-semibold hover:from-gray-700 hover:to-gray-800 transform hover:scale-105 transition-all duration-200 shadow-lg"
+                    className="px-8 py-3 bg-gradient-to-r from-gray-600 to-gray-700 dark:from-gray-700 dark:to-gray-800 text-white rounded-lg font-semibold hover:from-gray-700 hover:to-gray-800 dark:hover:from-gray-800 dark:hover:to-gray-900 transform hover:scale-105 transition-all duration-200 shadow-lg"
                   >
                     Go Back
                   </button>
 
                   <a
                     href="/"
-                    className="px-8 py-3 bg-gradient-to-r from-blue-600 to-purple-600 text-white rounded-lg font-semibold hover:from-blue-700 hover:to-purple-700 transform hover:scale-105 transition-all duration-200 shadow-lg"
+                    className="px-8 py-3 bg-gradient-to-r from-blue-600 to-purple-600 dark:from-blue-700 dark:to-purple-700 text-white rounded-lg font-semibold hover:from-blue-700 hover:to-purple-700 dark:hover:from-blue-800 dark:hover:to-purple-800 transform hover:scale-105 transition-all duration-200 shadow-lg"
                   >
                     Go Home
                   </a>
                 </div>
 
-                <div className="mt-12 p-6 bg-white/80 backdrop-blur-sm rounded-2xl shadow-xl max-w-md mx-auto">
-                  <h3 className="text-lg font-semibold text-gray-800 mb-2">Need Help?</h3>
-                  <p className="text-gray-600 text-sm">
+                <div className="mt-12 p-6 bg-white/80 dark:bg-gray-800/80 backdrop-blur-sm rounded-2xl shadow-xl max-w-md mx-auto">
+                  <h3 className="text-lg font-semibold text-gray-800 dark:text-gray-200 mb-2">Need Help?</h3>
+                  <p className="text-gray-600 dark:text-gray-400 text-sm">
                     Contact our support team at{' '}
                     <a href="mailto:support@profitlabs.com" className="text-blue-600 hover:underline">
                       support@profitlabs.com
@@ -253,11 +262,12 @@ return (
               </div>
             </div>
           }
-        />
-      </Routes>
-      <Toaster position="top-right" />
-    </Router>
-  </AuthProvider>
+          />
+        </Routes>
+        <Toaster position="top-right" />
+      </Router>
+    </AuthProvider>
+  </ThemeProvider>
 );
 
 }

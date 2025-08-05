@@ -1,4 +1,5 @@
 import React from 'react';
+import { ThemeToggle } from '../ui/ThemeToggle';
 
 interface Plan {
   name: string;
@@ -32,14 +33,19 @@ const plans: Plan[] = [
 
 const PricingPage: React.FC = () => {
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gray-50 px-4">
+    <div className="min-h-screen flex items-center justify-center bg-gray-50 dark:bg-gray-900 px-4">
+      {/* Theme Toggle */}
+      <div className="absolute top-4 right-4">
+        <ThemeToggle />
+      </div>
+      
       <div className="flex flex-wrap items-center justify-center gap-6">
         {plans.map((plan, index) => (
           <div
             key={index}
             className={`w-72 border border-gray-500/30 p-6 ${
               plan.name === 'Basic' ? 'pb-16' : plan.name === 'Pro' ? 'pb-14' : ''
-            } rounded-lg text-center ${plan.style} relative`}
+            } rounded-lg text-center ${plan.style} dark:bg-gray-800 dark:border-gray-600 relative`}
           >
             {plan.highlight && (
               <p className="absolute px-3 text-sm -top-3.5 left-3.5 py-1 bg-[#8789FB] rounded-full">
@@ -52,7 +58,7 @@ const PricingPage: React.FC = () => {
               <span
                 className={`text-sm font-normal ml-1 ${
                   plan.highlight ? 'text-white/80' : 'text-gray-500'
-                }`}
+                } dark:text-gray-400`}
               >
                 for {plan.months} {plan.months === 1 ? 'month' : 'months'}
               </span>
@@ -63,7 +69,7 @@ const PricingPage: React.FC = () => {
               className={`text-sm w-full py-2 rounded font-medium mt-7 transition-all ${
                 plan.highlight
                   ? 'bg-white text-indigo-500 hover:bg-gray-200'
-                  : 'bg-indigo-500 text-white hover:bg-indigo-600'
+                  : 'bg-indigo-500 text-white hover:bg-indigo-600 dark:bg-indigo-600 dark:hover:bg-indigo-700'
               }`}
             >
               Get Started

@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Phone, UtensilsCrossed, MessageSquare, ShoppingCart, X, Plus, Minus, ArrowLeft, Wifi, Clock, Car, Shield, User, Home } from 'lucide-react';
 import { toast } from 'react-hot-toast';
 import { apiClient } from '../../utils/api';
+import { ThemeToggle } from '../ui/ThemeToggle';
 
 interface GuestPortalProps {
   hotelId: string;
@@ -299,24 +300,29 @@ export default function GuestPortal({ hotelId, roomId }: GuestPortalProps) {
   // Phone Number Step
   if (step === 'phone') {
     return (
-      <div className="min-h-screen bg-gray-100 flex items-center justify-center p-4">
+      <div className="min-h-screen bg-gray-100 dark:bg-gray-900 flex items-center justify-center p-4">
+        {/* Theme Toggle */}
+        <div className="absolute top-4 right-4">
+          <ThemeToggle />
+        </div>
+        
         <div className="w-full max-w-md">
           {/* Hotel Info */}
           <div className="text-center mb-8">
             <div className="w-20 h-20 bg-slate-700 rounded-2xl flex items-center justify-center mx-auto mb-6">
               <Phone className="w-10 h-10 text-white" />
             </div>
-            <h1 className="text-3xl font-bold text-gray-900 mb-3">
+            <h1 className="text-3xl font-bold text-gray-900 dark:text-white mb-3">
               Welcome to {hotelData?.name || 'Hotel'}
             </h1>
-            <p className="text-lg text-gray-600">
+            <p className="text-lg text-gray-600 dark:text-gray-300">
               Room {roomData?.number || 'Loading...'}
             </p>
           </div>
 
           {/* Phone Input Form */}
-          <div className="bg-white rounded-2xl shadow-lg border p-8">
-            <h2 className="text-xl font-semibold text-gray-900 mb-6 text-center">
+          <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-lg border border-gray-200 dark:border-gray-700 p-8">
+            <h2 className="text-xl font-semibold text-gray-900 dark:text-white mb-6 text-center">
               Enter Your Phone Number
             </h2>
             <form onSubmit={handlePhoneSubmit} className="space-y-6">
@@ -325,7 +331,7 @@ export default function GuestPortal({ hotelId, roomId }: GuestPortalProps) {
                   type="tel"
                   value={phoneNumber}
                   onChange={(e) => setPhoneNumber(e.target.value)}
-                  className="w-full px-4 py-4 border border-gray-300 rounded-xl focus:ring-2 focus:ring-slate-500 focus:border-transparent text-center text-lg font-medium"
+                  className="w-full px-4 py-4 border border-gray-300 dark:border-gray-600 rounded-xl focus:ring-2 focus:ring-slate-500 focus:border-transparent text-center text-lg font-medium bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
                   placeholder="Enter your phone number"
                   required
                 />
@@ -346,13 +352,18 @@ export default function GuestPortal({ hotelId, roomId }: GuestPortalProps) {
   // Services Selection Step
   if (step === 'services') {
     return (
-      <div className="min-h-screen bg-gray-100">
+      <div className="min-h-screen bg-gray-100 dark:bg-gray-900">
+        {/* Theme Toggle */}
+        <div className="absolute top-4 right-4 z-50">
+          <ThemeToggle />
+        </div>
+        
         {/* Welcome Header */}
-        <div className="bg-slate-700 text-white p-6 mb-8">
+        <div className="bg-slate-700 dark:bg-slate-800 text-white p-6 mb-8">
           <div className="max-w-4xl mx-auto flex justify-between items-center">
             <div>
               <h1 className="text-2xl font-bold mb-1">Welcome, Guest!</h1>
-              <p className="text-slate-300">
+              <p className="text-slate-300 dark:text-slate-400">
                 Room {roomData?.number} • {new Date().toLocaleDateString('en-US', { 
                   month: 'short', 
                   day: 'numeric', 
@@ -361,17 +372,17 @@ export default function GuestPortal({ hotelId, roomId }: GuestPortalProps) {
               </p>
             </div>
             <div className="bg-slate-600 px-4 py-2 rounded-lg">
-              <span className="text-sm font-medium">Verified Guest</span>
+              <span className="text-sm font-medium text-white">Verified Guest</span>
             </div>
           </div>
         </div>
 
         {/* Hotel Services Section */}
         <div className="max-w-4xl mx-auto px-6">
-          <div className="bg-white rounded-2xl shadow-lg p-8 mb-8">
+          <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-lg p-8 mb-8">
             <div className="mb-8">
-              <h2 className="text-2xl font-bold text-gray-900 mb-2">Hotel Services</h2>
-              <p className="text-gray-600">Request services or assistance during your stay</p>
+              <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-2">Hotel Services</h2>
+              <p className="text-gray-600 dark:text-gray-300">Request services or assistance during your stay</p>
             </div>
 
             {/* Services Grid */}
@@ -382,13 +393,13 @@ export default function GuestPortal({ hotelId, roomId }: GuestPortalProps) {
                   setActiveService('food');
                   setStep('service-detail');
                 }}
-                className="bg-white border border-gray-200 rounded-xl p-6 text-center hover:shadow-md transition-all duration-200 group"
+                className="bg-white dark:bg-gray-700 border border-gray-200 dark:border-gray-600 rounded-xl p-6 text-center hover:shadow-md transition-all duration-200 group"
               >
-                <div className="w-12 h-12 bg-gray-100 rounded-lg flex items-center justify-center mx-auto mb-4 group-hover:bg-orange-100 transition-colors">
-                  <UtensilsCrossed className="w-6 h-6 text-gray-600 group-hover:text-orange-600" />
+                <div className="w-12 h-12 bg-gray-100 dark:bg-gray-600 rounded-lg flex items-center justify-center mx-auto mb-4 group-hover:bg-orange-100 dark:group-hover:bg-orange-900 transition-colors">
+                  <UtensilsCrossed className="w-6 h-6 text-gray-600 dark:text-gray-300 group-hover:text-orange-600" />
                 </div>
-                <h3 className="font-semibold text-gray-900 mb-2">Food Menu</h3>
-                <p className="text-sm text-gray-600 mb-4">Order food to your room</p>
+                <h3 className="font-semibold text-gray-900 dark:text-white mb-2">Food Menu</h3>
+                <p className="text-sm text-gray-600 dark:text-gray-300 mb-4">Order food to your room</p>
                 <span className="inline-block bg-yellow-100 text-yellow-800 text-xs font-medium px-3 py-1 rounded-full">
                   Available
                 </span>

@@ -5,6 +5,7 @@ import { z } from 'zod';
 import { UserPlus, Mail, Lock, Building, Phone, MapPin } from 'lucide-react';
 import { apiClient } from '../../utils/api';
 import toast from 'react-hot-toast';
+import { ThemeToggle } from '../ui/ThemeToggle';
 
 const registerSchema = z.object({
   hotelName: z.string().min(2, 'Hotel name must be at least 2 characters'),
@@ -54,27 +55,32 @@ export const RegisterForm: React.FC<RegisterFormProps> = ({ onSuccess, onSwitchT
 
   return (
     <div className="w-full max-w-2xl mx-auto">
-      <div className="bg-white rounded-2xl shadow-xl p-8">
+      {/* Theme Toggle */}
+      <div className="flex justify-end mb-4">
+        <ThemeToggle />
+      </div>
+      
+      <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-xl p-8">
         <div className="text-center mb-8">
           <div className="flex items-center justify-center mb-4">
             <UserPlus className="h-12 w-12 text-blue-600" />
           </div>
-          <h2 className="text-3xl font-bold text-gray-900">Join ProfitLabs</h2>
-          <p className="text-gray-600 mt-2">Start your 30-day free trial today</p>
+          <h2 className="text-3xl font-bold text-gray-900 dark:text-white">Join ProfitLabs</h2>
+          <p className="text-gray-600 dark:text-gray-300 mt-2">Start your 30-day free trial today</p>
         </div>
 
         <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <div>
-              <label htmlFor="hotelName" className="block text-sm font-medium text-gray-700 mb-2">
+              <label htmlFor="hotelName" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                 Hotel Name
               </label>
               <div className="relative">
-                <Building className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-5 w-5" />
+                <Building className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 dark:text-gray-500 h-5 w-5" />
                 <input
                   {...register('hotelName')}
                   type="text"
-                  className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-colors"
+                  className="w-full pl-10 pr-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-colors bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
                   placeholder="Enter hotel name"
                 />
               </div>
@@ -84,13 +90,13 @@ export const RegisterForm: React.FC<RegisterFormProps> = ({ onSuccess, onSwitchT
             </div>
 
             <div>
-              <label htmlFor="adminName" className="block text-sm font-medium text-gray-700 mb-2">
+              <label htmlFor="adminName" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                 Admin Name
               </label>
               <input
                 {...register('adminName')}
                 type="text"
-                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-colors"
+                className="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-colors bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
                 placeholder="Enter admin name"
               />
               {errors.adminName && (
@@ -220,7 +226,7 @@ export const RegisterForm: React.FC<RegisterFormProps> = ({ onSuccess, onSwitchT
         </form>
 
         <div className="mt-6 text-center">
-          <p className="text-gray-600">
+          <p className="text-gray-600 dark:text-gray-300">
             Already have an account?{' '}
             <button
               onClick={onSwitchToLogin}
@@ -232,7 +238,7 @@ export const RegisterForm: React.FC<RegisterFormProps> = ({ onSuccess, onSwitchT
         </div>
         
         <div className="mt-4 text-center">
-          <p className="text-xs text-gray-500">
+          <p className="text-xs text-gray-500 dark:text-gray-400">
             By creating an account, you agree to our{' '}
             <a href="/terms" className="text-blue-600 hover:text-blue-700 underline">Terms and Conditions</a>
             {' '}and{' '}
