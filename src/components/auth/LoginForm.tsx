@@ -34,33 +34,9 @@ export const LoginForm: React.FC = () => {
 
   const onSubmit = async (data: LoginFormData) => {
     setError(null);
-
     try {
-      const response = await apiClient.request('/auth/login', {
-        method: 'POST',
-        body: JSON.stringify(data),
-      });
-
-      // Type guard for response
-      type LoginResponse = {
-        success: boolean;
-        user?: any;
-        token?: string;
-        message?: string;
-      };
-
-      const res = response as LoginResponse;
-      
-      if (res.success) {
-        if (typeof res.token === 'string') {
-          login(res.user, res.token);
-          navigate('/admin');
-        } else {
-          setError('Login failed: missing authentication token.');
-        }
-      } else {
-        setError(res.message || 'Login failed. Please try again.');
-      }
+      await login(data.email, data.password); // use context's login
+      navigate('/admin');
     } catch (err: any) {
       setError(err.message || 'An error occurred during login. Please try again.');
     }

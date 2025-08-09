@@ -3,10 +3,11 @@ import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { UserPlus, Mail, Lock, Building, Phone, MapPin } from 'lucide-react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { apiClient } from '../../utils/api';
 import toast from 'react-hot-toast';
 import { ThemeToggle } from '../ui/ThemeToggle';
+import { useAuth } from '../../contexts/AuthContext';
 
 const registerSchema = z.object({
   hotelName: z.string().min(2, 'Hotel name must be at least 2 characters'),
@@ -32,7 +33,7 @@ export const RegisterForm: React.FC<RegisterFormProps> = ({ onSuccess }) => {
   const [isLoading, setIsLoading] = useState(false);
   const { register: registerUser, isLoading: authLoading } = useAuth();
   const navigate = useNavigate();
-  
+
   const {
     register,
     handleSubmit,
