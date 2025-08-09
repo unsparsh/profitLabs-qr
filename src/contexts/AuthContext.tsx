@@ -1,23 +1,45 @@
-import React, { createContext, useContext, useState, useEffect, ReactNode , useCallback} from 'react';
+import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
 import { apiClient } from '../utils/api';
 import toast from 'react-hot-toast';
 
-interface GoogleAccount {
+interface User {
+  _id: string;
+  email: string;
+  name: string;
+  role: 'admin' | 'staff';
+  hotelId: string;
+}
+
+interface Hotel {
+  _id: string;
   name: string;
   email: string;
-  picture: string;
-  businessName: string;
-  businessId: string;
+  phone: string;
+  address: string;
+  totalRooms: number;
+  subscription: {
+    plan: 'trial' | 'basic' | 'premium';
+    status: 'active' | 'inactive' | 'canceled';
+    expiresAt: Date;
+  };
+  settings: any;
 }
 
 interface AuthContextType {
+  user: User | null;
+  hotel: Hotel | null;
   isAuthenticated: boolean;
-  googleAccount: GoogleAccount | null;
   isLoading: boolean;
+<<<<<<< HEAD
   signInWithGoogle: (hotelId: string) => Promise<void>;
   signOut: () => void;
   checkAuthStatus: (hotelId: string) => Promise<void>;
   login: (user: any, token: string) => void; // <-- Add this line
+=======
+  login: (email: string, password: string) => Promise<void>;
+  logout: () => void;
+  register: (data: any) => Promise<void>;
+>>>>>>> 376a3be38d55843edc381e388a07a55d32d808ac
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -30,45 +52,59 @@ export const useAuth = () => {
   return context;
 };
 
-// interface AuthProviderProps {
-//   children: ReactNode;
-// }
+interface AuthProviderProps {
+  children: ReactNode;
+}
 
+<<<<<<< HEAD
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [googleAccount, setGoogleAccount] = useState<GoogleAccount | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [user, setUser] = useState<any>(null);
   const [token, setToken] = useState<string | null>(null);
+=======
+export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
+  const [user, setUser] = useState<User | null>(null);
+  const [hotel, setHotel] = useState<Hotel | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
+>>>>>>> 376a3be38d55843edc381e388a07a55d32d808ac
 
-const checkAuthStatus = useCallback(async (hotelId: string) => {
-    if (!hotelId) return;
-    
-    setIsLoading(true);
+  const isAuthenticated = !!user && !!hotel;
+
+  useEffect(() => {
+    checkAuthStatus();
+  }, []);
+
+  const checkAuthStatus = async () => {
     try {
-      const response = await apiClient.request(`/google-auth/status/${hotelId}`, {
-        method: 'GET'
-      }) as { authenticated: boolean; account?: GoogleAccount };
+      const token = localStorage.getItem('authToken');
+      if (!token) {
+        setIsLoading(false);
+        return;
+      }
+
+      apiClient.setToken(token);
       
-      if (response.authenticated && response.account) {
-        setIsAuthenticated(true);
-        setGoogleAccount(response.account);
+      // Try to get current user info
+      const response = await apiClient.request('/auth/me', { method: 'GET' });
+      
+      if (response.user && response.hotel) {
+        setUser(response.user);
+        setHotel(response.hotel);
       } else {
-        setIsAuthenticated(false);
-        setGoogleAccount(null);
+        // Invalid token, clear it
+        localStorage.removeItem('authToken');
+        apiClient.setToken(null);
       }
-    } catch (error: any) {
-      console.error('Auth status check failed:', error);
-      setIsAuthenticated(false);
-      setGoogleAccount(null);
-      
-      // Only show error toast for non-404 errors (404 means not connected)
-      if (!error.message?.includes('404') && !error.message?.includes('not connected')) {
-        toast.error('Failed to check Google authentication status');
-      }
+    } catch (error) {
+      console.error('Auth check failed:', error);
+      localStorage.removeItem('authToken');
+      apiClient.setToken(null);
     } finally {
       setIsLoading(false);
     }
+<<<<<<< HEAD
   }, []);
 
  const signInWithGoogle = useCallback(async (hotelId: string) => {
@@ -147,6 +183,81 @@ const checkAuthStatus = useCallback(async (hotelId: string) => {
     signOut,
     checkAuthStatus,
     login, // <-- Add this to the context value
+=======
+>>>>>>> 376a3be38d55843edc381e388a07a55d32d808ac
   };
-return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
+
+  const login = async (email: string, password: string) => {
+    try {
+      setIsLoading(true);
+      const response = await apiClient.login(email, password);
+      
+      if (response.token && response.user) {
+        apiClient.setToken(response.token);
+        setUser(response.user);
+        
+        // Fetch hotel data
+        if (response.user.hotelId) {
+          const hotelData = await apiClient.getHotel(response.user.hotelId);
+          setHotel(hotelData);
+        }
+        
+        toast.success('Login successful!');
+      } else {
+        throw new Error('Invalid response from server');
+      }
+    } catch (error: any) {
+      console.error('Login error:', error);
+      toast.error(error.message || 'Login failed. Please try again.');
+      throw error;
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const register = async (data: any) => {
+    try {
+      setIsLoading(true);
+      const response = await apiClient.register(data);
+      
+      if (response.token && response.user && response.hotel) {
+        apiClient.setToken(response.token);
+        setUser(response.user);
+        setHotel(response.hotel);
+        toast.success('Registration successful! Welcome to ProfitLabs!');
+      } else {
+        throw new Error('Invalid response from server');
+      }
+    } catch (error: any) {
+      console.error('Registration error:', error);
+      toast.error(error.message || 'Registration failed. Please try again.');
+      throw error;
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const logout = () => {
+    localStorage.removeItem('authToken');
+    apiClient.setToken(null);
+    setUser(null);
+    setHotel(null);
+    toast.success('Logged out successfully');
+  };
+
+  const value: AuthContextType = {
+    user,
+    hotel,
+    isAuthenticated,
+    isLoading,
+    login,
+    logout,
+    register,
+  };
+
+  return (
+    <AuthContext.Provider value={value}>
+      {children}
+    </AuthContext.Provider>
+  );
 };

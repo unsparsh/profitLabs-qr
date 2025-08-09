@@ -40,7 +40,12 @@ interface CartItem extends FoodItem {
   quantity: number;
 }
 
-export default function GuestPortal({ hotelId, roomId }: GuestPortalProps) {
+const GuestPortal: React.FC<GuestPortalProps> = ({ hotelId, roomId }) => {
+  // Get hotelId and roomId from URL params if not provided as props
+  const { hotelId: urlHotelId, roomId: urlRoomId } = useParams<{ hotelId: string; roomId: string }>();
+  const actualHotelId = hotelId || urlHotelId || '';
+  const actualRoomId = roomId || urlRoomId || '';
+
   const [step, setStep] = useState<'phone' | 'services' | 'service-detail'>('phone');
   const [activeService, setActiveService] = useState<string | null>(null);
   const [phoneNumber, setPhoneNumber] = useState('');
@@ -56,7 +61,7 @@ export default function GuestPortal({ hotelId, roomId }: GuestPortalProps) {
 
   useEffect(() => {
     fetchGuestPortalData();
-  }, [hotelId, roomId]);
+  }, [actualHotelId, actualRoomId]);
 
   useEffect(() => {
     if (activeService === 'food') {
@@ -70,7 +75,7 @@ export default function GuestPortal({ hotelId, roomId }: GuestPortalProps) {
 
   const fetchGuestPortalData = async () => {
     try {
-      const data = await apiClient.getGuestPortalData(hotelId, roomId);
+      const data = await apiClient.getGuestPortalData(actualHotelId, actualRoomId);
       setHotelData(data.hotel);
       setRoomData(data.room);
     } catch (error) {
@@ -82,7 +87,7 @@ export default function GuestPortal({ hotelId, roomId }: GuestPortalProps) {
   const fetchFoodItems = async () => {
     try {
       setLoading(true);
-      const data = await apiClient.getGuestFoodMenu(hotelId);
+      const data = await apiClient.getGuestFoodMenu(actualHotelId);
       setFoodItems(data.filter((item: FoodItem) => item.isAvailable));
     } catch (error) {
       console.error('Failed to load food menu:', error);
@@ -95,7 +100,7 @@ export default function GuestPortal({ hotelId, roomId }: GuestPortalProps) {
   const fetchRoomServiceItems = async () => {
     try {
       setLoading(true);
-      const data = await apiClient.getRoomServiceMenu(hotelId);
+      const data = await apiClient.getRoomServiceMenu(actualHotelId);
       setRoomServiceItems(data.filter((item: RoomServiceItem) => item.isAvailable));
     } catch (error) {
       console.error('Failed to load room service menu:', error);
@@ -108,7 +113,7 @@ export default function GuestPortal({ hotelId, roomId }: GuestPortalProps) {
   const fetchComplaintItems = async () => {
     try {
       setLoading(true);
-      const data = await apiClient.getComplaintMenu(hotelId);
+      const data = await apiClient.getComplaintMenu(actualHotelId);
       setComplaintItems(data.filter((item: ComplaintItem) => item.isAvailable));
     } catch (error) {
       console.error('Failed to load complaint options:', error);
@@ -176,7 +181,7 @@ export default function GuestPortal({ hotelId, roomId }: GuestPortalProps) {
         requestData.securityAlertDetails = details;
       }
 
-      await apiClient.submitGuestRequest(hotelId, roomId, requestData);
+      await apiClient.submitGuestRequest(actualHotelId, actualRoomId, requestData);
       
       toast.success('Request submitted successfully!');
       setStep('services');
@@ -870,4 +875,6 @@ export default function GuestPortal({ hotelId, roomId }: GuestPortalProps) {
   }
 
   return null;
-}
+};
+
+export default GuestPortal;
