@@ -64,15 +64,13 @@ export const LoginForm: React.FC = () => {
       
       <div className="max-w-md w-full space-y-8">
         <div className="text-center">
-          <div className={`mx-auto h-12 w-12 flex items-center justify-center rounded-full transition-colors duration-200 ${
-  theme === 'dark' ? 'bg-blue-600' : 'bg-blue-600'
-}`}>
-  <img 
-    src="/logo.png" 
-    alt="Logo" 
-    className="h-6 w-6 object-contain"
-  />
-</div>
+           <div className="mb-3">
+      <img 
+        src="/logo.png" 
+        alt="Logo" 
+        className="mx-auto h-20 w-auto sm:h-24 md:h-28 lg:h-32 object-contain"
+      />
+    </div>
           <h2 className={`mt-6 text-3xl font-extrabold transition-colors duration-200 ${
             theme === 'dark' ? 'text-white' : 'text-gray-900'
           }`}>

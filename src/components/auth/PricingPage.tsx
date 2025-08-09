@@ -1,4 +1,6 @@
 import React from 'react';
+import { ArrowLeft } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
 import { ThemeToggle } from '../ui/ThemeToggle';
 
 interface Plan {
@@ -32,8 +34,20 @@ const plans: Plan[] = [
 ];
 
 const PricingPage: React.FC = () => {
+  const navigate = useNavigate();
+
   return (
     <div className="min-h-screen flex items-center justify-center bg-gray-50 dark:bg-gray-900 px-4">
+      {/* Back Button */}
+      <div className="absolute top-4 left-4">
+        <button
+          onClick={() => navigate(-1)}
+          className="p-2 text-gray-600 dark:text-gray-300 hover:text-gray-800 dark:hover:text-white hover:bg-gray-100 dark:hover:bg-gray-800 rounded-lg transition-colors"
+        >
+          <ArrowLeft className="h-5 w-5" />
+        </button>
+      </div>
+      
       {/* Theme Toggle */}
       <div className="absolute top-4 right-4">
         <ThemeToggle />
@@ -52,8 +66,8 @@ const PricingPage: React.FC = () => {
                 Most Popular
               </p>
             )}
-            <p className="font-semibold pt-2">{plan.name}</p>
-            <h1 className="text-3xl font-semibold">
+            <p className="font-semibold pt-2 dark:text-gray-300">{plan.name}</p>
+            <h1 className="text-3xl font-semibold dark:text-white">
               ₹{plan.price}
               <span
                 className={`text-sm font-normal ml-1 ${
