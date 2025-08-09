@@ -4,7 +4,7 @@ import { AuthProvider } from './contexts/AuthContext';
 import { ThemeProvider } from './contexts/ThemeContext';
 import LoginForm from './components/auth/LoginForm';
 import RegisterForm from './components/auth/RegisterForm';
-import AdminDashboard from './components/admin/AdminDashboard';
+import { AdminDashboard } from './components/admin/AdminDashboard';
 import GuestPortal from './components/guest/GuestPortal';
 import PricingPage from './components/auth/PricingPage';
 import TermsAndConditions from './components/legal/TermsAndConditions';
