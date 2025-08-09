@@ -251,6 +251,34 @@ export const LoginForm: React.FC = () => {
               </Link>
             </p>
           </div>
+          <div className="mt-4 text-center">
+  <p className={`text-xs transition-colors duration-200 ${
+    theme === 'dark' ? 'text-gray-500' : 'text-gray-500'
+  }`}>
+    By signing in, you agree to our{' '}
+    <Link
+      to="/terms"
+      className={`transition-colors duration-200 underline ${
+        theme === 'dark' 
+          ? 'text-blue-400 hover:text-blue-300' 
+          : 'text-blue-600 hover:text-blue-700'
+      }`}
+    >
+      Terms and Conditions
+    </Link>
+    {' '}and{' '}
+    <Link
+      to="/privacy"
+      className={`transition-colors duration-200 underline ${
+        theme === 'dark' 
+          ? 'text-blue-400 hover:text-blue-300' 
+          : 'text-blue-600 hover:text-blue-700'
+      }`}
+    >
+      Privacy Policy
+    </Link>
+  </p>
+</div>
         </form>
       </div>
     </div>
