@@ -32,7 +32,7 @@ type Room = {
   // Add other fields as needed
 };
 
-export const AdminDashboard: React.FC<AdminDashboardProps> = ({ user, hotel, onLogout }) => {
+export const default AdminDashboard: React.FC<AdminDashboardProps> = ({ user, hotel, onLogout }) => {
   const [activeTab, setActiveTab] = useState('requests');
   const [requests, setRequests] = useState<Request[]>([]);
   const [rooms, setRooms] = useState<Room[]>([]);
