@@ -17,6 +17,7 @@ interface AuthContextType {
   signInWithGoogle: (hotelId: string) => Promise<void>;
   signOut: () => void;
   checkAuthStatus: (hotelId: string) => Promise<void>;
+  login: (user: any, token: string) => void; // <-- Add this line
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -37,6 +38,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [googleAccount, setGoogleAccount] = useState<GoogleAccount | null>(null);
   const [isLoading, setIsLoading] = useState(false);
+  const [user, setUser] = useState<any>(null);
+  const [token, setToken] = useState<string | null>(null);
 
 const checkAuthStatus = useCallback(async (hotelId: string) => {
     if (!hotelId) return;
@@ -110,6 +113,15 @@ const checkAuthStatus = useCallback(async (hotelId: string) => {
     setGoogleAccount(null);
   }, []);
 
+  // Add the login function
+  const login = useCallback((user: any, token: string) => {
+    setUser(user);
+    setToken(token);
+    setIsAuthenticated(true);
+    localStorage.setItem('authToken', token);
+    // Optionally, store user info if needed
+  }, []);
+
   // // Load auth state from localStorage on mount
   // useEffect(() => {
   //   const storedAuth = localStorage.getItem('googleAuth');
@@ -134,6 +146,7 @@ const checkAuthStatus = useCallback(async (hotelId: string) => {
     signInWithGoogle,
     signOut,
     checkAuthStatus,
+    login, // <-- Add this to the context value
   };
 return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 };
