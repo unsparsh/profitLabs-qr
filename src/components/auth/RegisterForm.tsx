@@ -25,11 +25,13 @@ const registerSchema = z.object({
 type RegisterFormData = z.infer<typeof registerSchema>;
 
 interface RegisterFormProps {
-  onSuccess: (user: any, hotel: any) => void;
+  onSuccess?: (user: any, hotel: any) => void;
 }
 
 export const RegisterForm: React.FC<RegisterFormProps> = ({ onSuccess }) => {
   const [isLoading, setIsLoading] = useState(false);
+  const { register: registerUser, isLoading: authLoading } = useAuth();
+  const navigate = useNavigate();
   
   const {
     register,
@@ -40,16 +42,15 @@ export const RegisterForm: React.FC<RegisterFormProps> = ({ onSuccess }) => {
   });
 
   const onSubmit = async (data: RegisterFormData) => {
-    setIsLoading(true);
     try {
-      const response = await apiClient.register(data);
-      apiClient.setToken(response.token);
-      toast.success('Registration successful! Welcome to ProfitLabs!');
-      onSuccess(response.user, response.hotel);
+      await registerUser(data);
+      if (onSuccess) {
+        onSuccess(null, null); // Will be handled by AuthContext
+      } else {
+        navigate('/admin');
+      }
     } catch (error) {
-      toast.error(error instanceof Error ? error.message : 'Registration failed');
-    } finally {
-      setIsLoading(false);
+      // Error handling is done in AuthContext
     }
   };
 
@@ -218,10 +219,10 @@ export const RegisterForm: React.FC<RegisterFormProps> = ({ onSuccess }) => {
 
           <button
             type="submit"
-            disabled={isLoading}
+            disabled={isLoading || authLoading}
             className="w-full bg-blue-600 dark:bg-blue-500 text-white py-3 px-4 rounded-lg font-medium hover:bg-blue-700 dark:hover:bg-blue-600 focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 dark:focus:ring-offset-gray-800 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
           >
-            {isLoading ? 'Creating Account...' : 'Start Free Trial'}
+            {isLoading || authLoading ? 'Creating Account...' : 'Start Free Trial'}
           </button>
         </form>
 
