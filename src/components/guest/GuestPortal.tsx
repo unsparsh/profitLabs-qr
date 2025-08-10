@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { useParams } from 'react-router-dom';
 import { Phone, UtensilsCrossed, MessageSquare, ShoppingCart, X, Plus, Minus, ArrowLeft, Wifi, Clock, Car, Shield, User, Home } from 'lucide-react';
 import { toast } from 'react-hot-toast';
 import { apiClient } from '../../utils/api';
@@ -60,10 +61,12 @@ const GuestPortal: React.FC<GuestPortalProps> = ({ hotelId, roomId }) => {
   const [customMessage, setCustomMessage] = useState('');
 
   useEffect(() => {
+    console.log('GuestPortal mounted with hotelId:', actualHotelId, 'roomId:', actualRoomId);
     fetchGuestPortalData();
   }, [actualHotelId, actualRoomId]);
 
   useEffect(() => {
+    console.log('Active service changed to:', activeService);
     if (activeService === 'food') {
       fetchFoodItems();
     } else if (activeService === 'room-service') {
@@ -75,7 +78,9 @@ const GuestPortal: React.FC<GuestPortalProps> = ({ hotelId, roomId }) => {
 
   const fetchGuestPortalData = async () => {
     try {
+      console.log('Fetching guest portal data for hotel:', actualHotelId, 'room:', actualRoomId);
       const data = await apiClient.getGuestPortalData(actualHotelId, actualRoomId);
+      console.log('Guest portal data received:', data);
       setHotelData(data.hotel);
       setRoomData(data.room);
     } catch (error) {
@@ -87,11 +92,14 @@ const GuestPortal: React.FC<GuestPortalProps> = ({ hotelId, roomId }) => {
   const fetchFoodItems = async () => {
     try {
       setLoading(true);
+      console.log('Fetching food items for hotel:', actualHotelId);
       const data = await apiClient.getGuestFoodMenu(actualHotelId);
+      console.log('Food items received:', data);
       setFoodItems(data.filter((item: FoodItem) => item.isAvailable));
     } catch (error) {
       console.error('Failed to load food menu:', error);
       toast.error('Failed to load food menu');
+      setFoodItems([]); // Set empty array on error
     } finally {
       setLoading(false);
     }
@@ -100,7 +108,7 @@ const GuestPortal: React.FC<GuestPortalProps> = ({ hotelId, roomId }) => {
   const fetchRoomServiceItems = async () => {
     try {
       setLoading(true);
-      const data = await apiClient.getRoomServiceMenu(actualHotelId);
+      const data = await apiClient.getGuestRoomServiceMenu(actualHotelId);
       setRoomServiceItems(data.filter((item: RoomServiceItem) => item.isAvailable));
     } catch (error) {
       console.error('Failed to load room service menu:', error);
@@ -113,7 +121,7 @@ const GuestPortal: React.FC<GuestPortalProps> = ({ hotelId, roomId }) => {
   const fetchComplaintItems = async () => {
     try {
       setLoading(true);
-      const data = await apiClient.getComplaintMenu(actualHotelId);
+      const data = await apiClient.getGuestComplaintMenu(actualHotelId);
       setComplaintItems(data.filter((item: ComplaintItem) => item.isAvailable));
     } catch (error) {
       console.error('Failed to load complaint options:', error);
@@ -650,6 +658,13 @@ const GuestPortal: React.FC<GuestPortalProps> = ({ hotelId, roomId }) => {
                     </button>
                   </div>
                 ))}
+                {filteredItems.length === 0 && !loading && (
+                  <div className="col-span-2 text-center py-12">
+                    <UtensilsCrossed className="h-12 w-12 text-gray-400 mx-auto mb-4" />
+                    <p className="text-gray-500">No food items available</p>
+                    <p className="text-sm text-gray-400">Please check back later</p>
+                  </div>
+                )}
               </div>
             )}
           </div>
@@ -787,6 +802,13 @@ const GuestPortal: React.FC<GuestPortalProps> = ({ hotelId, roomId }) => {
                     </div>
                   </div>
                 ))}
+                {filteredItems.length === 0 && !loading && (
+                  <div className="col-span-3 text-center py-12">
+                    <Home className="h-12 w-12 text-gray-400 mx-auto mb-4" />
+                    <p className="text-gray-500">No room services available</p>
+                    <p className="text-sm text-gray-400">Please check back later</p>
+                  </div>
+                )}
               </div>
             )}
           </div>
@@ -866,6 +888,13 @@ const GuestPortal: React.FC<GuestPortalProps> = ({ hotelId, roomId }) => {
                     </div>
                   </div>
                 ))}
+                {filteredItems.length === 0 && !loading && (
+                  <div className="col-span-3 text-center py-12">
+                    <Car className="h-12 w-12 text-gray-400 mx-auto mb-4" />
+                    <p className="text-gray-500">No taxi services available</p>
+                    <p className="text-sm text-gray-400">Please check back later</p>
+                  </div>
+                )}
               </div>
             )}
           </div>

@@ -159,24 +159,15 @@ class ApiClient {
   }
 
   async getGuestFoodMenu(hotelId: string) {
-    const url = `${this.baseURL}/guest/${hotelId}/food-menu`;
-    console.log('Fetching food menu from:', url);
+    return this.request<any[]>(`/guest/${hotelId}/food-menu`);
+  }
 
-    const response = await fetch(url, {
-      method: 'GET',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-    });
+  async getGuestRoomServiceMenu(hotelId: string) {
+    return this.request<any[]>(`/guest/${hotelId}/room-service-menu`);
+  }
 
-    if (!response.ok) {
-      console.error('Food menu API response not ok:', response.status, response.statusText);
-      throw new Error(`HTTP error! status: ${response.status}`);
-    }
-
-    const data = await response.json();
-    console.log('Food menu data received:', data);
-    return data;
+  async getGuestComplaintMenu(hotelId: string) {
+    return this.request<any[]>(`/guest/${hotelId}/complaint-menu`);
   }
 
   // Room Service Menu endpoints
