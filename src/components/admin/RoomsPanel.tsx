@@ -3,7 +3,6 @@ import React, { useState } from 'react';
 import { Plus, QrCode, Settings, Trash2, Download } from 'lucide-react';
 import { apiClient } from '../../utils/api';
 import toast from 'react-hot-toast';
-import { useTheme } from '../../contexts/ThemeContext';
 
 interface RoomsPanelProps {
   rooms: any[];
