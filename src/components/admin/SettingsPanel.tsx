@@ -3,7 +3,6 @@ import React, { useState } from 'react';
 import { Save, Bell, CreditCard, Users, Phone } from 'lucide-react';
 import { apiClient } from '../../utils/api';
 import toast from 'react-hot-toast';
-import { useTheme } from '../../contexts/ThemeContext';
 
 interface SettingsPanelProps {
   hotel: any;
