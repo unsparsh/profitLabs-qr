@@ -14,6 +14,7 @@ import { socketManager } from '../../utils/socket';
 import toast from 'react-hot-toast';
 import { Link } from 'react-router-dom';
 import { ThemeToggle } from '../ui/ThemeToggle';
+import { useTheme } from '../../contexts/ThemeContext';
 interface AdminDashboardProps {
   user: any;
   hotel: any;
@@ -38,6 +39,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ user, hotel, onL
   const [rooms, setRooms] = useState<Room[]>([]);
   const [unreadCount, setUnreadCount] = useState(0);
   const [isLoading, setIsLoading] = useState(true);
+  const { theme } = useTheme();
 
   useEffect(() => {
     const token = localStorage.getItem('authToken') ?? undefined;
@@ -130,13 +132,13 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ user, hotel, onL
   ];
 
   return (
-    <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
+    <div className="min-h-screen bg-gray-50 dark:bg-gray-900 transition-colors">
       {/* Header */}
-      <div className="bg-white dark:bg-gray-800 shadow-sm border-b border-gray-200 dark:border-gray-700">
+      <div className="bg-white dark:bg-gray-800 shadow-sm border-b border-gray-200 dark:border-gray-700 transition-colors">
         <div className="max-w-7xl mx-auto px-3 sm:px-4 lg:px-8">
           <div className="flex justify-between items-center py-3 sm:py-4">
             <div className="flex items-center">
-              <div className="bg-blue-600 text-white p-1.5 sm:p-2 rounded-lg mr-2 sm:mr-3">
+              <div className="bg-blue-600 dark:bg-blue-700 text-white p-1.5 sm:p-2 rounded-lg mr-2 sm:mr-3">
                 <Users className="h-4 w-4 sm:h-6 sm:w-6" />
               </div>
               <div>
@@ -164,7 +166,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ user, hotel, onL
       </div>
 
       {/* Navigation Tabs */}
-      <div className="bg-white dark:bg-gray-800 shadow-sm">
+      <div className="bg-white dark:bg-gray-800 shadow-sm transition-colors">
         <div className="max-w-7xl mx-auto px-3 sm:px-4 lg:px-8">
           <div className="flex space-x-2 sm:space-x-4 lg:space-x-8 overflow-x-auto">
             {tabs.map((tab) => (
@@ -172,7 +174,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ user, hotel, onL
                 key={tab.id}
                 onClick={() => handleTabChange(tab.id)}
                 className={`
-                  flex items-center space-x-1 sm:space-x-2 py-3 sm:py-4 px-1 sm:px-2 border-b-2 font-medium text-xs sm:text-sm relative whitespace-nowrap
+                  flex items-center space-x-1 sm:space-x-2 py-3 sm:py-4 px-1 sm:px-2 border-b-2 font-medium text-xs sm:text-sm relative whitespace-nowrap transition-colors
                   ${activeTab === tab.id
                     ? 'border-blue-500 text-blue-600 dark:text-blue-400'
                     : 'border-transparent text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300 hover:border-gray-300 dark:hover:border-gray-600'
@@ -197,7 +199,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ user, hotel, onL
       <div className="max-w-7xl mx-auto px-3 sm:px-4 lg:px-8 py-3 sm:py-6">
         {isLoading ? (
           <div className="text-center py-12">
-            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
+            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 dark:border-blue-400 mx-auto mb-4"></div>
             <p className="text-gray-600 dark:text-gray-300">Loading...</p>
           </div>
         ) : (

@@ -1,7 +1,9 @@
+import { useTheme } from '../../contexts/ThemeContext';
 import React, { useState } from 'react';
 import { Save, Bell, CreditCard, Users, Phone } from 'lucide-react';
 import { apiClient } from '../../utils/api';
 import toast from 'react-hot-toast';
+import { useTheme } from '../../contexts/ThemeContext';
 
 interface SettingsPanelProps {
   hotel: any;
@@ -27,6 +29,7 @@ export const SettingsPanel: React.FC<SettingsPanelProps> = ({ hotel, onHotelUpda
     },
   });
   const [isLoading, setIsLoading] = useState(false);
+  const { theme } = useTheme();
 
   const handleServiceToggle = (service: string) => {
     setSettings((prev: any) => ({
@@ -87,64 +90,64 @@ export const SettingsPanel: React.FC<SettingsPanelProps> = ({ hotel, onHotelUpda
   return (
     <div className="space-y-6">
       {/* Hotel Information */}
-      <div className="bg-white rounded-lg shadow-sm p-4 sm:p-6">
-        <h3 className="text-base sm:text-lg font-medium text-gray-900 mb-4">Hotel Information</h3>
+      <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm p-4 sm:p-6 transition-colors">
+        <h3 className="text-base sm:text-lg font-medium text-gray-900 dark:text-white mb-4">Hotel Information</h3>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div>
-            <label className="block text-xs sm:text-sm font-medium text-gray-700 mb-2">Hotel Name</label>
+            <label className="block text-xs sm:text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Hotel Name</label>
             <input
               type="text"
               value={hotel.name}
               disabled
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg bg-gray-50 text-gray-600"
+              className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-gray-50 dark:bg-gray-700 text-gray-600 dark:text-gray-300"
             />
           </div>
           <div>
-            <label className="block text-xs sm:text-sm font-medium text-gray-700 mb-2">Email</label>
+            <label className="block text-xs sm:text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Email</label>
             <input
               type="email"
               value={hotel.email}
               disabled
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg bg-gray-50 text-gray-600"
+              className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-gray-50 dark:bg-gray-700 text-gray-600 dark:text-gray-300"
             />
           </div>
           <div>
-            <label className="block text-xs sm:text-sm font-medium text-gray-700 mb-2">Phone</label>
+            <label className="block text-xs sm:text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Phone</label>
             <input
               type="tel"
               value={hotel.phone}
               disabled
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg bg-gray-50 text-gray-600"
+              className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-gray-50 dark:bg-gray-700 text-gray-600 dark:text-gray-300"
             />
           </div>
           <div>
-            <label className="block text-xs sm:text-sm font-medium text-gray-700 mb-2">Total Rooms</label>
+            <label className="block text-xs sm:text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Total Rooms</label>
             <input
               type="number"
               value={hotel.totalRooms}
               disabled
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg bg-gray-50 text-gray-600"
+              className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-gray-50 dark:bg-gray-700 text-gray-600 dark:text-gray-300"
             />
           </div>
         </div>
       </div>
 
       {/* Services Configuration */}
-      <div className="bg-white rounded-lg shadow-sm p-4 sm:p-6">
+      <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm p-4 sm:p-6 transition-colors">
         <div className="flex items-center mb-4">
-          <Users className="h-4 w-4 sm:h-5 sm:w-5 text-gray-400 mr-2" />
-          <h3 className="text-base sm:text-lg font-medium text-gray-900">Guest Services</h3>
+          <Users className="h-4 w-4 sm:h-5 sm:w-5 text-gray-400 dark:text-gray-500 mr-2" />
+          <h3 className="text-base sm:text-lg font-medium text-gray-900 dark:text-white">Guest Services</h3>
         </div>
         <div className="space-y-4">
           {services.map((service) => (
-            <div key={service.key} className="flex items-start sm:items-center justify-between py-3 border-b border-gray-200 last:border-b-0 gap-3">
+            <div key={service.key} className="flex items-start sm:items-center justify-between py-3 border-b border-gray-200 dark:border-gray-700 last:border-b-0 gap-3">
               <div className="flex-1">
-                <h4 className="text-sm sm:text-base font-medium text-gray-900">{service.label}</h4>
-                <p className="text-xs sm:text-sm text-gray-600 mt-1">{service.description}</p>
+                <h4 className="text-sm sm:text-base font-medium text-gray-900 dark:text-white">{service.label}</h4>
+                <p className="text-xs sm:text-sm text-gray-600 dark:text-gray-300 mt-1">{service.description}</p>
               </div>
               <button
                 onClick={() => handleServiceToggle(service.key)}
-                className={`relative inline-flex h-5 w-9 sm:h-6 sm:w-11 flex-shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 ${
+                className={`relative inline-flex h-5 w-9 sm:h-6 sm:w-11 flex-shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 dark:focus:ring-offset-gray-800 ${
                   settings.servicesEnabled[service.key] ? 'bg-blue-600' : 'bg-gray-200'
                 }`}
               >
@@ -160,21 +163,21 @@ export const SettingsPanel: React.FC<SettingsPanelProps> = ({ hotel, onHotelUpda
       </div>
 
       {/* Notification Settings */}
-      <div className="bg-white rounded-lg shadow-sm p-4 sm:p-6">
+      <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm p-4 sm:p-6 transition-colors">
         <div className="flex items-center mb-4">
-          <Bell className="h-4 w-4 sm:h-5 sm:w-5 text-gray-400 mr-2" />
-          <h3 className="text-base sm:text-lg font-medium text-gray-900">Notifications</h3>
+          <Bell className="h-4 w-4 sm:h-5 sm:w-5 text-gray-400 dark:text-gray-500 mr-2" />
+          <h3 className="text-base sm:text-lg font-medium text-gray-900 dark:text-white">Notifications</h3>
         </div>
         <div className="space-y-4">
           {notifications.map((notification) => (
-            <div key={notification.key} className="flex items-start sm:items-center justify-between py-3 border-b border-gray-200 last:border-b-0 gap-3">
+            <div key={notification.key} className="flex items-start sm:items-center justify-between py-3 border-b border-gray-200 dark:border-gray-700 last:border-b-0 gap-3">
               <div className="flex-1">
-                <h4 className="text-sm sm:text-base font-medium text-gray-900">{notification.label}</h4>
-                <p className="text-xs sm:text-sm text-gray-600 mt-1">{notification.description}</p>
+                <h4 className="text-sm sm:text-base font-medium text-gray-900 dark:text-white">{notification.label}</h4>
+                <p className="text-xs sm:text-sm text-gray-600 dark:text-gray-300 mt-1">{notification.description}</p>
               </div>
               <button
                 onClick={() => handleNotificationToggle(notification.key)}
-                className={`relative inline-flex h-5 w-9 sm:h-6 sm:w-11 flex-shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 ${
+                className={`relative inline-flex h-5 w-9 sm:h-6 sm:w-11 flex-shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 dark:focus:ring-offset-gray-800 ${
                   settings.notifications[notification.key] ? 'bg-blue-600' : 'bg-gray-200'
                 }`}
               >
@@ -190,48 +193,48 @@ export const SettingsPanel: React.FC<SettingsPanelProps> = ({ hotel, onHotelUpda
       </div>
 
       {/* Emergency Contact Settings */}
-      <div className="bg-white rounded-lg shadow-sm p-4 sm:p-6">
+      <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm p-4 sm:p-6 transition-colors">
         <div className="flex items-center mb-4">
-          <Phone className="h-4 w-4 sm:h-5 sm:w-5 text-gray-400 mr-2" />
-          <h3 className="text-base sm:text-lg font-medium text-gray-900">Emergency Contact</h3>
+          <Phone className="h-4 w-4 sm:h-5 sm:w-5 text-gray-400 dark:text-gray-500 mr-2" />
+          <h3 className="text-base sm:text-lg font-medium text-gray-900 dark:text-white">Emergency Contact</h3>
         </div>
         <div className="space-y-4">
           <div>
-            <label className="block text-xs sm:text-sm font-medium text-gray-700 mb-2">Phone Number</label>
+            <label className="block text-xs sm:text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Phone Number</label>
             <input
               type="tel"
               value={settings.emergencyContact?.phone || ''}
               onChange={(e) => handleEmergencyContactChange('phone', e.target.value)}
               placeholder="+91 9876543210"
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+              className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400"
             />
           </div>
           <div>
-            <label className="block text-xs sm:text-sm font-medium text-gray-700 mb-2">Description</label>
+            <label className="block text-xs sm:text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Description</label>
             <input
               type="text"
               value={settings.emergencyContact?.description || ''}
               onChange={(e) => handleEmergencyContactChange('description', e.target.value)}
               placeholder="Available 24/7 for any assistance"
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+              className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400"
             />
           </div>
         </div>
       </div>
 
       {/* Subscription Info */}
-      <div className="bg-white rounded-lg shadow-sm p-4 sm:p-6">
+      <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm p-4 sm:p-6 transition-colors">
         <div className="flex items-center mb-4">
-          <CreditCard className="h-4 w-4 sm:h-5 sm:w-5 text-gray-400 mr-2" />
-          <h3 className="text-base sm:text-lg font-medium text-gray-900">Subscription</h3>
+          <CreditCard className="h-4 w-4 sm:h-5 sm:w-5 text-gray-400 dark:text-gray-500 mr-2" />
+          <h3 className="text-base sm:text-lg font-medium text-gray-900 dark:text-white">Subscription</h3>
         </div>
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
           <div>
-            <p className="text-xs sm:text-sm text-gray-500">Current Plan</p>
-            <p className="text-sm sm:text-base font-medium text-gray-900 capitalize">{hotel.subscription.plan}</p>
+            <p className="text-xs sm:text-sm text-gray-500 dark:text-gray-400">Current Plan</p>
+            <p className="text-sm sm:text-base font-medium text-gray-900 dark:text-white capitalize">{hotel.subscription.plan}</p>
           </div>
           <div>
-            <p className="text-xs sm:text-sm text-gray-500">Status</p>
+            <p className="text-xs sm:text-sm text-gray-500 dark:text-gray-400">Status</p>
             <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
               hotel.subscription.status === 'active' 
                 ? 'bg-green-100 text-green-800'
@@ -241,8 +244,8 @@ export const SettingsPanel: React.FC<SettingsPanelProps> = ({ hotel, onHotelUpda
             </span>
           </div>
           <div>
-            <p className="text-xs sm:text-sm text-gray-500">Expires</p>
-            <p className="text-sm sm:text-base font-medium text-gray-900">
+            <p className="text-xs sm:text-sm text-gray-500 dark:text-gray-400">Expires</p>
+            <p className="text-sm sm:text-base font-medium text-gray-900 dark:text-white">
               {new Date(hotel.subscription.expiresAt).toLocaleDateString()}
             </p>
           </div>
@@ -254,7 +257,7 @@ export const SettingsPanel: React.FC<SettingsPanelProps> = ({ hotel, onHotelUpda
         <button
           onClick={handleSave}
           disabled={isLoading}
-          className="bg-blue-600 text-white px-4 sm:px-6 py-2 rounded-lg text-sm sm:text-base font-medium hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors flex items-center gap-2"
+          className="bg-blue-600 dark:bg-blue-700 text-white px-4 sm:px-6 py-2 rounded-lg text-sm sm:text-base font-medium hover:bg-blue-700 dark:hover:bg-blue-800 disabled:opacity-50 disabled:cursor-not-allowed transition-colors flex items-center gap-2"
         >
           <Save className="h-3 w-3 sm:h-4 sm:w-4" />
           {isLoading ? 'Saving...' : 'Save Settings'}

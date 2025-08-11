@@ -1,3 +1,4 @@
+import { useTheme } from '../../contexts/ThemeContext';
 import React, { useState, useEffect } from 'react';
 import { useParams } from 'react-router-dom';
 import { Phone, UtensilsCrossed, MessageSquare, ShoppingCart, X, Plus, Minus, ArrowLeft, Wifi, Clock, Car, Shield, User, Home } from 'lucide-react';
@@ -46,6 +47,7 @@ const GuestPortal: React.FC<GuestPortalProps> = ({ hotelId, roomId }) => {
   const { hotelId: urlHotelId, roomId: urlRoomId } = useParams<{ hotelId: string; roomId: string }>();
   const actualHotelId = hotelId || urlHotelId || '';
   const actualRoomId = roomId || urlRoomId || '';
+  const { theme } = useTheme();
 
   const [step, setStep] = useState<'phone' | 'services' | 'service-detail'>('phone');
   const [activeService, setActiveService] = useState<string | null>(null);
@@ -392,7 +394,7 @@ const GuestPortal: React.FC<GuestPortalProps> = ({ hotelId, roomId }) => {
 
         {/* Hotel Services Section */}
         <div className="max-w-4xl mx-auto px-6">
-          <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-lg p-8 mb-8">
+          <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-lg border border-gray-200 dark:border-gray-700 p-8 mb-8">
             <div className="mb-8">
               <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-2">Hotel Services</h2>
               <p className="text-gray-600 dark:text-gray-300">Request services or assistance during your stay</p>
@@ -424,13 +426,13 @@ const GuestPortal: React.FC<GuestPortalProps> = ({ hotelId, roomId }) => {
                   setActiveService('room-service');
                   setStep('service-detail');
                 }}
-                className="bg-white border border-gray-200 rounded-xl p-6 text-center hover:shadow-md transition-all duration-200 group"
+                className="bg-white dark:bg-gray-700 border border-gray-200 dark:border-gray-600 rounded-xl p-6 text-center hover:shadow-md transition-all duration-200 group"
               >
-                <div className="w-12 h-12 bg-gray-100 rounded-lg flex items-center justify-center mx-auto mb-4 group-hover:bg-blue-100 transition-colors">
-                  <Home className="w-6 h-6 text-gray-600 group-hover:text-blue-600" />
+                <div className="w-12 h-12 bg-gray-100 dark:bg-gray-600 rounded-lg flex items-center justify-center mx-auto mb-4 group-hover:bg-blue-100 dark:group-hover:bg-blue-900 transition-colors">
+                  <Home className="w-6 h-6 text-gray-600 dark:text-gray-300 group-hover:text-blue-600" />
                 </div>
-                <h3 className="font-semibold text-gray-900 mb-2">Housekeeping</h3>
-                <p className="text-sm text-gray-600 mb-4">Request cleaning service</p>
+                <h3 className="font-semibold text-gray-900 dark:text-white mb-2">Housekeeping</h3>
+                <p className="text-sm text-gray-600 dark:text-gray-300 mb-4">Request cleaning service</p>
                 <span className="inline-block bg-yellow-100 text-yellow-800 text-xs font-medium px-3 py-1 rounded-full">
                   Available
                 </span>
@@ -442,13 +444,13 @@ const GuestPortal: React.FC<GuestPortalProps> = ({ hotelId, roomId }) => {
                   setActiveService('custom-message');
                   setStep('service-detail');
                 }}
-                className="bg-white border border-gray-200 rounded-xl p-6 text-center hover:shadow-md transition-all duration-200 group"
+                className="bg-white dark:bg-gray-700 border border-gray-200 dark:border-gray-600 rounded-xl p-6 text-center hover:shadow-md transition-all duration-200 group"
               >
-                <div className="w-12 h-12 bg-gray-100 rounded-lg flex items-center justify-center mx-auto mb-4 group-hover:bg-purple-100 transition-colors">
-                  <User className="w-6 h-6 text-gray-600 group-hover:text-purple-600" />
+                <div className="w-12 h-12 bg-gray-100 dark:bg-gray-600 rounded-lg flex items-center justify-center mx-auto mb-4 group-hover:bg-purple-100 dark:group-hover:bg-purple-900 transition-colors">
+                  <User className="w-6 h-6 text-gray-600 dark:text-gray-300 group-hover:text-purple-600" />
                 </div>
-                <h3 className="font-semibold text-gray-900 mb-2">Concierge</h3>
-                <p className="text-sm text-gray-600 mb-4">Local recommendations</p>
+                <h3 className="font-semibold text-gray-900 dark:text-white mb-2">Concierge</h3>
+                <p className="text-sm text-gray-600 dark:text-gray-300 mb-4">Local recommendations</p>
                 <span className="inline-block bg-yellow-100 text-yellow-800 text-xs font-medium px-3 py-1 rounded-full">
                   Available
                 </span>
@@ -460,13 +462,13 @@ const GuestPortal: React.FC<GuestPortalProps> = ({ hotelId, roomId }) => {
                   setActiveService('complaint');
                   setStep('service-detail');
                 }}
-                className="bg-white border border-gray-200 rounded-xl p-6 text-center hover:shadow-md transition-all duration-200 group"
+                className="bg-white dark:bg-gray-700 border border-gray-200 dark:border-gray-600 rounded-xl p-6 text-center hover:shadow-md transition-all duration-200 group"
               >
-                <div className="w-12 h-12 bg-gray-100 rounded-lg flex items-center justify-center mx-auto mb-4 group-hover:bg-green-100 transition-colors">
-                  <Car className="w-6 h-6 text-gray-600 group-hover:text-green-600" />
+                <div className="w-12 h-12 bg-gray-100 dark:bg-gray-600 rounded-lg flex items-center justify-center mx-auto mb-4 group-hover:bg-green-100 dark:group-hover:bg-green-900 transition-colors">
+                  <Car className="w-6 h-6 text-gray-600 dark:text-gray-300 group-hover:text-green-600" />
                 </div>
-                <h3 className="font-semibold text-gray-900 mb-2">Complaints</h3>
-                <p className="text-sm text-gray-600 mb-4">Lodge Complaint to Reception</p>
+                <h3 className="font-semibold text-gray-900 dark:text-white mb-2">Complaints</h3>
+                <p className="text-sm text-gray-600 dark:text-gray-300 mb-4">Lodge Complaint to Reception</p>
                 <span className="inline-block bg-yellow-100 text-yellow-800 text-xs font-medium px-3 py-1 rounded-full">
                   Available
                 </span>
@@ -476,13 +478,13 @@ const GuestPortal: React.FC<GuestPortalProps> = ({ hotelId, roomId }) => {
               <button
                 onClick={handleWifiIssueSubmission}
                 disabled={loading}
-                className="bg-white border border-gray-200 rounded-xl p-6 text-center hover:shadow-md transition-all duration-200 group disabled:opacity-50"
+                className="bg-white dark:bg-gray-700 border border-gray-200 dark:border-gray-600 rounded-xl p-6 text-center hover:shadow-md transition-all duration-200 group disabled:opacity-50"
               >
-                <div className="w-12 h-12 bg-gray-100 rounded-lg flex items-center justify-center mx-auto mb-4 group-hover:bg-blue-100 transition-colors">
-                  <Wifi className="w-6 h-6 text-gray-600 group-hover:text-blue-600" />
+                <div className="w-12 h-12 bg-gray-100 dark:bg-gray-600 rounded-lg flex items-center justify-center mx-auto mb-4 group-hover:bg-blue-100 dark:group-hover:bg-blue-900 transition-colors">
+                  <Wifi className="w-6 h-6 text-gray-600 dark:text-gray-300 group-hover:text-blue-600" />
                 </div>
-                <h3 className="font-semibold text-gray-900 mb-2">WiFi Support</h3>
-                <p className="text-sm text-gray-600 mb-4">Technical assistance</p>
+                <h3 className="font-semibold text-gray-900 dark:text-white mb-2">WiFi Support</h3>
+                <p className="text-sm text-gray-600 dark:text-gray-300 mb-4">Technical assistance</p>
                 <span className="inline-block bg-yellow-100 text-yellow-800 text-xs font-medium px-3 py-1 rounded-full">
                   Available
                 </span>
@@ -491,13 +493,13 @@ const GuestPortal: React.FC<GuestPortalProps> = ({ hotelId, roomId }) => {
               {/* Security */}
               <button
                 onClick={handleSecurityAlert}
-                className="bg-white border border-gray-200 rounded-xl p-6 text-center hover:shadow-md transition-all duration-200 group"
+                className="bg-white dark:bg-gray-700 border border-gray-200 dark:border-gray-600 rounded-xl p-6 text-center hover:shadow-md transition-all duration-200 group"
               >
-                <div className="w-12 h-12 bg-gray-100 rounded-lg flex items-center justify-center mx-auto mb-4 group-hover:bg-red-100 transition-colors">
-                  <Shield className="w-6 h-6 text-gray-600 group-hover:text-red-600" />
+                <div className="w-12 h-12 bg-gray-100 dark:bg-gray-600 rounded-lg flex items-center justify-center mx-auto mb-4 group-hover:bg-red-100 dark:group-hover:bg-red-900 transition-colors">
+                  <Shield className="w-6 h-6 text-gray-600 dark:text-gray-300 group-hover:text-red-600" />
                 </div>
-                <h3 className="font-semibold text-gray-900 mb-2">Security</h3>
-                <p className="text-sm text-gray-600 mb-4">Emergency assistance</p>
+                <h3 className="font-semibold text-gray-900 dark:text-white mb-2">Security</h3>
+                <p className="text-sm text-gray-600 dark:text-gray-300 mb-4">Emergency assistance</p>
                 <span className="inline-block bg-red-100 text-red-800 text-xs font-medium px-3 py-1 rounded-full">
                   24/7
                 </span>
@@ -506,19 +508,19 @@ const GuestPortal: React.FC<GuestPortalProps> = ({ hotelId, roomId }) => {
           </div>
 
           {/* Emergency Contact */}
-          <div className="bg-white rounded-2xl shadow-lg p-8 mb-8">
+          <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-lg border border-gray-200 dark:border-gray-700 p-8 mb-8">
             <div className="flex justify-between items-start">
               <div>
-                <h3 className="text-xl font-bold text-red-600 mb-2">Emergency Contact</h3>
-                <p className="text-gray-600 mb-4">24/7 assistance available</p>
+                <h3 className="text-xl font-bold text-red-600 dark:text-red-400 mb-2">Emergency Contact</h3>
+                <p className="text-gray-600 dark:text-gray-300 mb-4">24/7 assistance available</p>
                 <div>
-                  <p className="font-semibold text-gray-900">Front Desk: {hotelData?.settings?.emergencyContact?.phone || '+91 9876543210'}</p>
-                  <p className="text-sm text-gray-600">{hotelData?.settings?.emergencyContact?.description || 'Available 24/7 for any assistance'}</p>
+                  <p className="font-semibold text-gray-900 dark:text-white">Front Desk: {hotelData?.settings?.emergencyContact?.phone || '+91 9876543210'}</p>
+                  <p className="text-sm text-gray-600 dark:text-gray-300">{hotelData?.settings?.emergencyContact?.description || 'Available 24/7 for any assistance'}</p>
                 </div>
               </div>
               <button 
                 onClick={handleEmergencyCall}
-                className="bg-red-600 text-white px-6 py-3 rounded-xl font-semibold hover:bg-red-700 transition-colors flex items-center gap-2"
+                className="bg-red-600 dark:bg-red-700 text-white px-6 py-3 rounded-xl font-semibold hover:bg-red-700 dark:hover:bg-red-800 transition-colors flex items-center gap-2"
               >
                 <Phone className="w-4 h-4" />
                 Call Now
@@ -535,41 +537,41 @@ const GuestPortal: React.FC<GuestPortalProps> = ({ hotelId, roomId }) => {
     // Custom Message Interface
     if (activeService === 'custom-message') {
       return (
-        <div className="min-h-screen bg-gray-100">
+        <div className="min-h-screen bg-gray-100 dark:bg-gray-900">
           {/* Header */}
-          <div className="bg-white border-b px-6 py-4">
+          <div className="bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700 px-6 py-4">
             <div className="max-w-4xl mx-auto flex items-center justify-between">
               <button
                 onClick={() => setStep('services')}
-                className="w-10 h-10 bg-gray-100 rounded-lg flex items-center justify-center hover:bg-gray-200 transition-colors"
+                className="w-10 h-10 bg-gray-100 dark:bg-gray-700 rounded-lg flex items-center justify-center hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors"
               >
-                <ArrowLeft className="w-5 h-5 text-gray-600" />
+                <ArrowLeft className="w-5 h-5 text-gray-600 dark:text-gray-300" />
               </button>
-              <h1 className="text-xl font-semibold text-gray-900">Concierge Service</h1>
+              <h1 className="text-xl font-semibold text-gray-900 dark:text-white">Concierge Service</h1>
               <div className="w-10 h-10"></div>
             </div>
           </div>
 
           {/* Message Form */}
           <div className="max-w-2xl mx-auto p-6">
-            <div className="bg-white rounded-2xl shadow-lg p-8 space-y-6">
+            <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-lg p-8 space-y-6">
               <div className="text-center mb-6">
-                <div className="w-16 h-16 bg-purple-100 rounded-2xl flex items-center justify-center mx-auto mb-4">
-                  <MessageSquare className="w-8 h-8 text-purple-600" />
+                <div className="w-16 h-16 bg-purple-100 dark:bg-purple-900 rounded-2xl flex items-center justify-center mx-auto mb-4">
+                  <MessageSquare className="w-8 h-8 text-purple-600 dark:text-purple-400" />
                 </div>
-                <h2 className="text-2xl font-bold text-gray-900 mb-2">Send Message to Concierge</h2>
-                <p className="text-gray-600">Get local recommendations and assistance</p>
+                <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-2">Send Message to Concierge</h2>
+                <p className="text-gray-600 dark:text-gray-300">Get local recommendations and assistance</p>
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-3">
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-3">
                   Your Message
                 </label>
                 <textarea
                   placeholder="Ask for local recommendations, directions, or any assistance you need..."
                   value={customMessage}
                   onChange={(e) => setCustomMessage(e.target.value)}
-                  className="w-full p-4 border border-gray-300 rounded-xl focus:ring-2 focus:ring-purple-500 focus:border-transparent resize-none"
+                  className="w-full p-4 border border-gray-300 dark:border-gray-600 rounded-xl focus:ring-2 focus:ring-purple-500 focus:border-transparent resize-none bg-white dark:bg-gray-700 text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400"
                   rows={6}
                   required
                 />
@@ -594,19 +596,19 @@ const GuestPortal: React.FC<GuestPortalProps> = ({ hotelId, roomId }) => {
       const filteredItems = filterItemsByCategory(foodItems);
 
       return (
-        <div className="min-h-screen bg-gray-100">
+        <div className="min-h-screen bg-gray-100 dark:bg-gray-900">
           {/* Header */}
-          <div className="bg-white border-b px-6 py-4 sticky top-0 z-50">
+          <div className="bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700 px-6 py-4 sticky top-0 z-50">
             <div className="max-w-4xl mx-auto flex items-center justify-between">
               <button
                 onClick={() => setStep('services')}
-                className="w-10 h-10 bg-gray-100 rounded-lg flex items-center justify-center hover:bg-gray-200 transition-colors"
+                className="w-10 h-10 bg-gray-100 dark:bg-gray-700 rounded-lg flex items-center justify-center hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors"
               >
-                <ArrowLeft className="w-5 h-5 text-gray-600" />
+                <ArrowLeft className="w-5 h-5 text-gray-600 dark:text-gray-300" />
               </button>
-              <h1 className="text-xl font-semibold text-gray-900">Food Menu</h1>
+              <h1 className="text-xl font-semibold text-gray-900 dark:text-white">Food Menu</h1>
               <div className="flex items-center space-x-2">
-                <ShoppingCart className="w-5 h-5 text-gray-600" />
+                <ShoppingCart className="w-5 h-5 text-gray-600 dark:text-gray-300" />
                 <span className="bg-red-500 text-white text-xs rounded-full w-5 h-5 flex items-center justify-center">
                   {cart.reduce((sum, item) => sum + item.quantity, 0)}
                 </span>
@@ -615,7 +617,7 @@ const GuestPortal: React.FC<GuestPortalProps> = ({ hotelId, roomId }) => {
           </div>
 
           {/* Categories */}
-          <div className="bg-white border-b px-6 py-4">
+          <div className="bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700 px-6 py-4">
             <div className="max-w-4xl mx-auto">
               <div className="flex space-x-2 overflow-x-auto">
                 {categories.map(category => (
@@ -625,7 +627,7 @@ const GuestPortal: React.FC<GuestPortalProps> = ({ hotelId, roomId }) => {
                     className={`px-4 py-2 rounded-full whitespace-nowrap text-sm font-medium transition-colors ${
                       selectedCategory === category
                         ? 'bg-orange-600 text-white'
-                        : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                        : 'bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600'
                     }`}
                   >
                     {category}
@@ -644,12 +646,12 @@ const GuestPortal: React.FC<GuestPortalProps> = ({ hotelId, roomId }) => {
             ) : (
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 {filteredItems.map(item => (
-                  <div key={item._id} className="bg-white rounded-2xl shadow-lg p-6">
+                  <div key={item._id} className="bg-white dark:bg-gray-800 rounded-2xl shadow-lg p-6">
                     <div className="flex justify-between items-start mb-3">
-                      <h3 className="font-semibold text-gray-900 text-lg">{item.name}</h3>
-                      <span className="font-bold text-orange-600 text-lg">₹{item.price}</span>
+                      <h3 className="font-semibold text-gray-900 dark:text-white text-lg">{item.name}</h3>
+                      <span className="font-bold text-orange-600 dark:text-orange-400 text-lg">₹{item.price}</span>
                     </div>
-                    <p className="text-gray-600 mb-4">{item.description}</p>
+                    <p className="text-gray-600 dark:text-gray-300 mb-4">{item.description}</p>
                     <button
                       onClick={() => addToCart(item)}
                       className="w-full bg-orange-600 text-white py-3 rounded-xl font-semibold hover:bg-orange-700 transition-colors"
@@ -660,9 +662,9 @@ const GuestPortal: React.FC<GuestPortalProps> = ({ hotelId, roomId }) => {
                 ))}
                 {filteredItems.length === 0 && !loading && (
                   <div className="col-span-2 text-center py-12">
-                    <UtensilsCrossed className="h-12 w-12 text-gray-400 mx-auto mb-4" />
-                    <p className="text-gray-500">No food items available</p>
-                    <p className="text-sm text-gray-400">Please check back later</p>
+                    <UtensilsCrossed className="h-12 w-12 text-gray-400 dark:text-gray-500 mx-auto mb-4" />
+                    <p className="text-gray-500 dark:text-gray-400">No food items available</p>
+                    <p className="text-sm text-gray-400 dark:text-gray-500">Please check back later</p>
                   </div>
                 )}
               </div>
@@ -671,10 +673,10 @@ const GuestPortal: React.FC<GuestPortalProps> = ({ hotelId, roomId }) => {
 
           {/* Fixed Cart Bottom Sheet */}
           {cart.length > 0 && (
-            <div className="fixed bottom-0 left-0 right-0 bg-white border-t shadow-2xl max-h-80 flex flex-col">
+            <div className="fixed bottom-0 left-0 right-0 bg-white dark:bg-gray-800 border-t border-gray-200 dark:border-gray-700 shadow-2xl max-h-80 flex flex-col">
               {/* Cart Header */}
-              <div className="p-6 border-b">
-                <h3 className="font-bold text-gray-900 text-lg">Your Order</h3>
+              <div className="p-6 border-b border-gray-200 dark:border-gray-700">
+                <h3 className="font-bold text-gray-900 dark:text-white text-lg">Your Order</h3>
               </div>
 
               {/* Cart Items - Scrollable */}
@@ -682,28 +684,28 @@ const GuestPortal: React.FC<GuestPortalProps> = ({ hotelId, roomId }) => {
                 {cart.map(item => (
                   <div key={item._id} className="flex items-center justify-between">
                     <div className="flex-1">
-                      <h4 className="font-semibold">{item.name}</h4>
-                      <p className="text-orange-600 font-bold">₹{item.price}</p>
+                      <h4 className="font-semibold text-gray-900 dark:text-white">{item.name}</h4>
+                      <p className="text-orange-600 dark:text-orange-400 font-bold">₹{item.price}</p>
                     </div>
                     <div className="flex items-center space-x-3">
                       <button
                         onClick={() => updateQuantity(item._id, -1)}
-                        className="w-8 h-8 rounded-full bg-gray-100 flex items-center justify-center hover:bg-gray-200"
+                        className="w-8 h-8 rounded-full bg-gray-100 dark:bg-gray-700 flex items-center justify-center hover:bg-gray-200 dark:hover:bg-gray-600"
                       >
-                        <Minus className="w-4 h-4" />
+                        <Minus className="w-4 h-4 text-gray-600 dark:text-gray-300" />
                       </button>
-                      <span className="w-8 text-center font-semibold">{item.quantity}</span>
+                      <span className="w-8 text-center font-semibold text-gray-900 dark:text-white">{item.quantity}</span>
                       <button
                         onClick={() => updateQuantity(item._id, 1)}
-                        className="w-8 h-8 rounded-full bg-gray-100 flex items-center justify-center hover:bg-gray-200"
+                        className="w-8 h-8 rounded-full bg-gray-100 dark:bg-gray-700 flex items-center justify-center hover:bg-gray-200 dark:hover:bg-gray-600"
                       >
-                        <Plus className="w-4 h-4" />
+                        <Plus className="w-4 h-4 text-gray-600 dark:text-gray-300" />
                       </button>
                       <button
                         onClick={() => removeFromCart(item._id)}
-                        className="w-8 h-8 rounded-full bg-red-100 flex items-center justify-center ml-2 hover:bg-red-200"
+                        className="w-8 h-8 rounded-full bg-red-100 dark:bg-red-900 flex items-center justify-center ml-2 hover:bg-red-200 dark:hover:bg-red-800"
                       >
-                        <X className="w-4 h-4 text-red-600" />
+                        <X className="w-4 h-4 text-red-600 dark:text-red-400" />
                       </button>
                     </div>
                   </div>
@@ -711,9 +713,9 @@ const GuestPortal: React.FC<GuestPortalProps> = ({ hotelId, roomId }) => {
               </div>
 
               {/* Checkout */}
-              <div className="p-6 border-t bg-gray-50">
+              <div className="p-6 border-t border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-700">
                 <div className="flex items-center justify-between mb-4">
-                  <span className="font-bold text-xl">Total: ₹{getTotalPrice()}</span>
+                  <span className="font-bold text-xl text-gray-900 dark:text-white">Total: ₹{getTotalPrice()}</span>
                 </div>
                 <button
                   onClick={handleFoodOrder}
@@ -735,23 +737,23 @@ const GuestPortal: React.FC<GuestPortalProps> = ({ hotelId, roomId }) => {
       const filteredItems = filterItemsByCategory(roomServiceItems);
 
       return (
-        <div className="min-h-screen bg-gray-100">
+        <div className="min-h-screen bg-gray-100 dark:bg-gray-900">
           {/* Header */}
-          <div className="bg-white border-b px-6 py-4">
+          <div className="bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700 px-6 py-4">
             <div className="max-w-4xl mx-auto flex items-center justify-between">
               <button
                 onClick={() => setStep('services')}
-                className="w-10 h-10 bg-gray-100 rounded-lg flex items-center justify-center hover:bg-gray-200 transition-colors"
+                className="w-10 h-10 bg-gray-100 dark:bg-gray-700 rounded-lg flex items-center justify-center hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors"
               >
-                <ArrowLeft className="w-5 h-5 text-gray-600" />
+                <ArrowLeft className="w-5 h-5 text-gray-600 dark:text-gray-300" />
               </button>
-              <h1 className="text-xl font-semibold text-gray-900">Room Service Menu</h1>
+              <h1 className="text-xl font-semibold text-gray-900 dark:text-white">Room Service Menu</h1>
               <div className="w-10 h-10"></div>
             </div>
           </div>
 
           {/* Categories */}
-          <div className="bg-white border-b px-6 py-4">
+          <div className="bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700 px-6 py-4">
             <div className="max-w-4xl mx-auto">
               <div className="flex flex-wrap gap-2">
                 {categories.map(category => (
@@ -761,7 +763,7 @@ const GuestPortal: React.FC<GuestPortalProps> = ({ hotelId, roomId }) => {
                     className={`px-4 py-2 rounded-full text-sm font-medium transition-colors ${
                       selectedCategory === category
                         ? 'bg-blue-600 text-white'
-                        : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                        : 'bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600'
                     }`}
                   >
                     {category}
@@ -779,17 +781,17 @@ const GuestPortal: React.FC<GuestPortalProps> = ({ hotelId, roomId }) => {
             ) : (
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                 {filteredItems.map(service => (
-                  <div key={service._id} className="bg-white rounded-2xl shadow-lg p-6 hover:shadow-xl transition-shadow">
+                  <div key={service._id} className="bg-white dark:bg-gray-800 rounded-2xl shadow-lg p-6 hover:shadow-xl transition-shadow">
                     <div className="flex items-start justify-between mb-4">
-                      <h3 className="font-bold text-gray-900 text-lg">{service.name}</h3>
-                      <div className="flex items-center text-sm text-gray-500">
-                        <Clock className="w-4 h-4 mr-1" />
+                      <h3 className="font-bold text-gray-900 dark:text-white text-lg">{service.name}</h3>
+                      <div className="flex items-center text-sm text-gray-500 dark:text-gray-400">
+                        <Clock className="w-4 h-4 mr-1 text-gray-500 dark:text-gray-400" />
                         {service.estimatedTime}
                       </div>
                     </div>
-                    <p className="text-gray-600 mb-6">{service.description}</p>
+                    <p className="text-gray-600 dark:text-gray-300 mb-6">{service.description}</p>
                     <div className="flex items-center justify-between">
-                      <span className="px-3 py-1 bg-blue-100 text-blue-800 rounded-full text-sm font-medium">
+                      <span className="px-3 py-1 bg-blue-100 dark:bg-blue-900 text-blue-800 dark:text-blue-200 rounded-full text-sm font-medium">
                         {service.category}
                       </span>
                       <button
@@ -804,9 +806,9 @@ const GuestPortal: React.FC<GuestPortalProps> = ({ hotelId, roomId }) => {
                 ))}
                 {filteredItems.length === 0 && !loading && (
                   <div className="col-span-3 text-center py-12">
-                    <Home className="h-12 w-12 text-gray-400 mx-auto mb-4" />
-                    <p className="text-gray-500">No room services available</p>
-                    <p className="text-sm text-gray-400">Please check back later</p>
+                    <Home className="h-12 w-12 text-gray-400 dark:text-gray-500 mx-auto mb-4" />
+                    <p className="text-gray-500 dark:text-gray-400">No room services available</p>
+                    <p className="text-sm text-gray-400 dark:text-gray-500">Please check back later</p>
                   </div>
                 )}
               </div>
@@ -822,23 +824,23 @@ const GuestPortal: React.FC<GuestPortalProps> = ({ hotelId, roomId }) => {
       const filteredItems = filterItemsByCategory(complaintItems);
 
       return (
-        <div className="min-h-screen bg-gray-100">
+        <div className="min-h-screen bg-gray-100 dark:bg-gray-900">
           {/* Header */}
-          <div className="bg-white border-b px-6 py-4">
+          <div className="bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700 px-6 py-4">
             <div className="max-w-4xl mx-auto flex items-center justify-between">
               <button
                 onClick={() => setStep('services')}
-                className="w-10 h-10 bg-gray-100 rounded-lg flex items-center justify-center hover:bg-gray-200 transition-colors"
+                className="w-10 h-10 bg-gray-100 dark:bg-gray-700 rounded-lg flex items-center justify-center hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors"
               >
-                <ArrowLeft className="w-5 h-5 text-gray-600" />
+                <ArrowLeft className="w-5 h-5 text-gray-600 dark:text-gray-300" />
               </button>
-              <h1 className="text-xl font-semibold text-gray-900">Taxi Service</h1>
+              <h1 className="text-xl font-semibold text-gray-900 dark:text-white">Taxi Service</h1>
               <div className="w-10 h-10"></div>
             </div>
           </div>
 
           {/* Categories */}
-          <div className="bg-white border-b px-6 py-4">
+          <div className="bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700 px-6 py-4">
             <div className="max-w-4xl mx-auto">
               <div className="flex flex-wrap gap-2">
                 {categories.map(category => (
@@ -848,7 +850,7 @@ const GuestPortal: React.FC<GuestPortalProps> = ({ hotelId, roomId }) => {
                     className={`px-4 py-2 rounded-full text-sm font-medium transition-colors ${
                       selectedCategory === category
                         ? 'bg-green-600 text-white'
-                        : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                        : 'bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600'
                     }`}
                   >
                     {category}
@@ -866,16 +868,16 @@ const GuestPortal: React.FC<GuestPortalProps> = ({ hotelId, roomId }) => {
             ) : (
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                 {filteredItems.map(complaint => (
-                  <div key={complaint._id} className="bg-white rounded-2xl shadow-lg p-6 hover:shadow-xl transition-shadow">
+                  <div key={complaint._id} className="bg-white dark:bg-gray-800 rounded-2xl shadow-lg p-6 hover:shadow-xl transition-shadow">
                     <div className="flex items-start justify-between mb-4">
-                      <h3 className="font-bold text-gray-900 text-lg">{complaint.name}</h3>
+                      <h3 className="font-bold text-gray-900 dark:text-white text-lg">{complaint.name}</h3>
                       <span className={`px-3 py-1 rounded-full text-sm font-medium ${getPriorityColor(complaint.priority)}`}>
                         {complaint.priority} Priority
                       </span>
                     </div>
-                    <p className="text-gray-600 mb-6">{complaint.description}</p>
+                    <p className="text-gray-600 dark:text-gray-300 mb-6">{complaint.description}</p>
                     <div className="flex items-center justify-between">
-                      <span className="px-3 py-1 bg-gray-100 text-gray-800 rounded-full text-sm font-medium">
+                      <span className="px-3 py-1 bg-gray-100 dark:bg-gray-700 text-gray-800 dark:text-gray-200 rounded-full text-sm font-medium">
                         {complaint.category}
                       </span>
                       <button
@@ -890,9 +892,9 @@ const GuestPortal: React.FC<GuestPortalProps> = ({ hotelId, roomId }) => {
                 ))}
                 {filteredItems.length === 0 && !loading && (
                   <div className="col-span-3 text-center py-12">
-                    <Car className="h-12 w-12 text-gray-400 mx-auto mb-4" />
-                    <p className="text-gray-500">No taxi services available</p>
-                    <p className="text-sm text-gray-400">Please check back later</p>
+                    <Car className="h-12 w-12 text-gray-400 dark:text-gray-500 mx-auto mb-4" />
+                    <p className="text-gray-500 dark:text-gray-400">No taxi services available</p>
+                    <p className="text-sm text-gray-400 dark:text-gray-500">Please check back later</p>
                   </div>
                 )}
               </div>
