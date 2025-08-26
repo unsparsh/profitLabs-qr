@@ -305,10 +305,10 @@ const GuestPortal: React.FC<GuestPortalProps> = ({ hotelId, roomId }) => {
 
   const getPriorityColor = (priority: string) => {
     switch (priority?.toLowerCase()) {
-      case 'high': return 'text-red-600 bg-red-50';
-      case 'medium': return 'text-yellow-600 bg-yellow-50';
-      case 'low': return 'text-green-600 bg-green-50';
-      default: return 'text-gray-600 bg-gray-50';
+      case 'high': return 'text-red-600 dark:text-red-400 bg-red-50 dark:bg-red-900';
+      case 'medium': return 'text-yellow-600 dark:text-yellow-400 bg-yellow-50 dark:bg-yellow-900';
+      case 'low': return 'text-green-600 dark:text-green-400 bg-green-50 dark:bg-green-900';
+      default: return 'text-gray-600 dark:text-gray-400 bg-gray-50 dark:bg-gray-700';
     }
   };
 
@@ -415,7 +415,7 @@ const GuestPortal: React.FC<GuestPortalProps> = ({ hotelId, roomId }) => {
                 </div>
                 <h3 className="font-semibold text-gray-900 dark:text-white mb-2">Food Menu</h3>
                 <p className="text-sm text-gray-600 dark:text-gray-300 mb-4">Order food to your room</p>
-                <span className="inline-block bg-yellow-100 text-yellow-800 text-xs font-medium px-3 py-1 rounded-full">
+                <span className="inline-block bg-yellow-100 dark:bg-yellow-900 text-yellow-800 dark:text-yellow-200 text-xs font-medium px-3 py-1 rounded-full">
                   Available
                 </span>
               </button>
@@ -433,7 +433,7 @@ const GuestPortal: React.FC<GuestPortalProps> = ({ hotelId, roomId }) => {
                 </div>
                 <h3 className="font-semibold text-gray-900 dark:text-white mb-2">Housekeeping</h3>
                 <p className="text-sm text-gray-600 dark:text-gray-300 mb-4">Request cleaning service</p>
-                <span className="inline-block bg-yellow-100 text-yellow-800 text-xs font-medium px-3 py-1 rounded-full">
+                <span className="inline-block bg-yellow-100 dark:bg-yellow-900 text-yellow-800 dark:text-yellow-200 text-xs font-medium px-3 py-1 rounded-full">
                   Available
                 </span>
               </button>
@@ -451,7 +451,7 @@ const GuestPortal: React.FC<GuestPortalProps> = ({ hotelId, roomId }) => {
                 </div>
                 <h3 className="font-semibold text-gray-900 dark:text-white mb-2">Concierge</h3>
                 <p className="text-sm text-gray-600 dark:text-gray-300 mb-4">Local recommendations</p>
-                <span className="inline-block bg-yellow-100 text-yellow-800 text-xs font-medium px-3 py-1 rounded-full">
+                <span className="inline-block bg-yellow-100 dark:bg-yellow-900 text-yellow-800 dark:text-yellow-200 text-xs font-medium px-3 py-1 rounded-full">
                   Available
                 </span>
               </button>
@@ -469,7 +469,7 @@ const GuestPortal: React.FC<GuestPortalProps> = ({ hotelId, roomId }) => {
                 </div>
                 <h3 className="font-semibold text-gray-900 dark:text-white mb-2">Complaints</h3>
                 <p className="text-sm text-gray-600 dark:text-gray-300 mb-4">Lodge Complaint to Reception</p>
-                <span className="inline-block bg-yellow-100 text-yellow-800 text-xs font-medium px-3 py-1 rounded-full">
+                <span className="inline-block bg-yellow-100 dark:bg-yellow-900 text-yellow-800 dark:text-yellow-200 text-xs font-medium px-3 py-1 rounded-full">
                   Available
                 </span>
               </button>
@@ -485,7 +485,7 @@ const GuestPortal: React.FC<GuestPortalProps> = ({ hotelId, roomId }) => {
                 </div>
                 <h3 className="font-semibold text-gray-900 dark:text-white mb-2">WiFi Support</h3>
                 <p className="text-sm text-gray-600 dark:text-gray-300 mb-4">Technical assistance</p>
-                <span className="inline-block bg-yellow-100 text-yellow-800 text-xs font-medium px-3 py-1 rounded-full">
+                <span className="inline-block bg-yellow-100 dark:bg-yellow-900 text-yellow-800 dark:text-yellow-200 text-xs font-medium px-3 py-1 rounded-full">
                   Available
                 </span>
               </button>
@@ -500,7 +500,7 @@ const GuestPortal: React.FC<GuestPortalProps> = ({ hotelId, roomId }) => {
                 </div>
                 <h3 className="font-semibold text-gray-900 dark:text-white mb-2">Security</h3>
                 <p className="text-sm text-gray-600 dark:text-gray-300 mb-4">Emergency assistance</p>
-                <span className="inline-block bg-red-100 text-red-800 text-xs font-medium px-3 py-1 rounded-full">
+                <span className="inline-block bg-red-100 dark:bg-red-900 text-red-800 dark:text-red-200 text-xs font-medium px-3 py-1 rounded-full">
                   24/7
                 </span>
               </button>
@@ -834,7 +834,7 @@ const GuestPortal: React.FC<GuestPortalProps> = ({ hotelId, roomId }) => {
               >
                 <ArrowLeft className="w-5 h-5 text-gray-600 dark:text-gray-300" />
               </button>
-              <h1 className="text-xl font-semibold text-gray-900 dark:text-white">Taxi Service</h1>
+              <h1 className="text-xl font-semibold text-gray-900 dark:text-white">Lodge Complaint</h1>
               <div className="w-10 h-10"></div>
             </div>
           </div>
@@ -885,7 +885,7 @@ const GuestPortal: React.FC<GuestPortalProps> = ({ hotelId, roomId }) => {
                         disabled={loading}
                         className="bg-green-600 text-white px-6 py-2 rounded-xl font-semibold hover:bg-green-700 transition-colors disabled:opacity-50"
                       >
-                        {loading ? 'Booking...' : 'Book Ride'}
+                        {loading ? 'Submitting...' : 'Submit Complaint'}
                       </button>
                     </div>
                   </div>
@@ -893,7 +893,7 @@ const GuestPortal: React.FC<GuestPortalProps> = ({ hotelId, roomId }) => {
                 {filteredItems.length === 0 && !loading && (
                   <div className="col-span-3 text-center py-12">
                     <Car className="h-12 w-12 text-gray-400 dark:text-gray-500 mx-auto mb-4" />
-                    <p className="text-gray-500 dark:text-gray-400">No taxi services available</p>
+                    <p className="text-gray-500 dark:text-gray-400">No complaint options available</p>
                     <p className="text-sm text-gray-400 dark:text-gray-500">Please check back later</p>
                   </div>
                 )}

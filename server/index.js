@@ -1860,6 +1860,48 @@ app.get("/api/guest/:hotelId/food-menu", async (req, res) => {
   }
 });
 
+// Guest Room Service Menu Route (no auth required)
+app.get("/api/guest/:hotelId/room-service-menu", async (req, res) => {
+  try {
+    const { hotelId } = req.params;
+
+    if (!mongoose.Types.ObjectId.isValid(hotelId)) {
+      return res.status(400).json({ message: "Invalid hotelId" });
+    }
+
+    const roomServiceItems = await RoomServiceItem.find({
+      hotelId: new mongoose.Types.ObjectId(hotelId),
+      isAvailable: true,
+    });
+
+    res.json(roomServiceItems);
+  } catch (error) {
+    console.error("Guest room service menu error:", error.stack || error);
+    res.status(500).json({ message: "Server error" });
+  }
+});
+
+// Guest Complaint Menu Route (no auth required)
+app.get("/api/guest/:hotelId/complaint-menu", async (req, res) => {
+  try {
+    const { hotelId } = req.params;
+
+    if (!mongoose.Types.ObjectId.isValid(hotelId)) {
+      return res.status(400).json({ message: "Invalid hotelId" });
+    }
+
+    const complaintItems = await ComplaintItem.find({
+      hotelId: new mongoose.Types.ObjectId(hotelId),
+      isAvailable: true,
+    });
+
+    res.json(complaintItems);
+  } catch (error) {
+    console.error("Guest complaint menu error:", error.stack || error);
+    res.status(500).json({ message: "Server error" });
+  }
+});
+
 // Guest portal routes (no authentication required)
 app.get("/api/guest/:hotelId/:roomId", async (req, res) => {
   try {
