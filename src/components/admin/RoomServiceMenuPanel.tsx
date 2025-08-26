@@ -135,8 +135,8 @@ export const RoomServiceMenuPanel: React.FC<RoomServiceMenuPanelProps> = ({ hote
         <div className="flex items-center gap-2 sm:gap-3">
           <Settings className="h-6 w-6 sm:h-8 sm:w-8 text-purple-600" />
           <div>
-            <h2 className="text-lg sm:text-2xl font-bold text-gray-900">Room Service Menu</h2>
-            <p className="text-xs sm:text-base text-gray-600 hidden sm:block">Manage available room service options</p>
+            <h2 className="text-lg sm:text-2xl font-bold text-gray-900 dark:text-white">Room Service Menu</h2>
+            <p className="text-xs sm:text-base text-gray-600 dark:text-gray-300 hidden sm:block">Manage available room service options</p>
           </div>
         </div>
         <button
@@ -151,14 +151,14 @@ export const RoomServiceMenuPanel: React.FC<RoomServiceMenuPanelProps> = ({ hote
 
       {/* Add/Edit Item Form */}
       {(isAddingItem || editingItem) && (
-        <div className="bg-white rounded-lg shadow-sm p-4 sm:p-6">
-          <h3 className="text-base sm:text-lg font-medium text-gray-900 mb-4">
+        <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm p-4 sm:p-6">
+          <h3 className="text-base sm:text-lg font-medium text-gray-900 dark:text-white mb-4">
             {editingItem ? 'Edit Room Service Item' : 'Add New Room Service Item'}
           </h3>
           <form onSubmit={editingItem ? handleEditItem : handleAddItem} className="space-y-4">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
-                <label className="block text-xs sm:text-sm font-medium text-gray-700 mb-2">
+                <label className="block text-xs sm:text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                   Service Name *
                 </label>
                 <input
@@ -168,13 +168,13 @@ export const RoomServiceMenuPanel: React.FC<RoomServiceMenuPanelProps> = ({ hote
                     ? setEditingItem({ ...editingItem, name: e.target.value })
                     : setNewItem({ ...newItem, name: e.target.value })
                   }
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+                  className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
                   placeholder="e.g., Clean Room"
                   required
                 />
               </div>
               <div>
-                <label className="block text-xs sm:text-sm font-medium text-gray-700 mb-2">
+                <label className="block text-xs sm:text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                   Category *
                 </label>
                 <div className="grid grid-cols-2 gap-2">
@@ -191,14 +191,14 @@ export const RoomServiceMenuPanel: React.FC<RoomServiceMenuPanelProps> = ({ hote
                         }
                         className="mr-2"
                       />
-                      <span className="text-xs sm:text-sm">{category.label}</span>
+                      <span className="text-xs sm:text-sm text-gray-900 dark:text-gray-300">{category.label}</span>
                     </label>
                   ))}
                 </div>
               </div>
             </div>
             <div>
-              <label className="block text-xs sm:text-sm font-medium text-gray-700 mb-2">
+              <label className="block text-xs sm:text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                 Description
               </label>
               <textarea
@@ -207,13 +207,13 @@ export const RoomServiceMenuPanel: React.FC<RoomServiceMenuPanelProps> = ({ hote
                   ? setEditingItem({ ...editingItem, description: e.target.value })
                   : setNewItem({ ...newItem, description: e.target.value })
                 }
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+                className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
                 placeholder="Describe the service..."
                 rows={3}
               />
             </div>
             <div>
-              <label className="block text-xs sm:text-sm font-medium text-gray-700 mb-2">
+              <label className="block text-xs sm:text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                 Estimated Time *
               </label>
               <select
@@ -222,7 +222,7 @@ export const RoomServiceMenuPanel: React.FC<RoomServiceMenuPanelProps> = ({ hote
                   ? setEditingItem({ ...editingItem, estimatedTime: e.target.value })
                   : setNewItem({ ...newItem, estimatedTime: e.target.value })
                 }
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+                className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
                 required
               >
                 {timeOptions.map((time) => (
@@ -237,7 +237,7 @@ export const RoomServiceMenuPanel: React.FC<RoomServiceMenuPanelProps> = ({ hote
                   setIsAddingItem(false);
                   setEditingItem(null);
                 }}
-                className="px-4 py-2 text-sm sm:text-base text-gray-700 bg-gray-200 rounded-lg hover:bg-gray-300 transition-colors"
+                className="px-4 py-2 text-sm sm:text-base text-gray-700 dark:text-gray-300 bg-gray-200 dark:bg-gray-700 rounded-lg hover:bg-gray-300 dark:hover:bg-gray-600 transition-colors"
               >
                 Cancel
               </button>
@@ -256,16 +256,16 @@ export const RoomServiceMenuPanel: React.FC<RoomServiceMenuPanelProps> = ({ hote
       {/* Service Items by Category */}
       {categorizedItems.length > 0 ? (
         categorizedItems.map(category => (
-          <div key={category.value} className="bg-white rounded-lg shadow-sm">
-            <div className="px-4 sm:px-6 py-3 sm:py-4 border-b border-gray-200">
-              <h3 className="text-base sm:text-lg font-medium text-gray-900">{category.label}</h3>
+          <div key={category.value} className="bg-white dark:bg-gray-800 rounded-lg shadow-sm">
+            <div className="px-4 sm:px-6 py-3 sm:py-4 border-b border-gray-200 dark:border-gray-700">
+              <h3 className="text-base sm:text-lg font-medium text-gray-900 dark:text-white">{category.label}</h3>
             </div>
             <div className="p-3 sm:p-6">
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4">
                 {category.items.map(item => (
-                  <div key={item._id} className="border border-gray-200 rounded-lg p-3 sm:p-4">
+                  <div key={item._id} className="border border-gray-200 dark:border-gray-700 rounded-lg p-3 sm:p-4">
                     <div className="flex justify-between items-start mb-2">
-                      <h4 className="text-sm sm:text-base font-semibold text-gray-900 truncate mr-2">{item.name}</h4>
+                      <h4 className="text-sm sm:text-base font-semibold text-gray-900 dark:text-white truncate mr-2">{item.name}</h4>
                       <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
                         item.isAvailable 
                           ? 'bg-green-100 text-green-800' 
@@ -275,7 +275,7 @@ export const RoomServiceMenuPanel: React.FC<RoomServiceMenuPanelProps> = ({ hote
                       </span>
                     </div>
                     {item.description && (
-                      <p className="text-xs sm:text-sm text-gray-600 mb-2 line-clamp-2">{item.description}</p>
+                      <p className="text-xs sm:text-sm text-gray-600 dark:text-gray-300 mb-2 line-clamp-2">{item.description}</p>
                     )}
                     <div className="flex items-center justify-between mb-3">
                       <span className="text-xs sm:text-sm text-purple-600 flex items-center">
@@ -316,8 +316,8 @@ export const RoomServiceMenuPanel: React.FC<RoomServiceMenuPanelProps> = ({ hote
       ) : (
         <div className="text-center py-12">
           <Settings className="h-12 w-12 text-gray-400 mx-auto mb-4" />
-          <p className="text-gray-500">No room service items added yet</p>
-          <p className="text-sm text-gray-400">Add your first service item to get started</p>
+          <p className="text-gray-500 dark:text-gray-400">No room service items added yet</p>
+          <p className="text-sm text-gray-400 dark:text-gray-500">Add your first service item to get started</p>
         </div>
       )}
     </div>

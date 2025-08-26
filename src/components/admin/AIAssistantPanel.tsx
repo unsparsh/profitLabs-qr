@@ -372,22 +372,22 @@ const fetchGoogleReviews = async () => {
 
         {/* Google Sign-In Card */}
         <div className="max-w-md mx-auto">
-          <div className="bg-white rounded-2xl shadow-lg p-8 text-center">
-            <div className="w-20 h-20 bg-purple-100 rounded-full flex items-center justify-center mx-auto mb-6">
-              <Bot className="w-10 h-10 text-purple-600" />
+          <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-lg p-8 text-center">
+            <div className="w-20 h-20 bg-purple-100 dark:bg-purple-900 rounded-full flex items-center justify-center mx-auto mb-6">
+              <Bot className="w-10 h-10 text-purple-600 dark:text-purple-400" />
             </div>
             
-            <h3 className="text-xl font-bold text-gray-900 mb-3">
+            <h3 className="text-xl font-bold text-gray-900 dark:text-white mb-3">
               Connect Google My Business
             </h3>
-            <p className="text-gray-600 mb-6">
+            <p className="text-gray-600 dark:text-gray-300 mb-6">
               Sign in with Google to access your business reviews and start using AI-powered reply assistance.
             </p>
 
             <button
               onClick={handleGoogleSignIn}
               disabled={isLoading}
-              className="w-full bg-white border-2 border-gray-300 text-gray-700 py-3 px-6 rounded-xl font-semibold hover:border-gray-400 hover:shadow-md transition-all duration-200 flex items-center justify-center gap-3 disabled:opacity-50"
+              className="w-full bg-white dark:bg-gray-700 border-2 border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-200 py-3 px-6 rounded-xl font-semibold hover:border-gray-400 dark:hover:border-gray-500 hover:shadow-md transition-all duration-200 flex items-center justify-center gap-3 disabled:opacity-50"
             >
               {isLoading ? (
                 <>
@@ -407,8 +407,8 @@ const fetchGoogleReviews = async () => {
               )}
             </button>
 
-            <div className="mt-6 p-4 bg-blue-50 rounded-lg">
-              <p className="text-sm text-blue-800">
+            <div className="mt-6 p-4 bg-blue-50 dark:bg-blue-900/20 rounded-lg">
+              <p className="text-sm text-blue-800 dark:text-blue-200">
                 <strong>AI-Powered Review Assistant</strong><br/>
                 Generate professional, SEO-optimized replies using advanced AI or smart templates.
               </p>
@@ -427,20 +427,20 @@ const fetchGoogleReviews = async () => {
         <div className="flex items-center gap-3">
           <Bot className="h-8 w-8 text-purple-600" />
           <div>
-            <h2 className="text-2xl font-bold text-gray-900">AI Review Assistant</h2>
-            <p className="text-gray-600">Manage Google reviews with AI-powered responses</p>
+            <h2 className="text-2xl font-bold text-gray-900 dark:text-white">AI Review Assistant</h2>
+            <p className="text-gray-600 dark:text-gray-300">Manage Google reviews with AI-powered responses</p>
           </div>
         </div>
         {googleAccount && (
-          <div className="flex items-center gap-3 bg-white rounded-lg p-3 shadow-sm">
+          <div className="flex items-center gap-3 bg-white dark:bg-gray-800 rounded-lg p-3 shadow-sm">
             <img
               src={googleAccount.picture}
               alt={googleAccount.name}
               className="w-8 h-8 rounded-full"
             />
             <div className="text-sm">
-              <p className="font-medium text-gray-900">{googleAccount.businessName}</p>
-              <p className="text-gray-500">{googleAccount.email}</p>
+              <p className="font-medium text-gray-900 dark:text-white">{googleAccount.businessName}</p>
+              <p className="text-gray-500 dark:text-gray-400">{googleAccount.email}</p>
             </div>
             <button
               onClick={handleGoogleSignOut}
@@ -456,14 +456,14 @@ const fetchGoogleReviews = async () => {
     </div>
 
       {/* Tabs */}
-      <div className="border-b border-gray-200">
+      <div className="border-b border-gray-200 dark:border-gray-700">
         <nav className="-mb-px flex space-x-8">
           <button
             onClick={() => setActiveTab('reviews')}
             className={`py-2 px-1 border-b-2 font-medium text-sm ${
               activeTab === 'reviews'
-                ? 'border-purple-500 text-purple-600'
-                : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+                ? 'border-purple-500 text-purple-600 dark:text-purple-400'
+                : 'border-transparent text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300 hover:border-gray-300 dark:hover:border-gray-600'
             }`}
           >
             <MessageSquare className="h-4 w-4 inline mr-2" />
@@ -473,8 +473,8 @@ const fetchGoogleReviews = async () => {
             onClick={() => setActiveTab('templates')}
             className={`py-2 px-1 border-b-2 font-medium text-sm ${
               activeTab === 'templates'
-                ? 'border-purple-500 text-purple-600'
-                : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+                ? 'border-purple-500 text-purple-600 dark:text-purple-400'
+                : 'border-transparent text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300 hover:border-gray-300 dark:hover:border-gray-600'
             }`}
           >
             <FileText className="h-4 w-4 inline mr-2" />
@@ -488,9 +488,9 @@ const fetchGoogleReviews = async () => {
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
           {/* Reviews List */}
           <div className="space-y-4">
-            <h3 className="text-lg font-semibold text-gray-900">Recent Reviews</h3>
+            <h3 className="text-lg font-semibold text-gray-900 dark:text-white">Recent Reviews</h3>
             <div className="flex items-center justify-between">
-              <p className="text-sm text-gray-600">
+              <p className="text-sm text-gray-600 dark:text-gray-400">
                 {reviews.length > 0 ? `${reviews.length} reviews loaded` : 'No reviews found'}
               </p>
               <button
@@ -504,32 +504,32 @@ const fetchGoogleReviews = async () => {
             {isLoading ? (
               <div className="flex items-center justify-center py-8">
                 <Loader className="h-6 w-6 animate-spin text-purple-600" />
-                <span className="ml-2 text-gray-600">Loading reviews...</span>
+                <span className="ml-2 text-gray-600 dark:text-gray-400">Loading reviews...</span>
               </div>
             ) : reviews.length > 0 ? (
               <div className="space-y-4">
                 {reviews.map((review) => (
                   <div
                     key={review.reviewId}
-                    className={`bg-white rounded-lg shadow-sm p-4 border-2 cursor-pointer transition-all ${
+                    className={`bg-white dark:bg-gray-800 rounded-lg shadow-sm p-4 border-2 cursor-pointer transition-all ${
                       selectedReview?.reviewId === review.reviewId
-                        ? 'border-purple-500 bg-purple-50'
-                        : 'border-gray-200 hover:border-gray-300'
+                        ? 'border-purple-500 bg-purple-50 dark:bg-purple-900/20'
+                        : 'border-gray-200 dark:border-gray-700 hover:border-gray-300 dark:hover:border-gray-600'
                     }`}
                     onClick={() => setSelectedReview(review)}
                   >
                     <div className="flex items-start justify-between mb-2">
                       <div className="flex items-center gap-2">
                         <User className="h-4 w-4 text-gray-400" />
-                        <span className="font-medium text-gray-900">{review.reviewer.displayName}</span>
+                        <span className="font-medium text-gray-900 dark:text-white">{review.reviewer.displayName}</span>
                       </div>
                       <div className="flex items-center gap-1">
                         {getRatingStars(review.starRating)}
                       </div>
                     </div>
-                    <p className="text-sm text-gray-600 mb-2 line-clamp-2">{review.comment}</p>
+                    <p className="text-sm text-gray-600 dark:text-gray-300 mb-2 line-clamp-2">{review.comment}</p>
                     <div className="flex items-center justify-between">
-                      <span className="text-xs text-gray-500">
+                      <span className="text-xs text-gray-500 dark:text-gray-400">
                         <Calendar className="h-3 w-3 inline mr-1" />
                         {formatDate(review.createTime)}
                       </span>
@@ -549,38 +549,38 @@ const fetchGoogleReviews = async () => {
             ) : (
               <div className="text-center py-8">
                 <MessageSquare className="h-12 w-12 text-gray-400 mx-auto mb-4" />
-                <p className="text-gray-500">No reviews found</p>
-                <p className="text-sm text-gray-400">Reviews will appear here once available</p>
+                <p className="text-gray-500 dark:text-gray-400">No reviews found</p>
+                <p className="text-sm text-gray-400 dark:text-gray-500">Reviews will appear here once available</p>
               </div>
             )}
           </div>
 
           {/* Reply Panel */}
           <div className="space-y-4">
-            <h3 className="text-lg font-semibold text-gray-900">Generate Reply</h3>
+            <h3 className="text-lg font-semibold text-gray-900 dark:text-white">Generate Reply</h3>
             
             {selectedReview ? (
               <div className="space-y-4">
                 {/* Selected Review Display */}
-                <div className="bg-gray-50 rounded-lg p-4">
+                <div className="bg-gray-50 dark:bg-gray-700 rounded-lg p-4">
                   <div className="flex items-center gap-2 mb-2">
-                    <span className="font-medium text-gray-900">{selectedReview.reviewer.displayName}</span>
+                    <span className="font-medium text-gray-900 dark:text-white">{selectedReview.reviewer.displayName}</span>
                     <div className="flex items-center gap-1">
                       {getRatingStars(selectedReview.starRating)}
                     </div>
                   </div>
-                  <p className="text-sm text-gray-600">{selectedReview.comment}</p>
+                  <p className="text-sm text-gray-600 dark:text-gray-300">{selectedReview.comment}</p>
                 </div>
 
                 {/* Template Selection */}
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                     Select Template (Optional)
                   </label>
                   <select
                     value={selectedTemplate}
                     onChange={(e) => handleTemplateSelect(e.target.value)}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+                    className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
                     aria-label="Select template"
                   >
                     <option value="">No template</option>
@@ -616,13 +616,13 @@ const fetchGoogleReviews = async () => {
                 {/* Final Reply Editor */}
                 {finalReply && (
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                       Final Reply
                     </label>
                     <textarea
                       value={finalReply}
                       onChange={(e) => setFinalReply(e.target.value)}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+                      className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
                       rows={4}
                       placeholder="Edit your reply before sending..."
                     />
@@ -649,7 +649,7 @@ const fetchGoogleReviews = async () => {
             ) : (
               <div className="text-center py-8">
                 <MessageSquare className="h-12 w-12 text-gray-400 mx-auto mb-4" />
-                <p className="text-gray-500">Select a review to generate a reply</p>
+                <p className="text-gray-500 dark:text-gray-400">Select a review to generate a reply</p>
               </div>
             )}
           </div>
@@ -672,8 +672,8 @@ const fetchGoogleReviews = async () => {
 
           {/* Add/Edit Form */}
           {(isAddingTemplate || editingTemplate) && (
-            <div className="bg-white rounded-lg shadow-sm p-6">
-              <h3 className="text-lg font-medium text-gray-900 mb-4">
+            <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm p-6">
+              <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-4">
                 {editingTemplate ? 'Edit Template' : 'Add New Template'}
               </h3>
               <form
@@ -681,7 +681,7 @@ const fetchGoogleReviews = async () => {
                 className="space-y-4"
               >
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">Template Name *</label>
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Template Name *</label>
                   <input
                     type="text"
                     value={editingTemplate ? editingTemplate.name : newTemplate.name}
@@ -690,13 +690,13 @@ const fetchGoogleReviews = async () => {
                         ? setEditingTemplate({ ...editingTemplate, name: e.target.value })
                         : setNewTemplate({ ...newTemplate, name: e.target.value })
                     }
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+                    className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
                     placeholder="e.g., Positive Review Response"
                     required
                   />
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">Tone *</label>
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Tone *</label>
                   <select
                     value={editingTemplate ? editingTemplate.tone : newTemplate.tone}
                     onChange={(e) =>
@@ -704,7 +704,7 @@ const fetchGoogleReviews = async () => {
                         ? setEditingTemplate({ ...editingTemplate, tone: e.target.value as any })
                         : setNewTemplate({ ...newTemplate, tone: e.target.value as any })
                     }
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+                    className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
                     aria-label="Select tone"
                     required
                   >
@@ -714,7 +714,7 @@ const fetchGoogleReviews = async () => {
                   </select>
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">Template Content *</label>
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Template Content *</label>
                   <textarea
                     value={editingTemplate ? editingTemplate.content : newTemplate.content}
                     onChange={(e) =>
@@ -722,12 +722,12 @@ const fetchGoogleReviews = async () => {
                         ? setEditingTemplate({ ...editingTemplate, content: e.target.value })
                         : setNewTemplate({ ...newTemplate, content: e.target.value })
                     }
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+                    className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
                     rows={4}
                     placeholder="Use {customerName} and {ai_content} as placeholders..."
                     required
                   />
-                  <p className="text-xs text-gray-500 mt-1">
+                  <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
                     Use placeholders: {'{customerName}'} for customer name, {'{ai_content}'} for AI-generated content
                   </p>
                 </div>
