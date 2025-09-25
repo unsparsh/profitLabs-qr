@@ -89,6 +89,31 @@ class ApiClient {
     });
   }
 
+  // Guest management endpoints
+  async createGuest(hotelId: string, guestData: any) {
+    return this.request<any>(`/hotels/${hotelId}/guests`, {
+      method: 'POST',
+      body: JSON.stringify(guestData),
+    });
+  }
+
+  async getGuests(hotelId: string) {
+    return this.request<any[]>(`/hotels/${hotelId}/guests`);
+  }
+
+  async updateGuest(hotelId: string, guestId: string, data: any) {
+    return this.request<any>(`/hotels/${hotelId}/guests/${guestId}`, {
+      method: 'PUT',
+      body: JSON.stringify(data),
+    });
+  }
+
+  async checkOutGuest(hotelId: string, guestId: string) {
+    return this.request<any>(`/hotels/${hotelId}/guests/${guestId}/checkout`, {
+      method: 'POST',
+    });
+  }
+
   async deleteRoom(hotelId: string, roomId: string) {
     return this.request<any>(`/hotels/${hotelId}/rooms/${roomId}`, {
       method: 'DELETE',
