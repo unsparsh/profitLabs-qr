@@ -1,23 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { 
-  MapPin, 
-  Users, 
-  Calendar, 
-  Phone, 
-  Mail, 
-  CreditCard, 
-  Plus, 
-  Edit, 
-  Wrench, 
-  UserCheck,
-  Bed,
-  DollarSign,
-  Save,
-  X,
-  CheckCircle,
-  AlertTriangle,
-  User
-} from 'lucide-react';
+import { MapPin, Users, Calendar, Phone, Mail, CreditCard, Plus, CreditCard as Edit, Wrench, UserCheck, Bed, DollarSign, Save, X, CheckCircle, AlertTriangle, User } from 'lucide-react';
 import { apiClient } from '../../utils/api';
 import toast from 'react-hot-toast';
 
