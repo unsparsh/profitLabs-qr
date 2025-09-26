@@ -64,6 +64,35 @@ export interface User {
   updatedAt: Date;
 }
 
+export interface Guest {
+  _id: string;
+  hotelId: string;
+  name: string;
+  email: string;
+  phone: string;
+  idType: string;
+  idNumber: string;
+  address: string;
+  checkInDate: Date;
+  checkOutDate: Date;
+  adults: number;
+  children: number;
+  roomId: string;
+  roomNumber: string;
+  roomType: string;
+  ratePerNight: number;
+  totalNights: number;
+  totalAmount: number;
+  advancePayment: number;
+  paidAmount: number;
+  pendingAmount: number;
+  additionalCharges?: number;
+  specialRequests?: string;
+  status: 'checked-in' | 'checked-out';
+  createdAt: Date;
+  updatedAt: Date;
+}
+
 export interface GuestPortalProps {
   hotelId: string;
   roomId: string;

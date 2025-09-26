@@ -15,7 +15,8 @@ import {
   Save,
   X,
   CheckCircle,
-  AlertTriangle
+  AlertTriangle,
+  User
 } from 'lucide-react';
 import { apiClient } from '../../utils/api';
 import toast from 'react-hot-toast';
@@ -38,6 +39,7 @@ interface Room {
     name: string;
     checkInDate: string;
     checkOutDate: string;
+    guestId: string;
   };
 }
 
@@ -55,9 +57,18 @@ interface Guest {
   children: number;
   roomId: string;
   roomNumber: string;
+  roomType: string;
+  ratePerNight: number;
+  totalNights: number;
   totalAmount: number;
   advancePayment: number;
+  pendingAmount: number;
+  paidAmount: number;
   specialRequests?: string;
+  status: 'checked-in' | 'checked-out';
+  hotelId: string;
+  createdAt?: string;
+  updatedAt?: string;
 }
 
 export const PositionCheckIn: React.FC<PositionCheckInProps> = ({ hotel }) => {
@@ -68,6 +79,7 @@ export const PositionCheckIn: React.FC<PositionCheckInProps> = ({ hotel }) => {
   const [isAddingRoom, setIsAddingRoom] = useState(false);
   const [editingRoom, setEditingRoom] = useState<Room | null>(null);
   const [isLoading, setIsLoading] = useState(false);
+  const [isCheckingIn, setIsCheckingIn] = useState(false);
   
   const [guestDetails, setGuestDetails] = useState<Guest>({
     name: '',
@@ -82,9 +94,16 @@ export const PositionCheckIn: React.FC<PositionCheckInProps> = ({ hotel }) => {
     children: 0,
     roomId: '',
     roomNumber: '',
+    roomType: '',
+    ratePerNight: 0,
+    totalNights: 0,
     totalAmount: 0,
     advancePayment: 0,
-    specialRequests: ''
+    pendingAmount: 0,
+    paidAmount: 0,
+    specialRequests: '',
+    status: 'checked-in',
+    hotelId: hotel._id
   });
 
   const [newRoom, setNewRoom] = useState({
@@ -115,6 +134,12 @@ export const PositionCheckIn: React.FC<PositionCheckInProps> = ({ hotel }) => {
     fetchGuests();
   }, [hotel._id]);
 
+  useEffect(() => {
+    if (selectedRoom && guestDetails.checkInDate && guestDetails.checkOutDate) {
+      calculateBilling();
+    }
+  }, [selectedRoom, guestDetails.checkInDate, guestDetails.checkOutDate]);
+
   const fetchRooms = async () => {
     try {
       const data = await apiClient.getRooms(hotel._id);
@@ -134,12 +159,34 @@ export const PositionCheckIn: React.FC<PositionCheckInProps> = ({ hotel }) => {
 
   const fetchGuests = async () => {
     try {
-      // This would be a new API endpoint for guests
-      // For now, we'll use mock data
-      setGuests([]);
+      const data = await apiClient.getGuests(hotel._id);
+      setGuests(data);
     } catch (error) {
       console.error('Failed to fetch guests:', error);
+      toast.error('Failed to load guests');
     }
+  };
+
+  const calculateBilling = () => {
+    const selectedRoomData = rooms.find(r => r._id === selectedRoom);
+    if (!selectedRoomData || !guestDetails.checkInDate || !guestDetails.checkOutDate) return;
+
+    const checkIn = new Date(guestDetails.checkInDate);
+    const checkOut = new Date(guestDetails.checkOutDate);
+    const nights = Math.ceil((checkOut.getTime() - checkIn.getTime()) / (1000 * 60 * 60 * 24));
+    const totalAmount = nights > 0 ? nights * selectedRoomData.rate : 0;
+    const pendingAmount = totalAmount - guestDetails.advancePayment;
+
+    setGuestDetails(prev => ({
+      ...prev,
+      roomNumber: selectedRoomData.number,
+      roomType: selectedRoomData.type,
+      ratePerNight: selectedRoomData.rate,
+      totalNights: nights,
+      totalAmount,
+      pendingAmount,
+      paidAmount: prev.advancePayment
+    }));
   };
 
   const handleAddRoom = async (e: React.FormEvent) => {
@@ -182,7 +229,14 @@ export const PositionCheckIn: React.FC<PositionCheckInProps> = ({ hotel }) => {
 
     setIsLoading(true);
     try {
-      await apiClient.updateRoom(hotel._id, editingRoom._id, editingRoom);
+      await apiClient.updateRoom(hotel._id, editingRoom._id, {
+        number: editingRoom.number,
+        name: editingRoom.name,
+        type: editingRoom.type,
+        rate: editingRoom.rate,
+        maxOccupancy: editingRoom.maxOccupancy,
+        amenities: editingRoom.amenities
+      });
       setEditingRoom(null);
       fetchRooms();
       toast.success('Room updated successfully');
@@ -206,7 +260,7 @@ export const PositionCheckIn: React.FC<PositionCheckInProps> = ({ hotel }) => {
   const handleCheckIn = async (e: React.FormEvent) => {
     e.preventDefault();
     
-    if (!selectedRoom || !guestDetails.name || !guestDetails.phone || !guestDetails.idNumber) {
+    if (!selectedRoom || !guestDetails.name || !guestDetails.phone || !guestDetails.idNumber || !guestDetails.checkOutDate) {
       toast.error('Please fill all required fields and select a room');
       return;
     }
@@ -217,34 +271,30 @@ export const PositionCheckIn: React.FC<PositionCheckInProps> = ({ hotel }) => {
       return;
     }
 
-    // Calculate total amount
-    const checkIn = new Date(guestDetails.checkInDate);
-    const checkOut = new Date(guestDetails.checkOutDate);
-    const nights = Math.ceil((checkOut.getTime() - checkIn.getTime()) / (1000 * 60 * 60 * 24));
-    const totalAmount = nights * selectedRoomData.rate;
+    if (guestDetails.totalAmount <= 0) {
+      toast.error('Invalid stay duration or room rate');
+      return;
+    }
 
-    setIsLoading(true);
+    setIsCheckingIn(true);
     try {
-      // Create guest record (this would be a new API endpoint)
+      // Create guest record
       const guestData = {
         ...guestDetails,
         roomId: selectedRoom,
-        roomNumber: selectedRoomData.number,
-        totalAmount,
-        hotelId: hotel._id,
-        status: 'checked-in'
+        hotelId: hotel._id
       };
 
-      // For now, we'll simulate the API call
-      console.log('Creating guest record:', guestData);
+      const createdGuest = await apiClient.createGuest(hotel._id, guestData);
       
-      // Update room status to occupied
+      // Update room status to occupied with guest info
       await apiClient.updateRoom(hotel._id, selectedRoom, { 
         status: 'occupied',
         currentGuest: {
           name: guestDetails.name,
           checkInDate: guestDetails.checkInDate,
-          checkOutDate: guestDetails.checkOutDate
+          checkOutDate: guestDetails.checkOutDate,
+          guestId: createdGuest._id
         }
       });
 
@@ -262,18 +312,40 @@ export const PositionCheckIn: React.FC<PositionCheckInProps> = ({ hotel }) => {
         children: 0,
         roomId: '',
         roomNumber: '',
+        roomType: '',
+        ratePerNight: 0,
+        totalNights: 0,
         totalAmount: 0,
         advancePayment: 0,
-        specialRequests: ''
+        pendingAmount: 0,
+        paidAmount: 0,
+        specialRequests: '',
+        status: 'checked-in',
+        hotelId: hotel._id
       });
       setSelectedRoom('');
       
       fetchRooms();
+      fetchGuests();
       toast.success('Guest checked in successfully!');
-    } catch (error) {
-      toast.error('Failed to check in guest');
+    } catch (error: any) {
+      console.error('Check-in error:', error);
+      toast.error(error.message || 'Failed to check in guest');
     } finally {
-      setIsLoading(false);
+      setIsCheckingIn(false);
+    }
+  };
+
+  const handleCheckOut = async (guestId: string) => {
+    if (!confirm('Are you sure you want to check out this guest?')) return;
+
+    try {
+      await apiClient.checkOutGuest(hotel._id, guestId);
+      fetchRooms();
+      fetchGuests();
+      toast.success('Guest checked out successfully');
+    } catch (error) {
+      toast.error('Failed to check out guest');
     }
   };
 
@@ -307,24 +379,11 @@ export const PositionCheckIn: React.FC<PositionCheckInProps> = ({ hotel }) => {
     }
   };
 
-  const calculateStayAmount = () => {
-    if (!selectedRoom || !guestDetails.checkInDate || !guestDetails.checkOutDate) return 0;
-    
-    const selectedRoomData = rooms.find(r => r._id === selectedRoom);
-    if (!selectedRoomData) return 0;
-
-    const checkIn = new Date(guestDetails.checkInDate);
-    const checkOut = new Date(guestDetails.checkOutDate);
-    const nights = Math.ceil((checkOut.getTime() - checkIn.getTime()) / (1000 * 60 * 60 * 24));
-    
-    return nights > 0 ? nights * selectedRoomData.rate : 0;
-  };
-
   const renderCheckInTab = () => (
     <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
       {/* Room Selection */}
       <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm p-6 border border-gray-200 dark:border-gray-700">
-        <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">Select Room</h3>
+        <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">Select Available Room</h3>
         <div className="grid grid-cols-2 gap-3 max-h-96 overflow-y-auto">
           {rooms.filter(room => room.status === 'available').map((room) => (
             <button
@@ -513,7 +572,15 @@ export const PositionCheckIn: React.FC<PositionCheckInProps> = ({ hotel }) => {
               type="number"
               min="0"
               value={guestDetails.advancePayment}
-              onChange={(e) => setGuestDetails({ ...guestDetails, advancePayment: parseFloat(e.target.value) || 0 })}
+              onChange={(e) => {
+                const advance = parseFloat(e.target.value) || 0;
+                setGuestDetails({ 
+                  ...guestDetails, 
+                  advancePayment: advance,
+                  paidAmount: advance,
+                  pendingAmount: guestDetails.totalAmount - advance
+                });
+              }}
               className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
               placeholder="Enter advance payment amount"
             />
@@ -533,23 +600,29 @@ export const PositionCheckIn: React.FC<PositionCheckInProps> = ({ hotel }) => {
           </div>
 
           {/* Billing Summary */}
-          {selectedRoom && guestDetails.checkInDate && guestDetails.checkOutDate && (
+          {selectedRoom && guestDetails.checkInDate && guestDetails.checkOutDate && guestDetails.totalAmount > 0 && (
             <div className="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-700 rounded-lg p-4">
               <h4 className="font-medium text-blue-900 dark:text-blue-300 mb-2">Billing Summary</h4>
               <div className="space-y-1 text-sm">
                 <div className="flex justify-between">
                   <span className="text-blue-700 dark:text-blue-300">Room Rate:</span>
-                  <span className="text-blue-900 dark:text-blue-200">₹{rooms.find(r => r._id === selectedRoom)?.rate}/night</span>
+                  <span className="text-blue-900 dark:text-blue-200">₹{guestDetails.ratePerNight}/night</span>
                 </div>
                 <div className="flex justify-between">
                   <span className="text-blue-700 dark:text-blue-300">Nights:</span>
-                  <span className="text-blue-900 dark:text-blue-200">
-                    {Math.ceil((new Date(guestDetails.checkOutDate).getTime() - new Date(guestDetails.checkInDate).getTime()) / (1000 * 60 * 60 * 24))}
-                  </span>
+                  <span className="text-blue-900 dark:text-blue-200">{guestDetails.totalNights}</span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-blue-700 dark:text-blue-300">Advance Payment:</span>
+                  <span className="text-blue-900 dark:text-blue-200">₹{guestDetails.advancePayment.toLocaleString()}</span>
                 </div>
                 <div className="flex justify-between font-medium border-t border-blue-200 dark:border-blue-600 pt-2">
                   <span className="text-blue-900 dark:text-blue-200">Total Amount:</span>
-                  <span className="text-blue-900 dark:text-blue-200">₹{calculateStayAmount().toLocaleString()}</span>
+                  <span className="text-blue-900 dark:text-blue-200">₹{guestDetails.totalAmount.toLocaleString()}</span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-blue-700 dark:text-blue-300">Pending Amount:</span>
+                  <span className="text-red-600 dark:text-red-400 font-medium">₹{guestDetails.pendingAmount.toLocaleString()}</span>
                 </div>
               </div>
             </div>
@@ -557,10 +630,10 @@ export const PositionCheckIn: React.FC<PositionCheckInProps> = ({ hotel }) => {
 
           <button
             type="submit"
-            disabled={isLoading || !selectedRoom || !guestDetails.name || !guestDetails.phone || !guestDetails.idNumber || !guestDetails.checkOutDate}
+            disabled={isCheckingIn || !selectedRoom || !guestDetails.name || !guestDetails.phone || !guestDetails.idNumber || !guestDetails.checkOutDate}
             className="w-full bg-blue-600 text-white py-3 px-4 rounded-lg font-semibold hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors flex items-center justify-center gap-2"
           >
-            {isLoading ? (
+            {isCheckingIn ? (
               <>
                 <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
                 Processing Check-in...
@@ -594,9 +667,21 @@ export const PositionCheckIn: React.FC<PositionCheckInProps> = ({ hotel }) => {
       {/* Add/Edit Room Form */}
       {(isAddingRoom || editingRoom) && (
         <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm p-6 border border-gray-200 dark:border-gray-700">
-          <h4 className="text-lg font-medium text-gray-900 dark:text-white mb-4">
-            {editingRoom ? 'Edit Room' : 'Add New Room'}
-          </h4>
+          <div className="flex justify-between items-center mb-4">
+            <h4 className="text-lg font-medium text-gray-900 dark:text-white">
+              {editingRoom ? 'Edit Room' : 'Add New Room'}
+            </h4>
+            <button
+              onClick={() => {
+                setIsAddingRoom(false);
+                setEditingRoom(null);
+              }}
+              className="p-2 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 transition-colors"
+            >
+              <X className="h-5 w-5" />
+            </button>
+          </div>
+          
           <form onSubmit={editingRoom ? handleEditRoom : handleAddRoom} className="space-y-4">
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
               <div>
@@ -741,11 +826,67 @@ export const PositionCheckIn: React.FC<PositionCheckInProps> = ({ hotel }) => {
         </div>
       )}
 
+      {/* Room Status Summary */}
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+        <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm p-4 border border-gray-200 dark:border-gray-700">
+          <div className="flex items-center gap-3">
+            <div className="p-2 bg-green-100 dark:bg-green-900 rounded-lg">
+              <CheckCircle className="h-5 w-5 text-green-600 dark:text-green-400" />
+            </div>
+            <div>
+              <p className="text-sm text-gray-600 dark:text-gray-300">Available</p>
+              <p className="text-xl font-bold text-gray-900 dark:text-white">
+                {rooms.filter(r => r.status === 'available').length}
+              </p>
+            </div>
+          </div>
+        </div>
+        <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm p-4 border border-gray-200 dark:border-gray-700">
+          <div className="flex items-center gap-3">
+            <div className="p-2 bg-blue-100 dark:bg-blue-900 rounded-lg">
+              <Users className="h-5 w-5 text-blue-600 dark:text-blue-400" />
+            </div>
+            <div>
+              <p className="text-sm text-gray-600 dark:text-gray-300">Occupied</p>
+              <p className="text-xl font-bold text-gray-900 dark:text-white">
+                {rooms.filter(r => r.status === 'occupied').length}
+              </p>
+            </div>
+          </div>
+        </div>
+        <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm p-4 border border-gray-200 dark:border-gray-700">
+          <div className="flex items-center gap-3">
+            <div className="p-2 bg-yellow-100 dark:bg-yellow-900 rounded-lg">
+              <Wrench className="h-5 w-5 text-yellow-600 dark:text-yellow-400" />
+            </div>
+            <div>
+              <p className="text-sm text-gray-600 dark:text-gray-300">Maintenance</p>
+              <p className="text-xl font-bold text-gray-900 dark:text-white">
+                {rooms.filter(r => r.status === 'maintenance').length}
+              </p>
+            </div>
+          </div>
+        </div>
+        <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm p-4 border border-gray-200 dark:border-gray-700">
+          <div className="flex items-center gap-3">
+            <div className="p-2 bg-red-100 dark:bg-red-900 rounded-lg">
+              <AlertTriangle className="h-5 w-5 text-red-600 dark:text-red-400" />
+            </div>
+            <div>
+              <p className="text-sm text-gray-600 dark:text-gray-300">Out of Order</p>
+              <p className="text-xl font-bold text-gray-900 dark:text-white">
+                {rooms.filter(r => r.status === 'out-of-order').length}
+              </p>
+            </div>
+          </div>
+        </div>
+      </div>
+
       {/* Rooms Grid */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
         {rooms.map((room) => (
-          <div key={room._id} className={`bg-white dark:bg-gray-800 rounded-xl shadow-sm p-6 border-2 transition-all ${getRoomStatusColor(room.status)}`}>
-            <div className="flex justify-between items-start mb-4">
+          <div key={room._id} className={`bg-white dark:bg-gray-800 rounded-xl shadow-sm p-4 border-2 transition-all ${getRoomStatusColor(room.status)}`}>
+            <div className="flex justify-between items-start mb-3">
               <div>
                 <h4 className="text-lg font-semibold text-gray-900 dark:text-white">Room {room.number}</h4>
                 <p className="text-sm text-gray-600 dark:text-gray-300">{room.name || room.type}</p>
@@ -803,14 +944,21 @@ export const PositionCheckIn: React.FC<PositionCheckInProps> = ({ hotel }) => {
             <div className="space-y-2">
               <div className="flex gap-2">
                 <button
-                  onClick={() => setEditingRoom(room)}
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    setEditingRoom(room);
+                  }}
                   className="flex-1 bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 py-2 px-3 rounded-lg text-sm font-medium hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors flex items-center justify-center gap-1"
                 >
                   <Edit className="h-3 w-3" />
                   Edit
                 </button>
                 <button
-                  onClick={() => handleRoomStatusChange(room._id, room.status === 'maintenance' ? 'available' : 'maintenance')}
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    const newStatus = room.status === 'maintenance' ? 'available' : 'maintenance';
+                    handleRoomStatusChange(room._id, newStatus);
+                  }}
                   className={`flex-1 py-2 px-3 rounded-lg text-sm font-medium transition-colors flex items-center justify-center gap-1 ${
                     room.status === 'maintenance'
                       ? 'bg-green-600 text-white hover:bg-green-700'
@@ -824,7 +972,10 @@ export const PositionCheckIn: React.FC<PositionCheckInProps> = ({ hotel }) => {
               
               {room.status === 'available' && (
                 <button
-                  onClick={() => handleRoomStatusChange(room._id, 'occupied')}
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    handleRoomStatusChange(room._id, 'occupied');
+                  }}
                   className="w-full bg-blue-600 text-white py-2 px-3 rounded-lg text-sm font-medium hover:bg-blue-700 transition-colors flex items-center justify-center gap-1"
                 >
                   <Users className="h-3 w-3" />
@@ -834,7 +985,12 @@ export const PositionCheckIn: React.FC<PositionCheckInProps> = ({ hotel }) => {
               
               {room.status === 'occupied' && (
                 <button
-                  onClick={() => handleRoomStatusChange(room._id, 'available')}
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    if (confirm('Are you sure you want to mark this room as available? This will not check out the guest.')) {
+                      handleRoomStatusChange(room._id, 'available');
+                    }
+                  }}
                   className="w-full bg-green-600 text-white py-2 px-3 rounded-lg text-sm font-medium hover:bg-green-700 transition-colors flex items-center justify-center gap-1"
                 >
                   <CheckCircle className="h-3 w-3" />
@@ -845,70 +1001,19 @@ export const PositionCheckIn: React.FC<PositionCheckInProps> = ({ hotel }) => {
           </div>
         ))}
       </div>
-
-      {/* Room Status Summary */}
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-        <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm p-4 border border-gray-200 dark:border-gray-700">
-          <div className="flex items-center gap-3">
-            <div className="p-2 bg-green-100 dark:bg-green-900 rounded-lg">
-              <CheckCircle className="h-5 w-5 text-green-600 dark:text-green-400" />
-            </div>
-            <div>
-              <p className="text-sm text-gray-600 dark:text-gray-300">Available</p>
-              <p className="text-xl font-bold text-gray-900 dark:text-white">
-                {rooms.filter(r => r.status === 'available').length}
-              </p>
-            </div>
-          </div>
-        </div>
-        <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm p-4 border border-gray-200 dark:border-gray-700">
-          <div className="flex items-center gap-3">
-            <div className="p-2 bg-blue-100 dark:bg-blue-900 rounded-lg">
-              <Users className="h-5 w-5 text-blue-600 dark:text-blue-400" />
-            </div>
-            <div>
-              <p className="text-sm text-gray-600 dark:text-gray-300">Occupied</p>
-              <p className="text-xl font-bold text-gray-900 dark:text-white">
-                {rooms.filter(r => r.status === 'occupied').length}
-              </p>
-            </div>
-          </div>
-        </div>
-        <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm p-4 border border-gray-200 dark:border-gray-700">
-          <div className="flex items-center gap-3">
-            <div className="p-2 bg-yellow-100 dark:bg-yellow-900 rounded-lg">
-              <Wrench className="h-5 w-5 text-yellow-600 dark:text-yellow-400" />
-            </div>
-            <div>
-              <p className="text-sm text-gray-600 dark:text-gray-300">Maintenance</p>
-              <p className="text-xl font-bold text-gray-900 dark:text-white">
-                {rooms.filter(r => r.status === 'maintenance').length}
-              </p>
-            </div>
-          </div>
-        </div>
-        <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm p-4 border border-gray-200 dark:border-gray-700">
-          <div className="flex items-center gap-3">
-            <div className="p-2 bg-red-100 dark:bg-red-900 rounded-lg">
-              <AlertTriangle className="h-5 w-5 text-red-600 dark:text-red-400" />
-            </div>
-            <div>
-              <p className="text-sm text-gray-600 dark:text-gray-300">Out of Order</p>
-              <p className="text-xl font-bold text-gray-900 dark:text-white">
-                {rooms.filter(r => r.status === 'out-of-order').length}
-              </p>
-            </div>
-          </div>
-        </div>
-      </div>
     </div>
   );
 
   const renderGuestsTab = () => (
     <div className="space-y-6">
-      <h3 className="text-lg font-semibold text-gray-900 dark:text-white">Current Guests</h3>
+      <div className="flex justify-between items-center">
+        <h3 className="text-lg font-semibold text-gray-900 dark:text-white">Current Guests</h3>
+        <div className="text-sm text-gray-600 dark:text-gray-300">
+          Total: {guests.filter(g => g.status === 'checked-in').length} guests
+        </div>
+      </div>
       
-      {guests.length === 0 ? (
+      {guests.filter(g => g.status === 'checked-in').length === 0 ? (
         <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm p-12 border border-gray-200 dark:border-gray-700 text-center">
           <Users className="h-12 w-12 text-gray-400 dark:text-gray-500 mx-auto mb-4" />
           <p className="text-gray-500 dark:text-gray-400">No guests currently checked in</p>
@@ -916,12 +1021,13 @@ export const PositionCheckIn: React.FC<PositionCheckInProps> = ({ hotel }) => {
         </div>
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {guests.map((guest) => (
+          {guests.filter(g => g.status === 'checked-in').map((guest) => (
             <div key={guest._id} className="bg-white dark:bg-gray-800 rounded-xl shadow-sm p-6 border border-gray-200 dark:border-gray-700">
               <div className="flex justify-between items-start mb-4">
                 <div>
                   <h4 className="font-semibold text-gray-900 dark:text-white">{guest.name}</h4>
                   <p className="text-sm text-gray-600 dark:text-gray-300">Room {guest.roomNumber}</p>
+                  <p className="text-xs text-gray-500 dark:text-gray-400">{guest.roomType}</p>
                 </div>
                 <span className="bg-blue-100 dark:bg-blue-900 text-blue-800 dark:text-blue-200 px-2 py-1 rounded-full text-xs font-medium">
                   Checked In
@@ -942,10 +1048,32 @@ export const PositionCheckIn: React.FC<PositionCheckInProps> = ({ hotel }) => {
                   <span className="text-gray-900 dark:text-white">{guest.adults + guest.children}</span>
                 </div>
                 <div className="flex justify-between">
+                  <span className="text-gray-600 dark:text-gray-300">Phone:</span>
+                  <span className="text-gray-900 dark:text-white">{guest.phone}</span>
+                </div>
+                <div className="flex justify-between">
                   <span className="text-gray-600 dark:text-gray-300">Total:</span>
                   <span className="font-medium text-gray-900 dark:text-white">₹{guest.totalAmount.toLocaleString()}</span>
                 </div>
+                <div className="flex justify-between">
+                  <span className="text-gray-600 dark:text-gray-300">Paid:</span>
+                  <span className="font-medium text-green-600 dark:text-green-400">₹{guest.paidAmount.toLocaleString()}</span>
+                </div>
+                {guest.pendingAmount > 0 && (
+                  <div className="flex justify-between">
+                    <span className="text-gray-600 dark:text-gray-300">Pending:</span>
+                    <span className="font-medium text-red-600 dark:text-red-400">₹{guest.pendingAmount.toLocaleString()}</span>
+                  </div>
+                )}
               </div>
+
+              <button
+                onClick={() => handleCheckOut(guest._id!)}
+                className="w-full mt-4 bg-red-600 text-white py-2 px-3 rounded-lg text-sm font-medium hover:bg-red-700 transition-colors flex items-center justify-center gap-1"
+              >
+                <User className="h-3 w-3" />
+                Check Out
+              </button>
             </div>
           ))}
         </div>
@@ -997,7 +1125,7 @@ export const PositionCheckIn: React.FC<PositionCheckInProps> = ({ hotel }) => {
             }`}
           >
             <Users className="h-4 w-4 inline mr-2" />
-            Current Guests ({guests.length})
+            Current Guests ({guests.filter(g => g.status === 'checked-in').length})
           </button>
         </div>
 
