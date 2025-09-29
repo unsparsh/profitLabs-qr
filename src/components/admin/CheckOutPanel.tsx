@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { DoorOpen, Search, Calculator, CreditCard, FileText, User, Phone, Calendar } from 'lucide-react';
+import { DoorOpen, Search, Calculator, CreditCard, FileText, User, Phone, Calendar, Users } from 'lucide-react';
 import { apiClient } from '../../utils/api';
 import toast from 'react-hot-toast';
 
@@ -24,8 +24,10 @@ interface Guest {
   advancePayment: number;
   ratePerNight: number;
   totalNights: number;
+  additionalCharges?: number;
   status: 'checked-in' | 'checked-out';
   specialRequests?: string;
+  roomId: string;
 }
 
 export const CheckOutPanel: React.FC<CheckOutPanelProps> = ({ hotel }) => {
@@ -58,7 +60,7 @@ export const CheckOutPanel: React.FC<CheckOutPanelProps> = ({ hotel }) => {
 
   const handleGuestSelect = (guest: Guest) => {
     setSelectedGuest(guest);
-    setAdditionalCharges(0);
+    setAdditionalCharges(guest.additionalCharges || 0);
     setFinalPayment(0);
   };
 
@@ -98,14 +100,10 @@ export const CheckOutPanel: React.FC<CheckOutPanelProps> = ({ hotel }) => {
       });
 
       // Update room status to available
-      const room = await apiClient.getRooms(hotel._id);
-      const guestRoom = room.find((r: any) => r.number === selectedGuest.roomNumber);
-      if (guestRoom) {
-        await apiClient.updateRoom(hotel._id, guestRoom._id, { 
-          status: 'available',
-          currentGuest: null
-        });
-      }
+      await apiClient.updateRoom(hotel._id, selectedGuest.roomId, { 
+        status: 'available',
+        currentGuest: null
+      });
 
       setSelectedGuest(null);
       setAdditionalCharges(0);
@@ -141,6 +139,63 @@ export const CheckOutPanel: React.FC<CheckOutPanelProps> = ({ hotel }) => {
         <div>
           <h2 className="text-2xl font-bold text-gray-900 dark:text-white">Check Out</h2>
           <p className="text-gray-600 dark:text-gray-300">Process guest check-outs and final billing</p>
+        </div>
+      </div>
+
+      {/* Summary Cards */}
+      <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
+        <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm p-6 border border-gray-200 dark:border-gray-700">
+          <div className="flex items-center gap-3">
+            <div className="p-3 bg-blue-100 dark:bg-blue-900 rounded-full">
+              <Users className="h-6 w-6 text-blue-600 dark:text-blue-400" />
+            </div>
+            <div>
+              <p className="text-sm text-gray-600 dark:text-gray-300">Checked In</p>
+              <p className="text-2xl font-bold text-gray-900 dark:text-white">{guests.length}</p>
+            </div>
+          </div>
+        </div>
+
+        <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm p-6 border border-gray-200 dark:border-gray-700">
+          <div className="flex items-center gap-3">
+            <div className="p-3 bg-green-100 dark:bg-green-900 rounded-full">
+              <DollarSign className="h-6 w-6 text-green-600 dark:text-green-400" />
+            </div>
+            <div>
+              <p className="text-sm text-gray-600 dark:text-gray-300">Total Revenue</p>
+              <p className="text-2xl font-bold text-gray-900 dark:text-white">
+                ₹{guests.reduce((sum, guest) => sum + guest.totalAmount, 0).toLocaleString()}
+              </p>
+            </div>
+          </div>
+        </div>
+
+        <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm p-6 border border-gray-200 dark:border-gray-700">
+          <div className="flex items-center gap-3">
+            <div className="p-3 bg-yellow-100 dark:bg-yellow-900 rounded-full">
+              <CreditCard className="h-6 w-6 text-yellow-600 dark:text-yellow-400" />
+            </div>
+            <div>
+              <p className="text-sm text-gray-600 dark:text-gray-300">Pending Payments</p>
+              <p className="text-2xl font-bold text-gray-900 dark:text-white">
+                ₹{guests.reduce((sum, guest) => sum + guest.pendingAmount, 0).toLocaleString()}
+              </p>
+            </div>
+          </div>
+        </div>
+
+        <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm p-6 border border-gray-200 dark:border-gray-700">
+          <div className="flex items-center gap-3">
+            <div className="p-3 bg-purple-100 dark:bg-purple-900 rounded-full">
+              <Calendar className="h-6 w-6 text-purple-600 dark:text-purple-400" />
+            </div>
+            <div>
+              <p className="text-sm text-gray-600 dark:text-gray-300">Avg Stay</p>
+              <p className="text-2xl font-bold text-gray-900 dark:text-white">
+                {guests.length > 0 ? Math.round(guests.reduce((sum, guest) => sum + guest.totalNights, 0) / guests.length) : 0} nights
+              </p>
+            </div>
+          </div>
         </div>
       </div>
 
