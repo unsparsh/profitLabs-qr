@@ -205,11 +205,6 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ user, hotel, onL
       icon: Bell,
     },
     {
-      id: 'rooms',
-      label: 'Rooms & QR',
-      icon: QrCode,
-    },
-    {
       id: 'ai-assistant',
       label: 'AI Assistant',
       icon: Users,
@@ -437,14 +432,6 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ user, hotel, onL
           <RequestsPanel
             requests={requests}
             onRequestUpdate={fetchRequests}
-            hotelId={hotel._id}
-          />
-        );
-      case 'rooms':
-        return (
-          <RoomsPanel
-            rooms={rooms}
-            onRoomsUpdate={fetchRooms}
             hotelId={hotel._id}
           />
         );

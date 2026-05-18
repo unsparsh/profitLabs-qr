@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { MapPin, Users, Calendar, Phone, Mail, CreditCard, Plus, CreditCard as Edit, Wrench, UserCheck, Bed, DollarSign, Save, X, CheckCircle, AlertTriangle, User, Clock, LogOut, Settings, Trash2, Eye } from 'lucide-react';
+import { MapPin, Users, Calendar, Phone, Mail, CreditCard, Plus, CreditCard as Edit, Wrench, UserCheck, Bed, DollarSign, Save, X, CheckCircle, AlertTriangle, User, Clock, LogOut, Settings, Trash2, Eye, QrCode, Download } from 'lucide-react';
 import { apiClient } from '../../utils/api';
 import toast from 'react-hot-toast';
 
@@ -17,6 +17,7 @@ interface Room {
   maxOccupancy: number;
   amenities: string[];
   isActive: boolean;
+  qrCode?: string;
   currentGuest?: {
     name: string;
     checkInDate: string;
@@ -61,7 +62,26 @@ export const PositionCheckIn: React.FC<PositionCheckInProps> = ({ hotel }) => {
   const [showModal, setShowModal] = useState(false);
   const [modalType, setModalType] = useState<'checkin' | 'checkout' | 'edit-room' | 'add-room'>('checkin');
   const [isLoading, setIsLoading] = useState(false);
+  const [flippedRooms, setFlippedRooms] = useState<Record<string, boolean>>({});
   
+  const toggleFlip = (roomId: string, e: React.MouseEvent) => {
+    e.stopPropagation();
+    setFlippedRooms(prev => ({
+      ...prev,
+      [roomId]: !prev[roomId]
+    }));
+  };
+
+  const handleDownloadQR = (qrCodeUrl: string, roomNumber: string, e: React.MouseEvent) => {
+    e.stopPropagation();
+    const link = document.createElement('a');
+    link.href = qrCodeUrl;
+    link.download = `room-${roomNumber}-qr.png`;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  };
+
   const [guestDetails, setGuestDetails] = useState<Guest>({
     name: '',
     email: '',
@@ -529,109 +549,156 @@ export const PositionCheckIn: React.FC<PositionCheckInProps> = ({ hotel }) => {
       </div>
 
       {/* Rooms Grid */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
-        {rooms.map((room) => (
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 [perspective:1000px]">
+        {rooms.map((room) => {
+          const isFlipped = flippedRooms[room._id];
+          return (
           <div
             key={room._id}
-            className={`bg-white dark:bg-gray-800 rounded-xl shadow-sm p-4 border-2 cursor-pointer transition-all hover:shadow-md ${getRoomStatusColor(room.status)}`}
-            onClick={() => handleRoomClick(room)}
+            className={`relative w-full transition-transform duration-700 [transform-style:preserve-3d] ${isFlipped ? '[transform:rotateY(180deg)]' : ''}`}
+            style={{ minHeight: '420px' }}
           >
-            <div className="flex justify-between items-start mb-3">
-              <div>
-                <h4 className="text-lg font-semibold text-gray-900 dark:text-white">Room {room.number}</h4>
-                <p className="text-sm text-gray-600 dark:text-gray-300">{room.name || room.type}</p>
-              </div>
-              <div className="flex items-center gap-1">
-                {getRoomStatusIcon(room.status)}
-                <span className="text-sm font-medium capitalize">{room.status.replace('-', ' ')}</span>
-              </div>
-            </div>
-
-            <div className="space-y-2 text-sm mb-4">
-              <div className="flex justify-between">
-                <span className="text-gray-600 dark:text-gray-300">Type:</span>
-                <span className="font-medium text-gray-900 dark:text-white">{room.type}</span>
-              </div>
-              <div className="flex justify-between">
-                <span className="text-gray-600 dark:text-gray-300">Rate:</span>
-                <span className="font-medium text-gray-900 dark:text-white">₹{room.rate}/night</span>
-              </div>
-              <div className="flex justify-between">
-                <span className="text-gray-600 dark:text-gray-300">Max Guests:</span>
-                <span className="font-medium text-gray-900 dark:text-white">{room.maxOccupancy}</span>
-              </div>
-              {room.amenities && room.amenities.length > 0 && (
+            {/* Front Side */}
+            <div 
+              className={`absolute inset-0 [backface-visibility:hidden] bg-white dark:bg-gray-800 rounded-xl shadow-sm p-4 border-2 cursor-pointer transition-all hover:shadow-md flex flex-col justify-between ${getRoomStatusColor(room.status)}`}
+              onClick={() => handleRoomClick(room)}
+            >
+              <div className="flex justify-between items-start mb-3">
                 <div>
-                  <span className="text-gray-600 dark:text-gray-300">Amenities:</span>
-                  <div className="flex flex-wrap gap-1 mt-1">
-                    {room.amenities.slice(0, 3).map((amenity) => (
-                      <span key={amenity} className="px-2 py-1 bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 rounded text-xs">
-                        {amenity}
-                      </span>
-                    ))}
-                    {room.amenities.length > 3 && (
-                      <span className="px-2 py-1 bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 rounded text-xs">
-                        +{room.amenities.length - 3} more
-                      </span>
-                    )}
+                  <h4 className="text-lg font-semibold text-gray-900 dark:text-white">Room {room.number}</h4>
+                  <p className="text-sm text-gray-600 dark:text-gray-300">{room.name || room.type}</p>
+                </div>
+                <div className="flex items-center gap-1">
+                  {getRoomStatusIcon(room.status)}
+                  <span className="text-sm font-medium capitalize">{room.status.replace('-', ' ')}</span>
+                  <button onClick={(e) => toggleFlip(room._id, e)} className="ml-2 p-1.5 bg-black/5 dark:bg-white/10 rounded hover:bg-black/10 dark:hover:bg-white/20 transition-colors" title="View QR">
+                    <QrCode className="h-4 w-4" />
+                  </button>
+                </div>
+              </div>
+
+              <div className="space-y-2 text-sm mb-4 flex-1">
+                <div className="flex justify-between">
+                  <span className="text-gray-600 dark:text-gray-300">Type:</span>
+                  <span className="font-medium text-gray-900 dark:text-white">{room.type}</span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-gray-600 dark:text-gray-300">Rate:</span>
+                  <span className="font-medium text-gray-900 dark:text-white">₹{room.rate}/night</span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-gray-600 dark:text-gray-300">Max Guests:</span>
+                  <span className="font-medium text-gray-900 dark:text-white">{room.maxOccupancy}</span>
+                </div>
+                {room.amenities && room.amenities.length > 0 && (
+                  <div>
+                    <span className="text-gray-600 dark:text-gray-300">Amenities:</span>
+                    <div className="flex flex-wrap gap-1 mt-1">
+                      {room.amenities.slice(0, 3).map((amenity) => (
+                        <span key={amenity} className="px-2 py-1 bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 rounded text-xs">
+                          {amenity}
+                        </span>
+                      ))}
+                      {room.amenities.length > 3 && (
+                        <span className="px-2 py-1 bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 rounded text-xs">
+                          +{room.amenities.length - 3} more
+                        </span>
+                      )}
+                    </div>
                   </div>
+                )}
+              </div>
+
+              {/* Current Guest Info */}
+              {room.status === 'occupied' && room.currentGuest && (
+                <div className="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-700 rounded-lg p-3 mb-4">
+                  <h5 className="font-medium text-blue-900 dark:text-blue-300 mb-1">Current Guest</h5>
+                  <p className="text-sm text-blue-700 dark:text-blue-300">{room.currentGuest.name}</p>
+                  <p className="text-xs text-blue-600 dark:text-blue-400">
+                    {new Date(room.currentGuest.checkInDate).toLocaleDateString()} - {new Date(room.currentGuest.checkOutDate).toLocaleDateString()}
+                  </p>
                 </div>
               )}
-            </div>
 
-            {/* Current Guest Info */}
-            {room.status === 'occupied' && room.currentGuest && (
-              <div className="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-700 rounded-lg p-3 mb-4">
-                <h5 className="font-medium text-blue-900 dark:text-blue-300 mb-1">Current Guest</h5>
-                <p className="text-sm text-blue-700 dark:text-blue-300">{room.currentGuest.name}</p>
-                <p className="text-xs text-blue-600 dark:text-blue-400">
-                  {new Date(room.currentGuest.checkInDate).toLocaleDateString()} - {new Date(room.currentGuest.checkOutDate).toLocaleDateString()}
+              {/* Room Action Buttons */}
+              <div className="flex gap-2">
+                <button
+                  onClick={(e) => handleEditRoom(room, e)}
+                  className="flex-1 bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 py-2 px-3 rounded-lg text-sm font-medium hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors flex items-center justify-center gap-1"
+                >
+                  <Edit className="h-3 w-3" />
+                  Edit
+                </button>
+                
+                {room.status !== 'occupied' && (
+                  <button
+                    onClick={(e) => handleRoomStatusChange(room, room.status === 'maintenance' ? 'available' : 'maintenance', e)}
+                    className={`flex-1 py-2 px-3 rounded-lg text-sm font-medium transition-colors flex items-center justify-center gap-1 ${
+                      room.status === 'maintenance'
+                        ? 'bg-green-600 text-white hover:bg-green-700'
+                        : 'bg-yellow-600 text-white hover:bg-yellow-700'
+                    }`}
+                  >
+                    <Wrench className="h-3 w-3" />
+                    {room.status === 'maintenance' ? 'Fix Done' : 'Maintenance'}
+                  </button>
+                )}
+
+                <button
+                  onClick={(e) => handleDeleteRoom(room, e)}
+                  className="p-2 text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg transition-colors"
+                >
+                  <Trash2 className="h-3 w-3" />
+                </button>
+              </div>
+
+              {/* Click Action Hint */}
+              <div className="mt-3 text-center">
+                <p className="text-xs text-gray-500 dark:text-gray-400">
+                  {room.status === 'available' ? 'Click to Check In' : 
+                   room.status === 'occupied' ? 'Click to Check Out' : 
+                   'Click for Details'}
                 </p>
               </div>
-            )}
-
-            {/* Room Action Buttons */}
-            <div className="flex gap-2">
-              <button
-                onClick={(e) => handleEditRoom(room, e)}
-                className="flex-1 bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 py-2 px-3 rounded-lg text-sm font-medium hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors flex items-center justify-center gap-1"
-              >
-                <Edit className="h-3 w-3" />
-                Edit
-              </button>
-              
-              {room.status !== 'occupied' && (
-                <button
-                  onClick={(e) => handleRoomStatusChange(room, room.status === 'maintenance' ? 'available' : 'maintenance', e)}
-                  className={`flex-1 py-2 px-3 rounded-lg text-sm font-medium transition-colors flex items-center justify-center gap-1 ${
-                    room.status === 'maintenance'
-                      ? 'bg-green-600 text-white hover:bg-green-700'
-                      : 'bg-yellow-600 text-white hover:bg-yellow-700'
-                  }`}
-                >
-                  <Wrench className="h-3 w-3" />
-                  {room.status === 'maintenance' ? 'Fix Done' : 'Maintenance'}
-                </button>
-              )}
-
-              <button
-                onClick={(e) => handleDeleteRoom(room, e)}
-                className="p-2 text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg transition-colors"
-              >
-                <Trash2 className="h-3 w-3" />
-              </button>
             </div>
 
-            {/* Click Action Hint */}
-            <div className="mt-3 text-center">
-              <p className="text-xs text-gray-500 dark:text-gray-400">
-                {room.status === 'available' ? 'Click to Check In' : 
-                 room.status === 'occupied' ? 'Click to Check Out' : 
-                 'Click for Details'}
-              </p>
+            {/* Back Side (QR Code) */}
+            <div 
+              className={`absolute inset-0 [backface-visibility:hidden] [transform:rotateY(180deg)] bg-white dark:bg-gray-800 rounded-xl shadow-sm p-4 border-2 border-gray-200 dark:border-gray-700 flex flex-col items-center justify-center`}
+              onClick={(e) => toggleFlip(room._id, e)}
+            >
+              <h4 className="text-lg font-bold text-gray-900 dark:text-white mb-4">Room {room.number} QR</h4>
+              {room.qrCode ? (
+                <div className="bg-white p-2 rounded-lg mb-4">
+                  <img src={room.qrCode} alt={`QR Code for Room ${room.number}`} className="w-40 h-40 object-contain" />
+                </div>
+              ) : (
+                <div className="w-40 h-40 bg-gray-100 dark:bg-gray-700 rounded-lg flex items-center justify-center mb-4">
+                  <QrCode className="h-12 w-12 text-gray-400" />
+                </div>
+              )}
+              
+              <div className="flex gap-2 w-full mt-auto">
+                <button
+                  onClick={(e) => { e.stopPropagation(); toggleFlip(room._id, e); }}
+                  className="flex-1 px-3 py-2 bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 rounded-lg text-sm font-medium hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors"
+                >
+                  Back
+                </button>
+                {room.qrCode && (
+                  <button
+                    onClick={(e) => handleDownloadQR(room.qrCode, room.number, e)}
+                    className="flex-1 px-3 py-2 bg-blue-600 text-white rounded-lg text-sm font-medium hover:bg-blue-700 transition-colors flex items-center justify-center gap-2"
+                  >
+                    <Download className="h-4 w-4" />
+                    Save
+                  </button>
+                )}
+              </div>
             </div>
           </div>
-        ))}
+          );
+        })}
       </div>
 
       {rooms.length === 0 && (

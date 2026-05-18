@@ -44,14 +44,16 @@ export const RegisterForm: React.FC<RegisterFormProps> = ({ onSuccess }) => {
 
   const onSubmit = async (data: RegisterFormData) => {
     try {
-      await registerUser(data);
+      const { subscriptionActive } = await registerUser(data);
       if (onSuccess) {
-        onSuccess(null, null); // Will be handled by AuthContext
-      } else {
+        onSuccess(null, null);
+      } else if (subscriptionActive === 'Active') {
         navigate('/admin');
+      } else {
+        navigate('/subscribe');
       }
     } catch (error) {
-      // Error handling is done in AuthContext
+      // Error handling done in AuthContext
     }
   };
 

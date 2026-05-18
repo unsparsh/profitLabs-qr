@@ -8,6 +8,7 @@ interface User {
   name: string;
   role: 'admin' | 'staff';
   hotelId: string;
+  subscriptionActive: 'Active' | 'Inactive';
 }
 
 interface Hotel {
@@ -30,10 +31,11 @@ interface AuthContextType {
   hotel: Hotel | null;
   isAuthenticated: boolean;
   isLoading: boolean;
-  login: (email: string, password: string) => Promise<void>;
+  login: (email: string, password: string) => Promise<{ subscriptionActive: string }>;
   logout: () => void;
-  register: (data: any) => Promise<void>;
+  register: (data: any) => Promise<{ subscriptionActive: string }>;
   checkAuthStatus: () => Promise<void>;
+  refreshUser: () => Promise<void>;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -57,7 +59,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
 
   const isAuthenticated = !!user && !!hotel;
 
-  // Login function
+  // Login — returns subscriptionActive so caller can redirect properly
   const login = async (email: string, password: string) => {
     setIsLoading(true);
     try {
@@ -65,8 +67,11 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       setUser(res.user);
       setHotel('hotel' in res ? (res.hotel as Hotel) : null);
       localStorage.setItem('authToken', res.token);
+      localStorage.setItem('userData', JSON.stringify(res.user));
+      localStorage.setItem('hotelData', JSON.stringify(res.hotel));
       apiClient.setToken(res.token);
       toast.success('Login successful');
+      return { subscriptionActive: res.user.subscriptionActive as string };
     } catch (error: any) {
       toast.error(error?.message || 'Login failed');
       throw error;
@@ -75,16 +80,18 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     }
   };
 
-  // Logout function
+  // Logout
   const logout = () => {
     setUser(null);
     setHotel(null);
     localStorage.removeItem('authToken');
+    localStorage.removeItem('userData');
+    localStorage.removeItem('hotelData');
     apiClient.setToken(null);
     toast.success('Logged out');
   };
 
-  // Register function
+  // Register — returns subscriptionActive so caller can redirect properly
   const register = async (data: any) => {
     setIsLoading(true);
     try {
@@ -92,8 +99,11 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       setUser(res.user);
       setHotel(res.hotel);
       localStorage.setItem('authToken', res.token);
+      localStorage.setItem('userData', JSON.stringify(res.user));
+      localStorage.setItem('hotelData', JSON.stringify(res.hotel));
       apiClient.setToken(res.token);
       toast.success('Registration successful');
+      return { subscriptionActive: res.user.subscriptionActive as string };
     } catch (error: any) {
       toast.error(error?.message || 'Registration failed');
       throw error;
@@ -102,7 +112,23 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     }
   };
 
-  // Check auth status on mount
+  // Refresh user state from localStorage (called after successful payment)
+  const refreshUser = async () => {
+    const token = localStorage.getItem('authToken');
+    const userData = localStorage.getItem('userData');
+    const hotelData = localStorage.getItem('hotelData');
+    if (token && userData && hotelData) {
+      try {
+        apiClient.setToken(token);
+        setUser(JSON.parse(userData));
+        setHotel(JSON.parse(hotelData));
+      } catch {
+        // ignore parse errors
+      }
+    }
+  };
+
+  // Rehydrate on page load from localStorage and API
   const checkAuthStatus = async () => {
     setIsLoading(true);
     const token = localStorage.getItem('authToken');
@@ -112,21 +138,28 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       setIsLoading(false);
       return;
     }
+    
     apiClient.setToken(token);
+    
     try {
-      // You may want to fetch user/hotel info here
-      // For example, fetch hotel by user.hotelId
-      // If you have an endpoint for this, use it here
-      // Example:
-      // const userInfo = await apiClient.getMe();
-      // setUser(userInfo.user);
-      // setHotel(userInfo.hotel);
-      setIsLoading(false);
+      // Fetch fresh data from backend
+      const res = await apiClient.getMe();
+      setUser(res.user);
+      setHotel(res.hotel);
+      
+      // Update local storage with fresh data
+      localStorage.setItem('userData', JSON.stringify(res.user));
+      localStorage.setItem('hotelData', JSON.stringify(res.hotel));
     } catch {
+      // If API call fails (e.g., token expired), clear everything
       setUser(null);
       setHotel(null);
-      setIsLoading(false);
+      localStorage.removeItem('authToken');
+      localStorage.removeItem('userData');
+      localStorage.removeItem('hotelData');
+      apiClient.setToken(null);
     }
+    setIsLoading(false);
   };
 
   useEffect(() => {
@@ -143,6 +176,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     logout,
     register,
     checkAuthStatus,
+    refreshUser,
   };
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

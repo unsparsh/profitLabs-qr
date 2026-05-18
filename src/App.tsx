@@ -8,6 +8,7 @@ import { RegisterForm } from './components/auth/RegisterForm';
 import { AdminDashboard } from './components/admin/AdminDashboard';
 import GuestPortal from './components/guest/GuestPortal';
 import PricingPage from './components/auth/PricingPage';
+import SubscriptionPage from './components/auth/SubscriptionPage';
 import TermsAndConditions from './components/legal/TermsAndConditions';
 import PrivacyPolicy from './components/legal/PrivacyPolicy';
 import GoogleCallback from './components/auth/GoogleCallback';
@@ -21,38 +22,85 @@ const GuestPortalWrapper: React.FC = () => {
   return <GuestPortal hotelId={hotelId || ''} roomId={roomId || ''} />;
 };
 
-// Protected Route Component
+// Protected Route — must be authenticated
 const ProtectedRoute: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const { isAuthenticated, isLoading } = useAuth();
-  
+
   if (isLoading) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gray-50 dark:bg-gray-900">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
+      <div className="min-h-screen flex items-center justify-center bg-gray-900">
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-purple-500"></div>
       </div>
     );
   }
-  
+
   return isAuthenticated ? <>{children}</> : <Navigate to="/login" replace />;
+};
+
+// Subscription Guard — authenticated + subscription Active required to reach /admin
+const SubscribedRoute: React.FC<{ children: React.ReactNode }> = ({ children }) => {
+  const { isAuthenticated, isLoading, user } = useAuth();
+
+  if (isLoading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-gray-900">
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-purple-500"></div>
+      </div>
+    );
+  }
+
+  if (!isAuthenticated) return <Navigate to="/login" replace />;
+  if (user?.subscriptionActive !== 'Active') return <Navigate to="/subscribe" replace />;
+  return <>{children}</>;
+};
+
+// Subscribe Route guard — only accessible when authenticated but NOT subscribed
+const SubscribeRoute: React.FC<{ children: React.ReactNode }> = ({ children }) => {
+  const { isAuthenticated, isLoading, user } = useAuth();
+
+  if (isLoading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-gray-900">
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-purple-500"></div>
+      </div>
+    );
+  }
+
+  if (!isAuthenticated) return <Navigate to="/login" replace />;
+  if (user?.subscriptionActive === 'Active') return <Navigate to="/admin" replace />;
+  return <>{children}</>;
 };
 
 // App Routes Component
 const AppRoutes: React.FC = () => {
   const { user, hotel, logout } = useAuth();
-  
+
   return (
     <Routes>
       <Route path="/" element={<Navigate to="/login" replace />} />
       <Route path="/login" element={<LoginForm />} />
       <Route path="/register" element={<RegisterForm />} />
-      <Route 
-        path="/admin" 
+
+      {/* Dashboard — requires authentication + active subscription */}
+      <Route
+        path="/admin"
         element={
-          <ProtectedRoute>
+          <SubscribedRoute>
             <AdminDashboard user={user!} hotel={hotel!} onLogout={logout} />
-          </ProtectedRoute>
-        } 
+          </SubscribedRoute>
+        }
       />
+
+      {/* Subscription page — requires authentication, redirects to /admin if already subscribed */}
+      <Route
+        path="/subscribe"
+        element={
+          <SubscribeRoute>
+            <SubscriptionPage />
+          </SubscribeRoute>
+        }
+      />
+
       <Route path="/guest/:hotelId/:roomId" element={<GuestPortalWrapper />} />
       <Route path="/pricing" element={<PricingPage />} />
       <Route path="/terms" element={<TermsAndConditions />} />

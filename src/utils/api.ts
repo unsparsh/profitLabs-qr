@@ -58,6 +58,10 @@ class ApiClient {
     });
   }
 
+  async getMe() {
+    return this.request<{ user: any; hotel: any }>('/auth/me');
+  }
+
   // Hotel endpoints
   async getHotel(id: string) {
     return this.request<any>(`/hotels/${id}`);
@@ -242,6 +246,28 @@ class ApiClient {
   async deleteComplaintItem(hotelId: string, itemId: string) {
     return this.request<any>(`/hotels/${hotelId}/complaint-menu/${itemId}`, {
       method: 'DELETE',
+    });
+  }
+
+  // Payment / Subscription endpoints
+  async createPaymentOrder(plan: string, duration: number) {
+    return this.request<{ order: any; key: string }>('/payment/create-order', {
+      method: 'POST',
+      body: JSON.stringify({ plan, duration }),
+    });
+  }
+
+  async verifyPayment(data: {
+    razorpay_order_id: string;
+    razorpay_payment_id: string;
+    razorpay_signature: string;
+    plan: string;
+    duration: number;
+    amount: number;
+  }) {
+    return this.request<{ success: boolean; message: string }>('/payment/verify', {
+      method: 'POST',
+      body: JSON.stringify(data),
     });
   }
 }

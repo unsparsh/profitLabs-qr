@@ -1,39 +1,28 @@
-/**
- * Database Configuration
- * 
- * This file handles MongoDB connection setup and configuration.
- * It establishes the connection to MongoDB using Mongoose and provides
- * connection status logging and error handling.
- */
+// const postgres = require("postgres");
 
-const mongoose = require('mongoose');
+// const connectionString = process.env.POSTGRES_URI;
+// const sql = postgres(connectionString);
 
-const connectDB = async () => {
-  try {
-    const conn = await mongoose.connect(process.env.MONGODB_URI, {
-      useNewUrlParser: true,
-      useUnifiedTopology: true,
-    });
+// module.exports = sql;
 
-    console.log(`✅ MongoDB Connected: ${conn.connection.host}`);
-    
-    // Connection event listeners
-    mongoose.connection.on('connected', () => {
-      console.log('📡 Mongoose connected to MongoDB');
-    });
+const pg = require('pg');
+const { drizzle } = require('drizzle-orm/node-postgres');
 
-    mongoose.connection.on('error', (err) => {
-      console.error('❌ Mongoose connection error:', err);
-    });
+const client = new pg.Client({
+  connectionString: process.env.POSTGRES_URI,
+});
 
-    mongoose.connection.on('disconnected', () => {
-      console.log('📴 Mongoose disconnected');
-    });
+// Initialize database connection (run once at startup)
+async function initDatabase() {
+  await client.connect();
+  console.log('✅ PostgreSQL connected');
+}
 
-  } catch (error) {
-    console.error('❌ Database connection failed:', error);
-    process.exit(1);
-  }
+// Create drizzle instance for database operations
+const db = drizzle(client);
+
+module.exports = {
+  db,
+  initDatabase,
+  client,
 };
-
-module.exports = connectDB;

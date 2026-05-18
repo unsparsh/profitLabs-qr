@@ -1,13 +1,15 @@
+require("dotenv").config();
 const express = require("express");
 const http = require("http");
 const socketIo = require("socket.io");
 const cors = require("cors");
-const mongoose = require("mongoose");
+const { db } = require("./config/database");
+const schema = require("./db/schema");
+const { eq, and, desc, asc } = require("drizzle-orm");
 const jwt = require("jsonwebtoken");
 const bcrypt = require("bcryptjs");
 const qrcode = require("qrcode");
 const { v4: uuidv4 } = require("uuid");
-require("dotenv").config();
 const bodyParser = require("body-parser");
 const crypto = require("crypto");
 const { google } = require("googleapis");
@@ -68,260 +70,14 @@ if (process.env.OPENAI_API_KEY) {
   });
 }
 
-// Connect to MongoDB
-mongoose
-  .connect(process.env.MONGODB_URI, {
-    useNewUrlParser: true,
-    useUnifiedTopology: true,
-  })
-  .then(() => {
-    console.log("Connected to MongoDB");
-  })
-  .catch((error) => {
-    console.error("MongoDB connection error:", error);
-  });
+const { initDatabase } = require("./config/database");
 
-// Schemas
-const hotelSchema = new mongoose.Schema(
-  {
-    name: { type: String, required: true },
-    email: { type: String, required: true, unique: true },
-    phone: { type: String, required: true },
-    address: { type: String, required: true },
-    totalRooms: { type: Number, required: true },
-    subscription: {
-      plan: {
-        type: String,
-        enum: ["trial", "basic", "premium"],
-        default: "trial",
-      },
-      status: {
-        type: String,
-        enum: ["active", "inactive", "canceled"],
-        default: "active",
-      },
-      expiresAt: {
-        type: Date,
-        default: () => new Date(Date.now() + 30 * 24 * 60 * 60 * 1000),
-      },
-      stripeCustomerId: String,
-      stripeSubscriptionId: String,
-    },
-    settings: {
-      servicesEnabled: {
-        callServiceBoy: { type: Boolean, default: true },
-        orderFood: { type: Boolean, default: true },
-        requestRoomService: { type: Boolean, default: true },
-        lodgeComplaint: { type: Boolean, default: true },
-        customMessage: { type: Boolean, default: true },
-      },
-      notifications: {
-        sound: { type: Boolean, default: true },
-        email: { type: Boolean, default: true },
-      },
-      emergencyContact: {
-        phone: { type: String, default: '+91 9876543210' },
-        description: { type: String, default: 'Available 24/7 for any assistance' },
-      },
-    },
-  },
-  { timestamps: true }
-);
+// Connect to PostgreSQL
+initDatabase().catch((error) => {
+  console.error("POSTGRES connection error:", error);
+});
 
-const userSchema = new mongoose.Schema(
-  {
-    email: { type: String, required: true, unique: true },
-    password: { type: String, required: true },
-    name: { type: String, required: true },
-    role: { type: String, enum: ["admin", "staff"], default: "admin" },
-    hotelId: {
-      type: mongoose.Schema.Types.ObjectId,
-      ref: "Hotel",
-      required: true,
-    },
-  },
-  { timestamps: true }
-);
-
-const roomSchema = new mongoose.Schema(
-  {
-    hotelId: {
-      type: mongoose.Schema.Types.ObjectId,
-      ref: "Hotel",
-      required: true,
-    },
-    number: { type: String, required: true },
-    name: { type: String, required: true },
-    uuid: { type: String, required: true, unique: true },
-    qrCode: { type: String, required: true },
-    isActive: { type: Boolean, default: true },
-  },
-  { timestamps: true }
-);
-
-const requestSchema = new mongoose.Schema(
-  {
-    hotelId: {
-      type: mongoose.Schema.Types.ObjectId,
-      ref: "Hotel",
-      required: true,
-    },
-    roomId: {
-      type: mongoose.Schema.Types.ObjectId,
-      ref: "Room",
-      required: true,
-    },
-    roomNumber: { type: String, required: true },
-    guestPhone: { type: String, required: true },
-    type: {
-      type: String,
-      enum: [
-        "call-service",
-        "order-food",
-        "room-service",
-        "complaint",
-        "custom-message",
-        "wifi-support",
-        "security-alert",
-      ],
-      required: true,
-    },
-    message: { type: String, required: true },
-    orderDetails: {
-      items: [
-        {
-          itemId: { type: mongoose.Schema.Types.ObjectId },
-          name: { type: String },
-          price: { type: Number },
-          quantity: { type: Number },
-          total: { type: Number },
-        },
-      ],
-      totalAmount: { type: Number, default: 0 },
-    },
-    status: {
-      type: String,
-      enum: ["pending", "in-progress", "completed", "canceled"],
-      default: "pending",
-    },
-    priority: {
-      type: String,
-      enum: ["low", "medium", "high"],
-      default: "medium",
-    },
-  },
-  { timestamps: true }
-);
-
-// Food Menu Schema
-const foodItemSchema = new mongoose.Schema(
-  {
-    hotelId: {
-      type: mongoose.Schema.Types.ObjectId,
-      ref: "Hotel",
-      required: true,
-    },
-    name: { type: String, required: true },
-    description: { type: String },
-    price: { type: Number, required: true },
-    category: { type: String, required: true },
-    isAvailable: { type: Boolean, default: true },
-    image: { type: String }, // URL to image
-  },
-  { timestamps: true }
-);
-
-// Room Service Menu Schema
-const roomServiceItemSchema = new mongoose.Schema(
-  {
-    hotelId: {
-      type: mongoose.Schema.Types.ObjectId,
-      ref: "Hotel",
-      required: true,
-    },
-    name: { type: String, required: true },
-    description: { type: String },
-    category: { type: String, required: true },
-    estimatedTime: { type: String, required: true },
-    isAvailable: { type: Boolean, default: true },
-  },
-  { timestamps: true }
-);
-
-// Complaint Menu Schema
-const complaintItemSchema = new mongoose.Schema(
-  {
-    hotelId: {
-      type: mongoose.Schema.Types.ObjectId,
-      ref: "Hotel",
-      required: true,
-    },
-    name: { type: String, required: true },
-    description: { type: String },
-    category: { type: String, required: true },
-    priority: { type: String, enum: ["low", "medium", "high"], required: true },
-    isAvailable: { type: Boolean, default: true },
-  },
-  { timestamps: true }
-);
-
-const Hotel = mongoose.model("Hotel", hotelSchema);
-const User = mongoose.model("User", userSchema);
-const Room = mongoose.model("Room", roomSchema);
-const Request = mongoose.model("Request", requestSchema);
-const FoodItem = mongoose.model("FoodItem", foodItemSchema);
-const RoomServiceItem = mongoose.model(
-  "RoomServiceItem",
-  roomServiceItemSchema
-);
-const ComplaintItem = mongoose.model("ComplaintItem", complaintItemSchema);
-
-// Google Auth Schema
-const googleAuthSchema = new mongoose.Schema(
-  {
-    hotelId: {
-      type: mongoose.Schema.Types.ObjectId,
-      ref: "Hotel",
-      required: true,
-    },
-    googleAccountId: { type: String, required: true },
-    email: { type: String, required: true },
-    name: { type: String, required: true },
-    picture: { type: String },
-    accessToken: { type: String, required: true },
-    refreshToken: { type: String, required: true },
-    businessName: { type: String },
-    businessId: { type: String },
-    expiresAt: { type: Date, required: true },
-    businessLocationId: { type: String },
-    reviewsCache: { type: Array },
-    cacheTimestamp: { type: Date }
-  },
-  { timestamps: true }
-);
-
-const GoogleAuth = mongoose.model("GoogleAuth", googleAuthSchema);
-
-// Template Schema
-const templateSchema = new mongoose.Schema(
-  {
-    hotelId: {
-      type: mongoose.Schema.Types.ObjectId,
-      ref: "Hotel",
-      required: true,
-    },
-    name: { type: String, required: true },
-    content: { type: String, required: true },
-    tone: {
-      type: String,
-      enum: ["professional", "friendly", "apologetic"],
-      required: true,
-    },
-  },
-  { timestamps: true }
-);
-
-const Template = mongoose.model("Template", templateSchema);
+// Schemas migrated to drizzle in db/schema.js
 
 // Auth middleware
 const authenticateToken = (req, res, next) => {
@@ -1448,7 +1204,7 @@ app.post("/api/auth/register", async (req, res) => {
     } = req.body;
 
     // Check if hotel already exists
-    const existingHotel = await Hotel.findOne({ email });
+    const [existingHotel] = await db.select().from(schema.hotels).where(eq(schema.hotels.email, email));
     if (existingHotel) {
       return res
         .status(400)
@@ -1456,31 +1212,27 @@ app.post("/api/auth/register", async (req, res) => {
     }
 
     // Create hotel
-    const hotel = new Hotel({
+    const [hotel] = await db.insert(schema.hotels).values({
       name: hotelName,
       email,
       phone,
       address,
       totalRooms,
-    });
-
-    await hotel.save();
+    }).returning();
 
     // Create admin user
     const hashedPassword = await bcrypt.hash(password, 10);
-    const user = new User({
+    const [user] = await db.insert(schema.users).values({
       email,
       password: hashedPassword,
       name: adminName,
       role: "admin",
-      hotelId: hotel._id,
-    });
-
-    await user.save();
+      hotelId: hotel.id,
+    }).returning();
 
     // Generate JWT token
     const token = jwt.sign(
-      { userId: user._id, hotelId: hotel._id },
+      { userId: user.id, hotelId: hotel.id },
       process.env.JWT_SECRET || "your-secret-key",
       { expiresIn: "24h" }
     );
@@ -1488,19 +1240,24 @@ app.post("/api/auth/register", async (req, res) => {
     res.json({
       token,
       user: {
-        _id: user._id,
+        _id: user.id,
         email: user.email,
         name: user.name,
         role: user.role,
+        subscriptionActive: user.subscriptionActive,
       },
       hotel: {
-        _id: hotel._id,
+        _id: hotel.id,
         name: hotel.name,
         email: hotel.email,
         phone: hotel.phone,
         address: hotel.address,
         totalRooms: hotel.totalRooms,
-        subscription: hotel.subscription,
+        subscription: {
+          plan: hotel.subscriptionPlan,
+          status: hotel.subscriptionStatus,
+          expiresAt: hotel.subscriptionExpiresAt
+        },
         settings: hotel.settings,
       },
     });
@@ -1521,7 +1278,7 @@ app.post("/api/auth/login", async (req, res) => {
         .json({ message: "Email and password are required" });
     }
     // Find user
-    const user = await User.findOne({ email });
+    const [user] = await db.select().from(schema.users).where(eq(schema.users.email, email));
     if (!user) {
       return res.status(400).json({ message: "Invalid credentials" });
     }
@@ -1533,14 +1290,14 @@ app.post("/api/auth/login", async (req, res) => {
     }
 
     // Get hotel data
-    const hotel = await Hotel.findById(user.hotelId);
+    const [hotel] = await db.select().from(schema.hotels).where(eq(schema.hotels.id, user.hotelId));
     if (!hotel) {
       return res.status(400).json({ message: "Hotel not found" });
     }
 
     // Generate JWT token
     const token = jwt.sign(
-      { userId: user._id, hotelId: hotel._id },
+      { userId: user.id, hotelId: hotel.id },
       process.env.JWT_SECRET || "your-secret-key",
       { expiresIn: "24h" }
     );
@@ -1548,19 +1305,24 @@ app.post("/api/auth/login", async (req, res) => {
     res.json({
       token,
       user: {
-        _id: user._id,
+        _id: user.id,
         email: user.email,
         name: user.name,
         role: user.role,
+        subscriptionActive: user.subscriptionActive,
       },
       hotel: {
-        _id: hotel._id,
+        _id: hotel.id,
         name: hotel.name,
         email: hotel.email,
         phone: hotel.phone,
         address: hotel.address,
         totalRooms: hotel.totalRooms,
-        subscription: hotel.subscription,
+        subscription: {
+          plan: hotel.subscriptionPlan,
+          status: hotel.subscriptionStatus,
+          expiresAt: hotel.subscriptionExpiresAt
+        },
         settings: hotel.settings,
       },
     });
@@ -1576,72 +1338,150 @@ app.post("/api/auth/login", async (req, res) => {
   }
 });
 
-//Razorpay route
-app.post("/api/subscribe", authenticateToken, async (req, res) => {
+// Get current user details
+app.get("/api/auth/me", authenticateToken, async (req, res) => {
   try {
-    const { plan } = req.body;
+    const [user] = await db.select().from(schema.users).where(eq(schema.users.id, req.user.userId));
+    if (!user) {
+      return res.status(404).json({ message: "User not found" });
+    }
 
-    // Plan pricing logic
+    const [hotel] = await db.select().from(schema.hotels).where(eq(schema.hotels.id, user.hotelId));
+    if (!hotel) {
+      return res.status(404).json({ message: "Hotel not found" });
+    }
+
+    res.json({
+      user: {
+        _id: user.id,
+        email: user.email,
+        name: user.name,
+        role: user.role,
+        subscriptionActive: user.subscriptionActive,
+      },
+      hotel: {
+        _id: hotel.id,
+        name: hotel.name,
+        email: hotel.email,
+        phone: hotel.phone,
+        address: hotel.address,
+        totalRooms: hotel.totalRooms,
+        subscription: {
+          plan: hotel.subscriptionPlan,
+          status: hotel.subscriptionStatus,
+          expiresAt: hotel.subscriptionExpiresAt
+        },
+        settings: hotel.settings,
+      },
+    });
+  } catch (error) {
+    console.error("Auth me error:", error);
+    res.status(500).json({ message: "Failed to fetch user data" });
+  }
+});
+
+// Razorpay — create order
+app.post("/api/payment/create-order", authenticateToken, async (req, res) => {
+  if (!razorpay) {
+    return res.status(503).json({ message: "Payment gateway not configured!" });
+  }
+  try {
+    const { plan, duration } = req.body; // duration in days
+
     const prices = {
-      basic: 99900, // ₹999 in paise
-      premium: 199900, // ₹1999 in paise
+      basic:      { 30: 29900,  90: 79900,  180: 149900 },
+      pro:        { 30: 49900,  90: 129900, 180: 239900 },
+      enterprise: { 30: 99900, 90: 249900, 180: 449900 },
     };
 
-    const amount = prices[plan];
-    if (!amount) return res.status(400).json({ message: "Invalid plan" });
+    const amount = prices[plan]?.[duration];
+    if (!amount) return res.status(400).json({ message: "Invalid plan or duration" });
 
     const options = {
       amount,
       currency: "INR",
       receipt: `receipt_${Date.now()}`,
-      notes: { plan },
+      notes: { plan, duration: String(duration), userId: req.user.userId },
     };
 
     const order = await razorpay.orders.create(options);
-    res.json({ order });
+    res.json({ order, key: process.env.RAZORPAY_KEY_ID });
   } catch (error) {
-    console.error("Subscription error:", error);
-    res.status(500).json({ message: "Failed to create order" });
+    console.error("Create order error:", error);
+    res.status(500).json({ message: "Failed to create payment order" });
   }
 });
 
-// POST /api/payment/webhook
+// Razorpay — verify payment & activate subscription
+app.post("/api/payment/verify", authenticateToken, async (req, res) => {
+  try {
+    const { razorpay_order_id, razorpay_payment_id, razorpay_signature, plan, duration, amount } = req.body;
+
+    // Verify signature
+    const expectedSig = crypto
+      .createHmac("sha256", process.env.RAZORPAY_KEY_SECRET)
+      .update(`${razorpay_order_id}|${razorpay_payment_id}`)
+      .digest("hex");
+
+    if (expectedSig !== razorpay_signature) {
+      return res.status(400).json({ message: "Invalid payment signature" });
+    }
+
+    const durationDays = parseInt(duration);
+    const expiresAt = new Date(Date.now() + durationDays * 24 * 60 * 60 * 1000);
+
+    // Activate subscription on user
+    await db.update(schema.users).set({
+      subscriptionActive: "Active",
+      activeSubscriptionAmount: amount,
+      subscriptionDuration: durationDays,
+      subscriptionExpiresAt: expiresAt,
+    }).where(eq(schema.users.id, req.user.userId));
+
+    // Also update hotel subscription plan
+    await db.update(schema.hotels).set({
+      subscriptionPlan: plan,
+      subscriptionStatus: "active",
+      subscriptionExpiresAt: expiresAt,
+    }).where(eq(schema.hotels.id, req.user.hotelId));
+
+    res.json({ success: true, message: "Subscription activated successfully" });
+  } catch (error) {
+    console.error("Payment verify error:", error);
+    res.status(500).json({ message: "Payment verification failed" });
+  }
+});
+
+// Razorpay webhook (for server-side event handling)
 app.post(
   "/payment/webhook",
   express.raw({ type: "application/json" }),
   async (req, res) => {
     const secret = process.env.RAZORPAY_WEBHOOK_SECRET;
-
     const signature = req.headers["x-razorpay-signature"];
-    const body = req.body;
 
     const isValid = Razorpay.validateWebhookSignature(
-      JSON.stringify(body),
+      JSON.stringify(req.body),
       signature,
       secret
     );
 
     if (!isValid) return res.status(400).send("Invalid signature");
 
-    const payment = body.payload.payment.entity;
-
+    const payment = req.body.payload.payment.entity;
     const userId = payment.notes.userId;
     const plan = payment.notes.plan;
     const duration = parseInt(payment.notes.duration);
-
     const expiresAt = new Date(Date.now() + duration * 24 * 60 * 60 * 1000);
 
-    // Update in DB
-    await Hotel.updateOne(
-      { admin: userId },
-      {
-        subscription: {
-          plan,
-          status: "active",
-          expiresAt,
-        },
-      }
-    );
+    if (userId) {
+      await db.update(schema.users).set({
+        subscriptionActive: "Active",
+        activeSubscriptionAmount: payment.amount,
+        subscriptionDuration: duration,
+        subscriptionExpiresAt: expiresAt,
+      }).where(eq(schema.users.id, userId));
+    }
 
     return res.status(200).json({ success: true });
   }
@@ -1650,10 +1490,11 @@ app.post(
 // Hotel routes
 app.get("/api/hotels/:id", authenticateToken, async (req, res) => {
   try {
-    const hotel = await Hotel.findById(req.params.id);
+    const [hotel] = await db.select().from(schema.hotels).where(eq(schema.hotels.id, req.params.id));
     if (!hotel) {
       return res.status(404).json({ message: "Hotel not found" });
     }
+    hotel._id = hotel.id;
     res.json(hotel);
   } catch (error) {
     res.status(500).json({ message: "Server error" });
@@ -1662,12 +1503,14 @@ app.get("/api/hotels/:id", authenticateToken, async (req, res) => {
 
 app.put("/api/hotels/:id", authenticateToken, async (req, res) => {
   try {
-    const hotel = await Hotel.findByIdAndUpdate(req.params.id, req.body, {
-      new: true,
-    });
+    const [hotel] = await db.update(schema.hotels)
+      .set(req.body)
+      .where(eq(schema.hotels.id, req.params.id))
+      .returning();
     if (!hotel) {
       return res.status(404).json({ message: "Hotel not found" });
     }
+    hotel._id = hotel.id;
     res.json(hotel);
   } catch (error) {
     res.status(500).json({ message: "Server error" });
@@ -1677,8 +1520,8 @@ app.put("/api/hotels/:id", authenticateToken, async (req, res) => {
 // Room routes
 app.get("/api/hotels/:hotelId/rooms", authenticateToken, async (req, res) => {
   try {
-    const rooms = await Room.find({ hotelId: req.params.hotelId });
-    res.json(rooms);
+    const rooms = await db.select().from(schema.rooms).where(eq(schema.rooms.hotelId, req.params.hotelId));
+    res.json(rooms.map(r => ({ ...r, _id: r.id })));
   } catch (error) {
     res.status(500).json({ message: "Server error" });
   }
@@ -1690,7 +1533,8 @@ app.post("/api/hotels/:hotelId/rooms", authenticateToken, async (req, res) => {
     const { hotelId } = req.params;
 
     // Check for duplicate room
-    const existingRoom = await Room.findOne({ hotelId, number });
+    const [existingRoom] = await db.select().from(schema.rooms)
+      .where(and(eq(schema.rooms.hotelId, hotelId), eq(schema.rooms.number, number)));
     if (existingRoom) {
       return res.status(400).json({ message: "Room number already exists" });
     }
@@ -1705,17 +1549,15 @@ app.post("/api/hotels/:hotelId/rooms", authenticateToken, async (req, res) => {
     const qrCode = await qrcode.toDataURL(qrData);
 
     // Create Room with UUID
-    const room = new Room({
+    const [room] = await db.insert(schema.rooms).values({
       hotelId,
       number,
       name,
-      uuid: roomUuid, // ✅ Save uuid
-      qrCode, // ✅ Save QR image
-    });
+      uuid: roomUuid,
+      qrCode,
+    }).returning();
 
-    await room.save();
-    // console.log("✅ Room created successfully");
-
+    room._id = room.id;
     res.json(room);
   } catch (error) {
     console.error("❌ Room creation error:", error);
@@ -1728,12 +1570,12 @@ app.put(
   authenticateToken,
   async (req, res) => {
     try {
-      const room = await Room.findByIdAndUpdate(req.params.roomId, req.body, {
-        new: true,
-      });
+      const [room] = await db.update(schema.rooms).set(req.body)
+        .where(eq(schema.rooms.id, req.params.roomId)).returning();
       if (!room) {
         return res.status(404).json({ message: "Room not found" });
       }
+      room._id = room.id;
       res.json(room);
     } catch (error) {
       res.status(500).json({ message: "Server error" });
@@ -1746,7 +1588,8 @@ app.delete(
   authenticateToken,
   async (req, res) => {
     try {
-      const room = await Room.findByIdAndDelete(req.params.roomId);
+      const [room] = await db.delete(schema.rooms)
+        .where(eq(schema.rooms.id, req.params.roomId)).returning();
       if (!room) {
         return res.status(404).json({ message: "Room not found" });
       }
@@ -1763,10 +1606,10 @@ app.get(
   authenticateToken,
   async (req, res) => {
     try {
-      const requests = await Request.find({ hotelId: req.params.hotelId }).sort(
-        { createdAt: -1 }
-      );
-      res.json(requests);
+      const reqs = await db.select().from(schema.requests)
+        .where(eq(schema.requests.hotelId, req.params.hotelId))
+        .orderBy(desc(schema.requests.createdAt));
+      res.json(reqs.map(r => ({ ...r, _id: r.id })));
     } catch (error) {
       res.status(500).json({ message: "Server error" });
     }
@@ -1782,24 +1625,24 @@ app.post(
         req.body;
       const { hotelId } = req.params;
 
-      const room = await Room.findById(roomId);
+      const [room] = await db.select().from(schema.rooms).where(eq(schema.rooms.id, roomId));
       if (!room) {
         return res.status(404).json({ message: "Room not found" });
       }
 
-      const request = new Request({
+      const [request] = await db.insert(schema.requests).values({
         hotelId,
-        roomId: room._id,
+        roomId: room.id,
         roomNumber: room.number,
-        guestPhone: requestData.guestPhone,
-        type: requestData.type,
-        message: requestData.message,
-        orderDetails: requestData.orderDetails,
-        priority: requestData.priority || "medium",
+        guestPhone: guestPhone,
+        type: type,
+        message: message,
+        orderDetails: orderDetails,
+        priority: priority || "medium",
         status: "pending",
-      });
+      }).returning();
 
-      await request.save();
+      request._id = request.id;
 
       // Emit real-time notification
       io.to(hotelId).emit("newRequest", request);
@@ -1817,15 +1660,13 @@ app.put(
   authenticateToken,
   async (req, res) => {
     try {
-      const request = await Request.findByIdAndUpdate(
-        req.params.requestId,
-        req.body,
-        { new: true }
-      );
+      const [request] = await db.update(schema.requests).set(req.body)
+        .where(eq(schema.requests.id, req.params.requestId)).returning();
       if (!request) {
         return res.status(404).json({ message: "Request not found" });
       }
 
+      request._id = request.id;
       // Emit real-time update
       io.to(req.params.hotelId).emit("requestUpdated", request);
 
@@ -1836,24 +1677,21 @@ app.put(
   }
 );
 
+const isValidUUID = (id) => typeof id === 'string' && id.length === 36;
+
 // Guest Food Menu Route (no auth required)
 app.get("/api/guest/:hotelId/food-menu", async (req, res) => {
   try {
     const { hotelId } = req.params;
-    // console.log('Fetching food menu for hotel:', hotelId);
 
-    if (!mongoose.Types.ObjectId.isValid(hotelId)) {
-      // console.log('Invalid hotelId:', hotelId);
+    if (!isValidUUID(hotelId)) {
       return res.status(400).json({ message: "Invalid hotelId" });
     }
 
-    const foodItems = await FoodItem.find({
-      hotelId: new mongoose.Types.ObjectId(hotelId),
-      isAvailable: true,
-    });
+    const foodItems = await db.select().from(schema.foodItems)
+      .where(and(eq(schema.foodItems.hotelId, hotelId), eq(schema.foodItems.isAvailable, true)));
 
-    // console.log('Found food items:', foodItems.length);
-    res.json(foodItems);
+    res.json(foodItems.map(item => ({ ...item, _id: item.id })));
   } catch (error) {
     console.error("Guest food menu error:", error.stack || error);
     res.status(500).json({ message: "Server error" });
@@ -1865,16 +1703,14 @@ app.get("/api/guest/:hotelId/room-service-menu", async (req, res) => {
   try {
     const { hotelId } = req.params;
 
-    if (!mongoose.Types.ObjectId.isValid(hotelId)) {
+    if (!isValidUUID(hotelId)) {
       return res.status(400).json({ message: "Invalid hotelId" });
     }
 
-    const roomServiceItems = await RoomServiceItem.find({
-      hotelId: new mongoose.Types.ObjectId(hotelId),
-      isAvailable: true,
-    });
+    const roomServiceItems = await db.select().from(schema.roomServiceItems)
+      .where(and(eq(schema.roomServiceItems.hotelId, hotelId), eq(schema.roomServiceItems.isAvailable, true)));
 
-    res.json(roomServiceItems);
+    res.json(roomServiceItems.map(item => ({ ...item, _id: item.id })));
   } catch (error) {
     console.error("Guest room service menu error:", error.stack || error);
     res.status(500).json({ message: "Server error" });
@@ -1886,16 +1722,14 @@ app.get("/api/guest/:hotelId/complaint-menu", async (req, res) => {
   try {
     const { hotelId } = req.params;
 
-    if (!mongoose.Types.ObjectId.isValid(hotelId)) {
+    if (!isValidUUID(hotelId)) {
       return res.status(400).json({ message: "Invalid hotelId" });
     }
 
-    const complaintItems = await ComplaintItem.find({
-      hotelId: new mongoose.Types.ObjectId(hotelId),
-      isAvailable: true,
-    });
+    const complaintItems = await db.select().from(schema.complaintItems)
+      .where(and(eq(schema.complaintItems.hotelId, hotelId), eq(schema.complaintItems.isAvailable, true)));
 
-    res.json(complaintItems);
+    res.json(complaintItems.map(item => ({ ...item, _id: item.id })));
   } catch (error) {
     console.error("Guest complaint menu error:", error.stack || error);
     res.status(500).json({ message: "Server error" });
@@ -1907,29 +1741,25 @@ app.get("/api/guest/:hotelId/:roomId", async (req, res) => {
   try {
     const { hotelId, roomId } = req.params;
 
-    // Cast hotelId to ObjectId for query
-    const hotel = await Hotel.findById(hotelId);
+    const [hotel] = await db.select().from(schema.hotels).where(eq(schema.hotels.id, hotelId));
     if (!hotel) {
       return res.status(404).json({ message: "Hotel not found" });
     }
 
-    // FIX: Use 'new' with ObjectId
-    const room = await Room.findOne({
-      hotelId: new mongoose.Types.ObjectId(hotelId),
-      uuid: roomId,
-    });
+    const [room] = await db.select().from(schema.rooms)
+      .where(and(eq(schema.rooms.hotelId, hotelId), eq(schema.rooms.uuid, roomId)));
     if (!room) {
       return res.status(404).json({ message: "Room not found" });
     }
 
     res.json({
       hotel: {
-        _id: hotel._id,
+        _id: hotel.id,
         name: hotel.name,
         settings: hotel.settings,
       },
       room: {
-        _id: room._id,
+        _id: room.id,
         number: room.number,
         name: room.name,
       },
@@ -1943,21 +1773,14 @@ app.get("/api/guest/:hotelId/:roomId", async (req, res) => {
 app.post("/api/guest/:hotelId/:roomId/request", async (req, res) => {
   const { hotelId, roomId } = req.params;
 
-  if (!mongoose.Types.ObjectId.isValid(hotelId)) {
+  if (!isValidUUID(hotelId)) {
     return res.status(400).json({ message: "Invalid hotel ID" });
   }
 
   try {
     // ✅ Find the actual room using UUID
-    // console.log('Looking for room:', {
-    //   hotelId: new mongoose.Types.ObjectId(hotelId),
-    //   uuid: roomId
-    // });
-    const room = await Room.findOne({
-      hotelId: new mongoose.Types.ObjectId(hotelId),
-      uuid: roomId,
-    });
-    // console.log('Room found:', room);
+    const [room] = await db.select().from(schema.rooms)
+      .where(and(eq(schema.rooms.hotelId, hotelId), eq(schema.rooms.uuid, roomId)));
 
     if (!room) {
       return res.status(404).json({ message: "Room not found" });
@@ -2036,9 +1859,9 @@ app.post("/api/guest/:hotelId/:roomId/request", async (req, res) => {
       message = requestData.message || "No additional details provided";
     }
 
-    const request = new Request({
+    const [request] = await db.insert(schema.requests).values({
       hotelId,
-      roomId: room._id,
+      roomId: room.id,
       roomNumber: room.number,
       guestPhone: requestData.guestPhone,
       type: requestData.type,
@@ -2046,12 +1869,11 @@ app.post("/api/guest/:hotelId/:roomId/request", async (req, res) => {
       orderDetails: orderDetails,
       priority: requestData.priority || "medium",
       status: "pending",
-    });
+    }).returning();
 
-    await request.save();
+    request._id = request.id;
 
     // ✅ Emit real-time notification to admin dashboard
-    // console.log('🔔 Emitting newRequest to hotel room:', hotelId);
     io.to(hotelId).emit("newRequest", request);
 
     res
@@ -2069,8 +1891,8 @@ app.get(
   authenticateToken,
   async (req, res) => {
     try {
-      const foodItems = await FoodItem.find({ hotelId: req.params.hotelId });
-      res.json(foodItems);
+      const foodItems = await db.select().from(schema.foodItems).where(eq(schema.foodItems.hotelId, req.params.hotelId));
+      res.json(foodItems.map(item => ({ ...item, _id: item.id })));
     } catch (error) {
       res.status(500).json({ message: "Server error" });
     }
@@ -2085,16 +1907,16 @@ app.post(
       const { name, description, price, category, image } = req.body;
       const { hotelId } = req.params;
 
-      const foodItem = new FoodItem({
+      const [foodItem] = await db.insert(schema.foodItems).values({
         hotelId,
         name,
         description,
         price,
         category,
         image,
-      });
+      }).returning();
 
-      await foodItem.save();
+      foodItem._id = foodItem.id;
       res.json(foodItem);
     } catch (error) {
       console.error("Food item creation error:", error);
@@ -2128,7 +1950,8 @@ app.delete(
   authenticateToken,
   async (req, res) => {
     try {
-      const foodItem = await FoodItem.findByIdAndDelete(req.params.itemId);
+      const [foodItem] = await db.delete(schema.foodItems)
+        .where(eq(schema.foodItems.id, req.params.itemId)).returning();
       if (!foodItem) {
         return res.status(404).json({ message: "Food item not found" });
       }
@@ -2145,10 +1968,9 @@ app.get(
   authenticateToken,
   async (req, res) => {
     try {
-      const roomServiceItems = await RoomServiceItem.find({
-        hotelId: req.params.hotelId,
-      });
-      res.json(roomServiceItems);
+      const roomServiceItems = await db.select().from(schema.roomServiceItems)
+        .where(eq(schema.roomServiceItems.hotelId, req.params.hotelId));
+      res.json(roomServiceItems.map(item => ({ ...item, _id: item.id })));
     } catch (error) {
       res.status(500).json({ message: "Server error" });
     }
@@ -2163,15 +1985,15 @@ app.post(
       const { name, description, category, estimatedTime } = req.body;
       const { hotelId } = req.params;
 
-      const roomServiceItem = new RoomServiceItem({
+      const [roomServiceItem] = await db.insert(schema.roomServiceItems).values({
         hotelId,
         name,
         description,
         category,
         estimatedTime,
-      });
+      }).returning();
 
-      await roomServiceItem.save();
+      roomServiceItem._id = roomServiceItem.id;
       res.json(roomServiceItem);
     } catch (error) {
       console.error("Room service item creation error:", error);
@@ -2185,14 +2007,12 @@ app.put(
   authenticateToken,
   async (req, res) => {
     try {
-      const roomServiceItem = await RoomServiceItem.findByIdAndUpdate(
-        req.params.itemId,
-        req.body,
-        { new: true }
-      );
+      const [roomServiceItem] = await db.update(schema.roomServiceItems).set(req.body)
+        .where(eq(schema.roomServiceItems.id, req.params.itemId)).returning();
       if (!roomServiceItem) {
         return res.status(404).json({ message: "Room service item not found" });
       }
+      roomServiceItem._id = roomServiceItem.id;
       res.json(roomServiceItem);
     } catch (error) {
       res.status(500).json({ message: "Server error" });
@@ -2205,9 +2025,8 @@ app.delete(
   authenticateToken,
   async (req, res) => {
     try {
-      const roomServiceItem = await RoomServiceItem.findByIdAndDelete(
-        req.params.itemId
-      );
+      const [roomServiceItem] = await db.delete(schema.roomServiceItems)
+        .where(eq(schema.roomServiceItems.id, req.params.itemId)).returning();
       if (!roomServiceItem) {
         return res.status(404).json({ message: "Room service item not found" });
       }
@@ -2224,10 +2043,9 @@ app.get(
   authenticateToken,
   async (req, res) => {
     try {
-      const complaintItems = await ComplaintItem.find({
-        hotelId: req.params.hotelId,
-      });
-      res.json(complaintItems);
+      const complaintItems = await db.select().from(schema.complaintItems)
+        .where(eq(schema.complaintItems.hotelId, req.params.hotelId));
+      res.json(complaintItems.map(item => ({ ...item, _id: item.id })));
     } catch (error) {
       res.status(500).json({ message: "Server error" });
     }
@@ -2242,15 +2060,15 @@ app.post(
       const { name, description, category, priority } = req.body;
       const { hotelId } = req.params;
 
-      const complaintItem = new ComplaintItem({
+      const [complaintItem] = await db.insert(schema.complaintItems).values({
         hotelId,
         name,
         description,
         category,
         priority,
-      });
+      }).returning();
 
-      await complaintItem.save();
+      complaintItem._id = complaintItem.id;
       res.json(complaintItem);
     } catch (error) {
       console.error("Complaint item creation error:", error);
@@ -2264,14 +2082,12 @@ app.put(
   authenticateToken,
   async (req, res) => {
     try {
-      const complaintItem = await ComplaintItem.findByIdAndUpdate(
-        req.params.itemId,
-        req.body,
-        { new: true }
-      );
+      const [complaintItem] = await db.update(schema.complaintItems).set(req.body)
+        .where(eq(schema.complaintItems.id, req.params.itemId)).returning();
       if (!complaintItem) {
         return res.status(404).json({ message: "Complaint item not found" });
       }
+      complaintItem._id = complaintItem.id;
       res.json(complaintItem);
     } catch (error) {
       res.status(500).json({ message: "Server error" });
@@ -2284,9 +2100,8 @@ app.delete(
   authenticateToken,
   async (req, res) => {
     try {
-      const complaintItem = await ComplaintItem.findByIdAndDelete(
-        req.params.itemId
-      );
+      const [complaintItem] = await db.delete(schema.complaintItems)
+        .where(eq(schema.complaintItems.id, req.params.itemId)).returning();
       if (!complaintItem) {
         return res.status(404).json({ message: "Complaint item not found" });
       }
@@ -2302,8 +2117,8 @@ server.listen(PORT, () => {
   console.log(`Server running on port ${PORT}`);
   console.log(`Environment: ${process.env.NODE_ENV || "development"}`);
   console.log(
-    `MongoDB URI: ${
-      process.env.MONGODB_URI ? "Connected" : "Using default localhost"
+    `POSTGRES URI: ${
+      process.env.POSTGRES_URI ? "Connected" : "Using default localhost"
     }`
   );
   console.log(

@@ -35,8 +35,12 @@ export const LoginForm: React.FC = () => {
   const onSubmit = async (data: LoginFormData) => {
     setError(null);
     try {
-      await login(data.email, data.password); // use context's login
-      navigate('/admin');
+      const { subscriptionActive } = await login(data.email, data.password);
+      if (subscriptionActive === 'Active') {
+        navigate('/admin');
+      } else {
+        navigate('/subscribe');
+      }
     } catch (err: any) {
       setError(err.message || 'An error occurred during login. Please try again.');
     }

@@ -153,7 +153,7 @@ npm run dev
 
 ### **Environment Configuration**
 - **Frontend**: `VITE_API_URL`, `VITE_SOCKET_URL`
-- **Backend**: `MONGODB_URI`, `JWT_SECRET`, `GOOGLE_CLIENT_ID`, etc.
+- **Backend**: `POSTGRES_URI`, `JWT_SECRET`, `GOOGLE_CLIENT_ID`, etc.
 
 ## 🔐 **Security Features**
 
